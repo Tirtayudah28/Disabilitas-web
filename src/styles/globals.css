@@ -1,0 +1,221 @@
+/* src/styles/globals.css */
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap');
+@import url('https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Custom styles untuk aksesibilitas dan kenyamanan */
+:root {
+  --transition-speed: 0.3s;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: 'Poppins', sans-serif;
+}
+
+.high-contrast {
+  --contrast-filter: contrast(150%) brightness(110%);
+  filter: var(--contrast-filter);
+}
+
+.large-text {
+  font-size: 1.25rem;
+}
+
+.extra-large-text {
+  font-size: 1.5rem;
+}
+
+.reader-mode {
+  line-height: 1.8;
+  letter-spacing: 0.05em;
+  max-width: 65ch;
+  margin: 0 auto;
+}
+
+.skip-link {
+  position: absolute;
+  top: -40px;
+  left: 0;
+  background: #000;
+  color: white;
+  padding: 8px;
+  z-index: 100;
+  transition: top var(--transition-speed);
+}
+
+.skip-link:focus {
+  top: 0;
+}
+
+/* Animasi untuk interaktivitas */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.fade-in {
+  animation: fadeIn 0.8s ease-out;
+}
+
+/* Focus styles untuk aksesibilitas keyboard */
+button:focus, a:focus, input:focus, select:focus, textarea:focus {
+  outline: 3px solid #0ea5e9;
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+/* Efek hover yang lembut */
+.hover-lift {
+  transition: transform var(--transition-speed), box-shadow var(--transition-speed);
+}
+
+.hover-lift:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+}
+
+/* Custom scrollbar untuk aksesibilitas */
+::-webkit-scrollbar {
+  width: 12px;
+}
+
+::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 10px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #c1c1c1;
+  border-radius: 10px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #a8a8a8;
+}
+
+/* Background pattern subtle */
+.hero-pattern {
+  background-image: radial-gradient(circle at 25% 25%, rgba(14, 165, 233, 0.1) 0%, transparent 55%), 
+                    radial-gradient(circle at 75% 75%, rgba(168, 85, 247, 0.1) 0%, transparent 55%);
+}
+
+/* src/styles/globals.css - Tambahkan styles ini */
+.job-card {
+  transition: all 0.3s ease;
+  border: 1px solid #e5e7eb;
+}
+
+.job-card:hover {
+  border-color: #0ea5e9;
+  box-shadow: 0 10px 25px -5px rgba(14, 165, 233, 0.1);
+}
+
+.filter-option {
+  transition: all 0.2s ease;
+}
+
+.filter-option:hover {
+  background-color: #f0f9ff;
+}
+
+.filter-option.selected {
+  background-color: #0ea5e9;
+  color: white;
+}
+
+.accommodation-tag {
+  background: linear-gradient(135deg, #a855f7, #06b6d4);
+  color: white;
+}
+
+.match-badge {
+  background: linear-gradient(135deg, #10b981, #06b6d4);
+  color: white;
+  animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.05); }
+  100% { transform: scale(1); }
+}
+
+.search-highlight {
+  background-color: #fffacd;
+  padding: 2px 4px;
+  border-radius: 3px;
+}
+
+.loading-spinner {
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+/* src/styles/globals.css - Tambahkan styles ini */
+.tab-content {
+  display: none;
+  animation: fadeIn 0.5s ease-in-out;
+}
+
+.tab-content.active {
+  display: block;
+}
+
+.tab-button {
+  transition: all 0.3s ease;
+  border-bottom: 3px solid transparent;
+}
+
+.tab-button.active {
+  border-bottom-color: #0ea5e9;
+  color: #0ea5e9;
+  background-color: #f0f9ff;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.progress-bar {
+  transition: width 0.5s ease-in-out;
+}
+
+.file-upload-area {
+  border: 2px dashed #cbd5e1;
+  transition: all 0.3s ease;
+}
+
+.file-upload-area.dragover {
+  border-color: #0ea5e9;
+  background-color: #f0f9ff;
+}
+
+.skill-tag {
+  transition: all 0.2s ease;
+}
+
+.skill-tag:hover {
+  transform: scale(1.05);
+}
+
+.hover-lift {
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.hover-lift:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1);
+}
