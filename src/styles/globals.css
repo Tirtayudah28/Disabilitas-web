@@ -219,3 +219,68 @@ button:focus, a:focus, input:focus, select:focus, textarea:focus {
   transform: translateY(-2px);
   box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1);
 }
+/* Tambahkan di src/styles/globals.css */
+
+/* Resume Styles */
+.resume-template {
+  background: white;
+  min-height: 297mm;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+}
+
+.resume-header {
+  background: linear-gradient(135deg, #0ea5e9, #a855f7);
+  color: white;
+}
+
+.resume-section {
+  margin-bottom: 1.5rem;
+}
+
+.resume-section-title {
+  border-bottom: 2px solid #0ea5e9;
+  padding-bottom: 0.5rem;
+  margin-bottom: 1rem;
+  color: #0369a1;
+  font-weight: 600;
+}
+
+.skill-level {
+  height: 6px;
+  border-radius: 3px;
+  background: #e5e7eb;
+  overflow: hidden;
+}
+
+.skill-level-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #0ea5e9, #a855f7);
+  border-radius: 3px;
+}
+
+.template-option {
+  border: 2px solid transparent;
+  transition: all 0.3s ease;
+  cursor: pointer;
+}
+
+.template-option:hover {
+  transform: scale(1.05);
+}
+
+.template-option.selected {
+  border-color: #0ea5e9;
+  box-shadow: 0 4px 12px rgba(14, 165, 233, 0.2);
+}
+
+@media print {
+  .no-print {
+    display: none !important;
+  }
+  
+  .resume-template {
+    box-shadow: none;
+    margin: 0;
+    min-height: auto;
+  }
+}

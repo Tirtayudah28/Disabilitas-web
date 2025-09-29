@@ -1,12 +1,34 @@
 // src/components/layout/Header.js
 import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 
 const Header = () => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const location = useLocation();
 
   const toggleMobileMenu = () => {
     setIsMobileMenuOpen(!isMobileMenuOpen);
+  };
+
+  // Function to check if menu is active
+  const isActive = (path) => {
+    return location.pathname === path;
+  };
+
+  // Function to get menu class based on active state
+  const getMenuClass = (path) => {
+    const baseClass = "px-4 py-2 font-medium rounded-lg transition flex items-center gap-1";
+    return isActive(path) 
+      ? `${baseClass} bg-primary-100 text-primary-600`
+      : `${baseClass} hover:bg-primary-50 hover:text-primary-600`;
+  };
+
+  // Function to get mobile menu class based on active state
+  const getMobileMenuClass = (path) => {
+    const baseClass = "block py-3 px-4 rounded-lg transition flex items-center gap-2";
+    return isActive(path)
+      ? `${baseClass} bg-primary-50 text-primary-600`
+      : `${baseClass} hover:bg-primary-50`;
   };
 
   return (
@@ -24,16 +46,16 @@ const Header = () => {
         
         {/* Desktop Menu */}
         <div className="hidden lg:flex space-x-1">
-          <Link to="/" className="px-4 py-2 font-medium rounded-lg bg-primary-100 text-primary-600 transition flex items-center gap-1">
+          <Link to="/" className={getMenuClass('/')}>
             <i className="fas fa-home"></i> <span>Beranda</span>
           </Link>
-          <Link to="/lowongan" className="px-4 py-2 font-medium rounded-lg hover:bg-primary-50 hover:text-primary-600 transition flex items-center gap-1">
+          <Link to="/lowongan" className={getMenuClass('/lowongan')}>
             <i className="fas fa-search"></i> <span>Cari Lowongan</span>
           </Link>
-          <Link to="/profile" className="px-4 py-2 font-medium rounded-lg hover:bg-primary-50 hover:text-primary-600 transition flex items-center gap-1">
+          <Link to="/profile" className={getMenuClass('/profile')}>
             <i className="fas fa-user"></i> <span>Profil Saya</span>
           </Link>
-          <Link to="/resume" className="px-4 py-2 font-medium rounded-lg hover:bg-primary-50 hover:text-primary-600 transition flex items-center gap-1">
+          <Link to="/resume" className={getMenuClass('/resume')}>
             <i className="fas fa-file-pdf"></i> <span>Resume Saya</span>
           </Link>
         </div>
@@ -44,10 +66,10 @@ const Header = () => {
             <span>Cari</span>
           </Link>
           <div className="hidden md:flex space-x-2">
-            <Link to="/daftar" className="bg-primary-500 text-white px-4 py-2 rounded-lg hover:bg-primary-600 transition font-medium flex items-center gap-2">
+            <Link to="/register" className="bg-primary-500 text-white px-4 py-2 rounded-lg hover:bg-primary-600 transition font-medium flex items-center gap-2">
               <i className="fas fa-user-plus"></i> <span>Daftar</span>
             </Link>
-            <Link to="/masuk" className="border border-primary-500 text-primary-500 px-4 py-2 rounded-lg hover:bg-primary-50 transition font-medium">
+            <Link to="/login" className="border border-primary-500 text-primary-500 px-4 py-2 rounded-lg hover:bg-primary-50 transition font-medium">
               Masuk
             </Link>
           </div>
@@ -64,16 +86,16 @@ const Header = () => {
       {/* Mobile Menu */}
       {isMobileMenuOpen && (
         <div className="lg:hidden bg-white/95 backdrop-blur-md px-4 py-3 shadow-lg">
-          <Link to="/" className="block py-3 px-4 bg-primary-50 text-primary-600 rounded-lg transition flex items-center gap-2">
+          <Link to="/" className={getMobileMenuClass('/')}>
             <i className="fas fa-home w-5 text-center"></i> Beranda
           </Link>
-          <Link to="/lowongan" className="block py-3 px-4 hover:bg-primary-50 rounded-lg transition flex items-center gap-2">
+          <Link to="/lowongan" className={getMobileMenuClass('/lowongan')}>
             <i className="fas fa-search w-5 text-center"></i> Cari Lowongan
           </Link>
-          <Link to="/profile" className="block py-3 px-4 hover:bg-primary-50 rounded-lg transition flex items-center gap-2">
+          <Link to="/profile" className={getMobileMenuClass('/profile')}>
             <i className="fas fa-user w-5 text-center"></i> Profil Saya
           </Link>
-          <Link to="/resume" className="block py-3 px-4 hover:bg-primary-50 rounded-lg transition flex items-center gap-2">
+          <Link to="/resume" className={getMobileMenuClass('/resume')}>
             <i className="fas fa-file-pdf w-5 text-center"></i> Resume Saya
           </Link>
           <div className="border-t my-2 pt-2">

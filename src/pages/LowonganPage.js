@@ -523,9 +523,13 @@ const JobCard = ({ job, isBookmarked, onBookmark, onApply }) => {
           >
             Lamar Sekarang
           </button>
-          <button className="border border-primary-500 text-primary-500 px-4 py-2 rounded-lg hover:bg-primary-50 transition">
+          {/* PERBAIKAN: Tambahkan Link ke halaman detail */}
+          <Link 
+            to={`/lowongan/${job.id}`}
+            className="border border-primary-500 text-primary-500 px-4 py-2 rounded-lg hover:bg-primary-50 transition font-medium inline-block"
+          >
             Lihat Detail
-          </button>
+          </Link>
         </div>
         <span className="text-sm text-gray-500">{job.applicants} pelamar</span>
       </div>
