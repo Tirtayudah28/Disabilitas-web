@@ -100,10 +100,10 @@ const Header = () => {
             <i className="fas fa-file-pdf w-5 text-center"></i> Resume Saya
           </Link>
           <div className="border-t my-2 pt-2">
-            <Link to="/daftar" className="block py-3 px-4 hover:bg-primary-50 rounded-lg transition flex items-center gap-2">
+            <Link to="/register" className="block py-3 px-4 hover:bg-primary-50 rounded-lg transition flex items-center gap-2">
               <i className="fas fa-user-plus w-5 text-center"></i> Daftar
             </Link>
-            <Link to="/masuk" className="block py-3 px-4 hover:bg-primary-50 rounded-lg transition flex items-center gap-2">
+            <Link to="/login" className="block py-3 px-4 hover:bg-primary-50 rounded-lg transition flex items-center gap-2">
               <i className="fas fa-sign-in-alt w-5 text-center"></i> Masuk
             </Link>
           </div>
