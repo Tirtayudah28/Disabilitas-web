@@ -1,4 +1,4 @@
-// src/pages/employer/EmployerDashboard.js
+// src/pages/employer/EmployerDashboard.js - FIXED VERSION
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 
@@ -97,6 +97,31 @@ const EmployerDashboard = () => {
     }
   ];
 
+  // All jobs for jobs tab
+  const allJobs = [
+    ...activeJobs,
+    {
+      id: 4,
+      title: "Data Analyst",
+      type: "Full Time",
+      location: "Jakarta • On-site",
+      postedDate: "2024-01-03",
+      applications: 18,
+      views: 95,
+      status: "paused"
+    },
+    {
+      id: 5,
+      title: "Project Manager",
+      type: "Full Time",
+      location: "Remote",
+      postedDate: "2023-12-28",
+      applications: 34,
+      views: 210,
+      status: "closed"
+    }
+  ];
+
   const tabs = [
     { id: 'overview', label: 'Overview', icon: 'chart-bar' },
     { id: 'jobs', label: 'Lowongan', icon: 'briefcase' },
@@ -117,6 +142,11 @@ const EmployerDashboard = () => {
       closed: 'bg-red-100 text-red-800'
     };
     return statusMap[status] || 'bg-gray-100 text-gray-800';
+  };
+
+  const handleJobAction = (jobId, action) => {
+    console.log(`${action} job ${jobId}`);
+    // Implement job actions (edit, pause, close, etc.)
   };
 
   return (
@@ -334,13 +364,22 @@ const EmployerDashboard = () => {
                             <span className="text-primary-600 font-medium">{job.applications} pelamar</span>
                           </div>
                           <div className="mt-2 flex gap-2">
-                            <button className="text-primary-500 hover:text-primary-600 text-xs">
+                            <Link 
+                              to={`/employer/jobs/${job.id}`}
+                              className="text-primary-500 hover:text-primary-600 text-xs"
+                            >
                               <i className="fas fa-eye mr-1"></i>Lihat
-                            </button>
-                            <button className="text-green-500 hover:text-green-600 text-xs">
+                            </Link>
+                            <button 
+                              onClick={() => handleJobAction(job.id, 'edit')}
+                              className="text-green-500 hover:text-green-600 text-xs"
+                            >
                               <i className="fas fa-edit mr-1"></i>Edit
                             </button>
-                            <button className="text-red-500 hover:text-red-600 text-xs">
+                            <button 
+                              onClick={() => handleJobAction(job.id, 'pause')}
+                              className="text-red-500 hover:text-red-600 text-xs"
+                            >
                               <i className="fas fa-pause mr-1"></i>Pause
                             </button>
                           </div>
@@ -383,40 +422,233 @@ const EmployerDashboard = () => {
               </div>
             )}
 
-            {/* Jobs Tab */}
+            {/* Jobs Tab - FIXED: Show actual job management */}
             {activeTab === 'jobs' && (
-              <div className="bg-white rounded-2xl shadow-lg p-6">
-                <div className="flex justify-between items-center mb-6">
-                  <h2 className="text-2xl font-bold text-gray-900">Kelola Lowongan</h2>
+              <div className="space-y-6">
+
+                {/* Job Stats */}
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                  <div className="bg-white rounded-2xl p-4 text-center">
+                    <div className="text-2xl font-bold text-primary-600">{stats.activeJobs}</div>
+                    <div className="text-sm text-gray-600">Aktif</div>
+                  </div>
+                  <div className="bg-white rounded-2xl p-4 text-center">
+                    <div className="text-2xl font-bold text-yellow-600">1</div>
+                    <div className="text-sm text-gray-600">Paused</div>
+                  </div>
+                  <div className="bg-white rounded-2xl p-4 text-center">
+                    <div className="text-2xl font-bold text-red-600">1</div>
+                    <div className="text-sm text-gray-600">Closed</div>
+                  </div>
+                  <div className="bg-white rounded-2xl p-4 text-center">
+                    <div className="text-2xl font-bold text-blue-600">{stats.totalJobs}</div>
+                    <div className="text-sm text-gray-600">Total</div>
+                  </div>
+                </div>
+
+                {/* Jobs List */}
+                <div className="bg-white rounded-2xl shadow-lg p-6">
+                  <h3 className="text-lg font-bold text-gray-900 mb-4">Semua Lowongan</h3>
+                  <div className="space-y-4">
+                    {allJobs.map(job => (
+                      <div key={job.id} className="border border-gray-200 rounded-lg p-4 hover:shadow-md transition">
+                        <div className="flex justify-between items-start mb-3">
+                          <div className="flex-1">
+                            <h4 className="font-bold text-gray-900 text-lg">{job.title}</h4>
+                            <p className="text-gray-600">{job.type} • {job.location}</p>
+                          </div>
+                          <span className={`px-3 py-1 rounded-full text-xs font-medium ${getStatusBadgeClass(job.status)}`}>
+                            {job.status === 'active' ? 'Aktif' : 
+                             job.status === 'paused' ? 'Paused' : 'Closed'}
+                          </span>
+                        </div>
+                        
+                        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm mb-3">
+                          <div>
+                            <span className="text-gray-500">Diposting:</span>
+                            <p className="font-medium">{job.postedDate}</p>
+                          </div>
+                          <div>
+                            <span className="text-gray-500">Pelamar:</span>
+                            <p className="font-medium text-primary-600">{job.applications}</p>
+                          </div>
+                          <div>
+                            <span className="text-gray-500">Views:</span>
+                            <p className="font-medium">{job.views}</p>
+                          </div>
+                          <div>
+                            <span className="text-gray-500">Match Rate:</span>
+                            <p className="font-medium text-green-600">85%</p>
+                          </div>
+                        </div>
+
+                        <div className="flex gap-2 pt-3 border-t">
+                          <Link 
+                            to={`/employer/jobs/${job.id}`}
+                            className="flex-1 bg-primary-500 text-white py-2 rounded text-center hover:bg-primary-600 transition text-sm"
+                          >
+                            <i className="fas fa-chart-bar mr-1"></i>Analytics
+                          </Link>
+                          <button 
+                            onClick={() => handleJobAction(job.id, 'edit')}
+                            className="flex-1 border border-gray-300 text-gray-700 py-2 rounded hover:bg-gray-50 transition text-sm"
+                          >
+                            <i className="fas fa-edit mr-1"></i>Edit
+                          </button>
+                          <button 
+                            onClick={() => handleJobAction(job.id, job.status === 'active' ? 'pause' : 'activate')}
+                            className={`flex-1 border py-2 rounded transition text-sm ${
+                              job.status === 'active' 
+                                ? 'border-yellow-300 text-yellow-600 hover:bg-yellow-50' 
+                                : 'border-green-300 text-green-600 hover:bg-green-50'
+                            }`}
+                          >
+                            <i className={`fas fa-${job.status === 'active' ? 'pause' : 'play'} mr-1`}></i>
+                            {job.status === 'active' ? 'Pause' : 'Aktifkan'}
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Applications Tab - FIXED: Show actual applications management */}
+            {activeTab === 'applications' && (
+              <div className="space-y-6">
+                <div className="flex justify-between items-center">
+                  <h2 className="text-2xl font-bold text-gray-900">Kelola Lamaran</h2>
                   <Link 
-                    to="/employer/job-posting"
+                    to="/employer/applications"
                     className="bg-primary-500 text-white px-6 py-3 rounded-lg hover:bg-primary-600 transition font-medium flex items-center gap-2"
                   >
-                    <i className="fas fa-plus"></i>
-                    Posting Lowongan Baru
+                    <i className="fas fa-external-link-alt mr-2"></i>
+                    Buka Halaman Lengkap
                   </Link>
                 </div>
-                {/* Jobs management content would go here */}
-                <div className="text-center py-12 text-gray-500">
-                  <i className="fas fa-briefcase text-4xl mb-4"></i>
-                  <p>Halaman kelola lowongan akan ditampilkan di sini</p>
+
+                {/* Application Stats */}
+                <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+                  <div className="bg-white rounded-2xl p-4 text-center">
+                    <div className="text-2xl font-bold text-gray-900">{stats.totalApplications}</div>
+                    <div className="text-sm text-gray-600">Total</div>
+                  </div>
+                  <div className="bg-white rounded-2xl p-4 text-center">
+                    <div className="text-2xl font-bold text-blue-600">{stats.newApplications}</div>
+                    <div className="text-sm text-gray-600">Baru</div>
+                  </div>
+                  <div className="bg-white rounded-2xl p-4 text-center">
+                    <div className="text-2xl font-bold text-yellow-600">15</div>
+                    <div className="text-sm text-gray-600">Ditinjau</div>
+                  </div>
+                  <div className="bg-white rounded-2xl p-4 text-center">
+                    <div className="text-2xl font-bold text-purple-600">8</div>
+                    <div className="text-sm text-gray-600">Interview</div>
+                  </div>
+                  <div className="bg-white rounded-2xl p-4 text-center">
+                    <div className="text-2xl font-bold text-green-600">5</div>
+                    <div className="text-sm text-gray-600">Diterima</div>
+                  </div>
+                </div>
+
+                {/* Applications Preview */}
+                <div className="bg-white rounded-2xl shadow-lg p-6">
+                  <div className="flex justify-between items-center mb-6">
+                    <h3 className="text-lg font-bold text-gray-900">Lamaran Terbaru</h3>
+                    <div className="flex gap-2">
+                      <select className="border rounded-lg px-3 py-2 text-sm">
+                        <option>Semua Posisi</option>
+                        <option>UI/UX Designer</option>
+                        <option>Frontend Developer</option>
+                        <option>Content Writer</option>
+                      </select>
+                      <select className="border rounded-lg px-3 py-2 text-sm">
+                        <option>Semua Status</option>
+                        <option>Baru</option>
+                        <option>Ditinjau</option>
+                        <option>Interview</option>
+                      </select>
+                    </div>
+                  </div>
+
+                  <div className="space-y-4">
+                    {recentApplications.map(application => (
+                      <div key={application.id} className="border border-gray-200 rounded-lg p-4 hover:shadow-md transition">
+                        <div className="flex justify-between items-start mb-3">
+                          <div className="flex items-start space-x-3">
+                            <div className="w-10 h-10 bg-gradient-to-br from-primary-500 to-secondary-500 rounded-full flex items-center justify-center text-white font-bold">
+                              {application.candidate.charAt(0)}
+                            </div>
+                            <div>
+                              <h4 className="font-bold text-gray-900">{application.candidate}</h4>
+                              <p className="text-primary-600">{application.position}</p>
+                              <p className="text-sm text-gray-500">{application.disability}</p>
+                            </div>
+                          </div>
+                          <span className={`px-3 py-1 rounded-full text-xs font-medium ${getStatusBadgeClass(application.status)}`}>
+                            {application.statusLabel}
+                          </span>
+                        </div>
+                        
+                        <div className="flex justify-between items-center">
+                          <div className="flex gap-4 text-sm">
+                            <span className="text-gray-500">{application.appliedDate}</span>
+                            <span className="bg-green-100 text-green-800 px-2 py-1 rounded text-xs font-medium">
+                              {application.match}% Match
+                            </span>
+                          </div>
+                          <div className="flex gap-2">
+                            <Link 
+                              to={`/employer/applications/${application.id}`}
+                              className="text-primary-500 hover:text-primary-700 text-sm font-medium"
+                            >
+                              Lihat Detail
+                            </Link>
+                            <button className="text-green-500 hover:text-green-700 text-sm font-medium">
+                              Undang Interview
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+
+                  <div className="mt-6 text-center">
+                    <Link 
+                      to="/employer/applications"
+                      className="bg-primary-500 text-white px-6 py-2 rounded-lg hover:bg-primary-600 transition font-medium"
+                    >
+                      Lihat Semua Lamaran
+                    </Link>
+                  </div>
                 </div>
               </div>
             )}
 
-            {/* Applications Tab */}
-            {activeTab === 'applications' && (
+            {/* Candidates Tab - Placeholder */}
+            {activeTab === 'candidates' && (
               <div className="bg-white rounded-2xl shadow-lg p-6">
-                <h2 className="text-2xl font-bold text-gray-900 mb-6">Kelola Lamaran</h2>
-                {/* Applications management content would go here */}
+                <h2 className="text-2xl font-bold text-gray-900 mb-6">Cari Kandidat</h2>
                 <div className="text-center py-12 text-gray-500">
-                  <i className="fas fa-file-alt text-4xl mb-4"></i>
-                  <p>Halaman kelola lamaran akan ditampilkan di sini</p>
+                  <i className="fas fa-users text-4xl mb-4"></i>
+                  <p>Fitur pencarian kandidat akan segera hadir</p>
+                  <p className="text-sm mt-2">Cari talenta terbaik dari database kandidat kami</p>
                 </div>
               </div>
             )}
 
-            {/* Other tabs would follow similar structure */}
+            {/* Analytics Tab - Placeholder */}
+            {activeTab === 'analytics' && (
+              <div className="bg-white rounded-2xl shadow-lg p-6">
+                <h2 className="text-2xl font-bold text-gray-900 mb-6">Analytics & Laporan</h2>
+                <div className="text-center py-12 text-gray-500">
+                  <i className="fas fa-chart-pie text-4xl mb-4"></i>
+                  <p>Dashboard analytics akan segera hadir</p>
+                  <p className="text-sm mt-2">Lihat statistik dan insights performa rekrutmen</p>
+                </div>
+              </div>
+            )}
           </div>
         </div>
       </main>

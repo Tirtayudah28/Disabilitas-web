@@ -1,4 +1,4 @@
-// src/pages/auth/LoginPage.js
+// src/pages/auth/LoginPage.js - WITH ROLE SELECTION
 import React, { useState } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 
@@ -6,7 +6,8 @@ const LoginPage = () => {
   const [formData, setFormData] = useState({
     email: '',
     password: '',
-    rememberMe: false
+    rememberMe: false,
+    userType: 'candidate' // 'candidate' or 'employer'
   });
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
@@ -14,9 +15,6 @@ const LoginPage = () => {
   const navigate = useNavigate();
   const location = useLocation();
   
-  // Redirect setelah login berhasil
-  const from = location.state?.from?.pathname || '/dashboard';
-
   const handleInputChange = (field, value) => {
     setFormData(prev => ({
       ...prev,
@@ -35,10 +33,21 @@ const LoginPage = () => {
       // Simulate API call
       await new Promise(resolve => setTimeout(resolve, 1500));
       
-      // Mock authentication - in real app, this would be API call
+      // Mock authentication
       if (formData.email && formData.password) {
         console.log('Login successful:', formData);
-        navigate(from, { replace: true });
+        
+        // Simpan data login sederhana
+        localStorage.setItem('isLoggedIn', 'true');
+        localStorage.setItem('userEmail', formData.email);
+        localStorage.setItem('userType', formData.userType);
+        
+        // Redirect berdasarkan user type
+        if (formData.userType === 'employer') {
+          navigate('/employer/dashboard', { replace: true });
+        } else {
+          navigate('/', { replace: true });
+        }
       } else {
         setError('Email dan password harus diisi');
       }
@@ -53,9 +62,21 @@ const LoginPage = () => {
     navigate('/forgot-password');
   };
 
-  const handleSocialLogin = (provider) => {
-    console.log(`Social login with: ${provider}`);
-    // Implement social login logic
+  // Accessibility functions
+  const increaseFontSize = () => {
+    document.documentElement.style.fontSize = '18px';
+  };
+
+  const decreaseFontSize = () => {
+    document.documentElement.style.fontSize = '14px';
+  };
+
+  const resetFontSize = () => {
+    document.documentElement.style.fontSize = '16px';
+  };
+
+  const toggleHighContrast = () => {
+    document.body.classList.toggle('high-contrast');
   };
 
   return (
@@ -71,16 +92,13 @@ const LoginPage = () => {
           </Link>
           <h2 className="text-3xl font-bold text-gray-900">Masuk ke Akun Anda</h2>
           <p className="mt-2 text-gray-600">
-            {from !== '/dashboard' 
-              ? 'Silakan masuk untuk melanjutkan' 
-              : 'Selamat datang kembali di platform inklusif'
-            }
+            Selamat datang kembali di platform inklusif
           </p>
         </div>
 
         {/* Error Message */}
         {error && (
-          <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+          <div className="bg-red-50 border border-red-200 rounded-lg p-4" role="alert">
             <div className="flex items-center">
               <i className="fas fa-exclamation-circle text-red-500 mr-3"></i>
               <span className="text-red-700 text-sm">{error}</span>
@@ -88,43 +106,49 @@ const LoginPage = () => {
           </div>
         )}
 
-        {/* Social Login Options */}
+        {/* Login Form */}
         <div className="bg-white rounded-2xl shadow-lg p-6">
-          <div className="grid grid-cols-2 gap-3 mb-6">
-            <button
-              type="button"
-              onClick={() => handleSocialLogin('google')}
-              className="flex items-center justify-center p-3 border border-gray-300 rounded-lg hover:bg-gray-50 transition"
-              disabled={isLoading}
-            >
-              <i className="fab fa-google text-red-500 mr-2"></i>
-              <span className="text-sm font-medium">Google</span>
-            </button>
-            <button
-              type="button"
-              onClick={() => handleSocialLogin('linkedin')}
-              className="flex items-center justify-center p-3 border border-gray-300 rounded-lg hover:bg-gray-50 transition"
-              disabled={isLoading}
-            >
-              <i className="fab fa-linkedin text-blue-600 mr-2"></i>
-              <span className="text-sm font-medium">LinkedIn</span>
-            </button>
+          {/* User Type Selection */}
+          <div className="mb-6">
+            <label className="block text-sm font-medium text-gray-700 mb-3">
+              Masuk Sebagai *
+            </label>
+            <div className="grid grid-cols-2 gap-3">
+              <button
+                type="button"
+                onClick={() => handleInputChange('userType', 'candidate')}
+                className={`p-4 border rounded-lg text-center transition ${
+                  formData.userType === 'candidate'
+                    ? 'border-primary-500 bg-primary-50 text-primary-700 shadow-sm'
+                    : 'border-gray-300 hover:border-gray-400 hover:bg-gray-50'
+                }`}
+                disabled={isLoading}
+              >
+                <i className="fas fa-user-graduate block text-2xl mb-2"></i>
+                <span className="block text-sm font-medium">Pencari Kerja</span>
+                <span className="block text-xs text-gray-500 mt-1">Disabilitas</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => handleInputChange('userType', 'employer')}
+                className={`p-4 border rounded-lg text-center transition ${
+                  formData.userType === 'employer'
+                    ? 'border-primary-500 bg-primary-50 text-primary-700 shadow-sm'
+                    : 'border-gray-300 hover:border-gray-400 hover:bg-gray-50'
+                }`}
+                disabled={isLoading}
+              >
+                <i className="fas fa-building block text-2xl mb-2"></i>
+                <span className="block text-sm font-medium">Perusahaan</span>
+                <span className="block text-xs text-gray-500 mt-1">Employer</span>
+              </button>
+            </div>
           </div>
 
-          <div className="relative mb-6">
-            <div className="absolute inset-0 flex items-center">
-              <div className="w-full border-t border-gray-300"></div>
-            </div>
-            <div className="relative flex justify-center text-sm">
-              <span className="px-2 bg-white text-gray-500">atau masuk dengan email</span>
-            </div>
-          </div>
-
-          {/* Login Form */}
-          <form onSubmit={handleSubmit} className="space-y-4">
+          <form onSubmit={handleSubmit} className="space-y-6">
             <div>
-              <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
-                Email *
+              <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-2">
+                {formData.userType === 'employer' ? 'Email Perusahaan *' : 'Alamat Email *'}
               </label>
               <input
                 id="email"
@@ -133,13 +157,20 @@ const LoginPage = () => {
                 value={formData.email}
                 onChange={(e) => handleInputChange('email', e.target.value)}
                 className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 disabled:bg-gray-100 disabled:cursor-not-allowed"
-                placeholder="email@example.com"
+                placeholder={formData.userType === 'employer' ? "hr@perusahaan.com" : "email@example.com"}
                 disabled={isLoading}
+                aria-describedby="email-help"
               />
+              <div id="email-help" className="text-xs text-gray-500 mt-1">
+                {formData.userType === 'employer' 
+                  ? 'Masukkan email perusahaan yang terdaftar' 
+                  : 'Masukkan alamat email yang Anda daftarkan'
+                }
+              </div>
             </div>
 
             <div>
-              <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-1">
+              <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-2">
                 Password *
               </label>
               <input
@@ -151,7 +182,11 @@ const LoginPage = () => {
                 className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 disabled:bg-gray-100 disabled:cursor-not-allowed"
                 placeholder="Masukkan password Anda"
                 disabled={isLoading}
+                aria-describedby="password-help"
               />
+              <div id="password-help" className="text-xs text-gray-500 mt-1">
+                Password harus minimal 8 karakter
+              </div>
             </div>
 
             <div className="flex items-center justify-between">
@@ -187,7 +222,10 @@ const LoginPage = () => {
                   Memproses...
                 </>
               ) : (
-                'Masuk'
+                <>
+                  <i className="fas fa-sign-in-alt mr-2"></i>
+                  Masuk sebagai {formData.userType === 'employer' ? 'Employer' : 'Pencari Kerja'}
+                </>
               )}
             </button>
           </form>
@@ -195,33 +233,47 @@ const LoginPage = () => {
 
         {/* Accessibility Quick Options */}
         <div className="bg-primary-50 rounded-lg p-4">
-          <h4 className="text-sm font-medium text-primary-900 mb-2 flex items-center">
+          <h4 className="text-sm font-medium text-primary-900 mb-3 flex items-center">
             <i className="fas fa-universal-access mr-2"></i>
-            Opsi Aksesibilitas Cepat
+            Opsi Aksesibilitas
           </h4>
-          <div className="flex flex-wrap gap-2">
+          <div className="flex flex-wrap gap-2 justify-center">
             <button 
-              className="text-xs bg-white text-primary-700 px-2 py-1 rounded border border-primary-200 hover:bg-primary-100 transition"
-              onClick={() => {/* Implement text size increase */}}
+              className="text-xs bg-white text-primary-700 px-3 py-2 rounded-lg border border-primary-200 hover:bg-primary-100 transition flex items-center gap-1"
+              onClick={increaseFontSize}
+              aria-label="Perbesar ukuran teks"
             >
-              <i className="fas fa-text-height mr-1"></i>Teks Besar
+              <i className="fas fa-text-height"></i>
+              <span>A+</span>
             </button>
             <button 
-              className="text-xs bg-white text-primary-700 px-2 py-1 rounded border border-primary-200 hover:bg-primary-100 transition"
-              onClick={() => {/* Implement high contrast */}}
+              className="text-xs bg-white text-primary-700 px-3 py-2 rounded-lg border border-primary-200 hover:bg-primary-100 transition flex items-center gap-1"
+              onClick={decreaseFontSize}
+              aria-label="Perkecil ukuran teks"
             >
-              <i className="fas fa-adjust mr-1"></i>Kontras Tinggi
+              <i className="fas fa-text-height"></i>
+              <span>A-</span>
             </button>
             <button 
-              className="text-xs bg-white text-primary-700 px-2 py-1 rounded border border-primary-200 hover:bg-primary-100 transition"
-              onClick={() => {/* Implement screen reader */}}
+              className="text-xs bg-white text-primary-700 px-3 py-2 rounded-lg border border-primary-200 hover:bg-primary-100 transition flex items-center gap-1"
+              onClick={resetFontSize}
+              aria-label="Reset ukuran teks ke normal"
             >
-              <i className="fas fa-assistive-listening-systems mr-1"></i>Baca Halaman
+              <i className="fas fa-undo-alt"></i>
+              <span>Reset</span>
+            </button>
+            <button 
+              className="text-xs bg-white text-primary-700 px-3 py-2 rounded-lg border border-primary-200 hover:bg-primary-100 transition flex items-center gap-1"
+              onClick={toggleHighContrast}
+              aria-label="Toggle mode kontras tinggi"
+            >
+              <i className="fas fa-adjust"></i>
+              <span>Kontras</span>
             </button>
           </div>
         </div>
 
-        {/* Footer */}
+        {/* Registration Link */}
         <div className="text-center">
           <p className="text-gray-600">
             Belum punya akun?{' '}
@@ -229,16 +281,27 @@ const LoginPage = () => {
               to="/register" 
               className="text-primary-500 hover:text-primary-600 font-medium"
             >
-              Daftar di sini
+              Daftar sebagai {formData.userType === 'employer' ? 'Employer' : 'Pencari Kerja'}
             </Link>
           </p>
         </div>
 
-        {/* Demo Accounts Hint */}
-        <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 text-center">
-          <p className="text-yellow-700 text-sm">
-            <strong>Demo:</strong> Gunakan email dan password apa saja untuk mencoba
+        {/* Demo Info */}
+        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 text-center">
+          <p className="text-blue-700 text-sm">
+            <strong>Untuk Demo:</strong> Pilih role, isi email & password apa saja
           </p>
+          <p className="text-blue-600 text-xs mt-1">
+            {formData.userType === 'employer' 
+              ? 'Akan redirect ke Employer Dashboard' 
+              : 'Akan redirect ke Halaman Utama'
+            }
+          </p>
+        </div>
+
+        {/* Screen Reader Announcement */}
+        <div className="sr-only" aria-live="polite" aria-atomic="true">
+          Halaman login. Pilih tipe pengguna dan masukkan email serta password.
         </div>
       </div>
     </div>

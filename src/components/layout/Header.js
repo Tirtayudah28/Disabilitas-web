@@ -72,6 +72,7 @@ const Header = () => {
             <Link to="/login" className="border border-primary-500 text-primary-500 px-4 py-2 rounded-lg hover:bg-primary-50 transition font-medium">
               Masuk
             </Link>
+            
           </div>
           <button 
             onClick={toggleMobileMenu}

@@ -1,8 +1,9 @@
 // src/pages/LowonganPage.js
 import React, { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom'; // Tambahkan useNavigate
 
 const LowonganPage = () => {
+  const navigate = useNavigate(); // Tambahkan ini
   const [searchTerm, setSearchTerm] = useState('');
   const [showAdvancedFilters, setShowAdvancedFilters] = useState(false);
   const [selectedFilters, setSelectedFilters] = useState({
@@ -90,9 +91,15 @@ const LowonganPage = () => {
     });
   };
 
-  const handleApply = (jobTitle, company) => {
-    showNotification(`Lamaran untuk ${jobTitle} di ${company} berhasil dikirim!`, 'success');
+  // Ganti fungsi handleApply yang lama dengan ini:
+  const handleApply = (job) => {
+    navigate(`/lowongan/${job.id}/apply`, { 
+      state: { job } // Kirim data lowongan melalui state
+    });
   };
+  // const handleApply = (jobTitle, company) => {
+  //   showNotification(`Lamaran untuk ${jobTitle} di ${company} berhasil dikirim!`, 'success');
+  // };
 
   const showNotification = (message, type = 'info') => {
     // Create notification element
@@ -241,12 +248,12 @@ const LowonganPage = () => {
                 </select>
               </div>
             </div>
-          )}
+          )}  
 
           {/* Quick Filter Chips */}
           <div className="mt-4 flex flex-wrap gap-2">
             {[
-              { label: "Rekomendasi AI", icon: "star", color: "primary" },
+              // { label: "Rekomendasi AI", icon: "star", color: "primary" },
               { label: "Disabilitas Fisik", icon: "bolt", color: "green" },
               { label: "Disabilitas Visual", icon: "eye", color: "blue" },
               { label: "Disabilitas Pendengaran", icon: "deaf", color: "purple" },
@@ -445,10 +452,12 @@ const LowonganPage = () => {
   );
 };
 
-// Job Card Component
+// Job Card Component - Update bagian tombol
 const JobCard = ({ job, isBookmarked, onBookmark, onApply }) => {
+  const navigate = useNavigate(); // Tambahkan useNavigate di sini juga
+  
   const getMatchBadgeClass = (match) => {
-    if (match >= 90) return "match-badge px-2 py-1 rounded-full text-xs font-medium";
+    if (match >= 90) return "bg-green-100 text-green-800 px-2 py-1 rounded-full text-xs font-medium";
     return "bg-blue-100 text-blue-800 px-2 py-1 rounded-full text-xs font-medium";
   };
 
@@ -517,8 +526,9 @@ const JobCard = ({ job, isBookmarked, onBookmark, onApply }) => {
 
       <div className="flex justify-between items-center">
         <div className="flex gap-2">
+          {/* PERBAIKAN: Update tombol "Lamar Sekarang" */}
           <button 
-            onClick={() => onApply(job.title, job.company)}
+            onClick={() => navigate(`/lowongan/${job.id}/apply`, { state: { job } })}
             className="bg-primary-500 text-white px-6 py-2 rounded-lg hover:bg-primary-600 transition font-medium"
           >
             Lamar Sekarang

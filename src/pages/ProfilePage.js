@@ -178,7 +178,65 @@ const ProfilePage = () => {
                 </div>
               </div>
             </div>
-            
+
+            {/* Quick Actions */}
+            <div className="mb-6 grid grid-cols-1 md:grid-cols-3 gap-4 mt-4">
+              <Link 
+                to="/application/history" 
+                className="bg-white rounded-2xl shadow-lg p-4 hover:shadow-xl transition text-center group border-2 border-transparent hover:border-blue-600"
+              >
+                <div className="w-12 h-12 bg-primary-100 rounded-full flex items-center justify-center mx-auto mb-3 group-hover:bg-primary-200 transition">
+                  <i className="fas fa-history text-primary-600 text-xl"></i>
+                </div>
+                <h3 className="font-bold text-gray-900 mb-1">Riwayat Lamar</h3>
+                <p className="text-sm text-gray-600">Cek status lamaran kerja</p>
+                <span className="inline-block mt-2 px-2 py-1 bg-primary-500 text-white text-xs rounded-full">
+                  3 lamaran
+                </span>
+              </Link>
+              
+              <Link 
+                to="/lowongan" 
+                className="bg-white rounded-2xl shadow-lg p-4 hover:shadow-xl transition text-center group border-2 border-transparent hover:border-green-200"
+              >
+                <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-3 group-hover:bg-green-200 transition">
+                  <i className="fas fa-search text-green-600 text-xl"></i>
+                </div>
+                <h3 className="font-bold text-gray-900 mb-1">Cari Lowongan</h3>
+                <p className="text-sm text-gray-600">Temukan pekerjaan baru</p>
+              </Link>
+              
+              <Link 
+                to="/resume" 
+                className="bg-white rounded-2xl shadow-lg p-4 hover:shadow-xl transition text-center group border-2 border-transparent hover:border-blue-200"
+              >
+                <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-3 group-hover:bg-blue-200 transition">
+                  <i className="fas fa-file-pdf text-blue-600 text-xl"></i>
+                </div>
+                <h3 className="font-bold text-gray-900 mb-1">Resume Saya</h3>
+                <p className="text-sm text-gray-600">Kelola CV dan resume</p>
+              </Link>
+            </div>
+            <div className="border-t my-4 pt-4 space-y-3">
+              <Link 
+                to="/application/history" 
+                className="flex items-center gap-3 text-primary-600 hover:text-primary-700 font-medium transition p-2 rounded-lg hover:bg-primary-50"
+              >
+                <i className="fas fa-history w-5 text-center"></i>
+                <span>Riwayat Lamar Saya</span>
+                <span className="ml-auto bg-primary-500 text-white text-xs rounded-full w-6 h-6 flex items-center justify-center">
+                  3
+                </span>
+              </Link>
+              <Link 
+                to="/resume" 
+                className="flex items-center gap-3 text-primary-600 hover:text-primary-700 font-medium transition p-2 rounded-lg hover:bg-primary-50"
+              >
+                <i className="fas fa-file-pdf w-5 text-center"></i>
+                <span>Lihat Resume Saya</span>
+              </Link>
+            </div>
+                        
             {/* Profile Completion */}
             <div className="mt-6 bg-primary-50 rounded-lg p-4">
               <div className="flex justify-between items-center mb-2">

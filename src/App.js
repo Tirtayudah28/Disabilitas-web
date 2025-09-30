@@ -1,4 +1,4 @@
-// src/App.js - SIMPLE VERSION untuk development
+// src/App.js - PERBAIKAN VERSION
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import Header from './components/layout/Header';
@@ -20,6 +20,8 @@ import JobDetailPage from './pages/JobDetailPage';
 import ApplicationForm from './pages/application/ApplicationForm';
 import ApplicationHistory from './pages/application/ApplicationHistory';
 import EmployerDashboard from './pages/employer/EmployerDashboard';
+import JobPostingPage from './pages/employer/JobPostingPage';
+import ApplicationManagementPage from './pages/employer/ApplicationManagementPage';
 
 function App() {
   return (
@@ -39,10 +41,15 @@ function App() {
           <Route path="/profile" element={<ProfilePage />} />
           <Route path="/resume" element={<ResumePage />} />
           
+          {/* PERBAIKAN: Pisahkan route untuk detail lowongan dan apply */}
           <Route path="/lowongan/:id" element={<JobDetailPage />} />
-          <Route path="/application/:id" element={<ApplicationForm />} />
+          <Route path="/lowongan/:id/apply" element={<ApplicationForm />} /> {/* ← PATH YANG BENAR */}
           <Route path="/application/history" element={<ApplicationHistory />} />
+
+          {/* Employer Dashboard */}
           <Route path="/employer/dashboard" element={<EmployerDashboard />} />
+          <Route path="/employer/job-posting" element={<JobPostingPage />} />
+          <Route path="/employer/applications" element={<ApplicationManagementPage />} />
  
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
