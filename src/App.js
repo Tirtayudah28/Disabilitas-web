@@ -22,6 +22,9 @@ import ApplicationHistory from './pages/application/ApplicationHistory';
 import EmployerDashboard from './pages/employer/EmployerDashboard';
 import JobPostingPage from './pages/employer/JobPostingPage';
 import ApplicationManagementPage from './pages/employer/ApplicationManagementPage';
+import CompanyProfilePage from './pages/employer/CompanyProfilePage';
+import CandidateSearchPage from './pages/employer/CandidateSearchPage';
+import InterviewSchedulingPage from './pages/employer/InterviewSchedulingPage';
 
 function App() {
   return (
@@ -50,6 +53,9 @@ function App() {
           <Route path="/employer/dashboard" element={<EmployerDashboard />} />
           <Route path="/employer/job-posting" element={<JobPostingPage />} />
           <Route path="/employer/applications" element={<ApplicationManagementPage />} />
+          <Route path="/employer/profile" element={<CompanyProfilePage />} />
+          <Route path="/employer/candidates" element={<CandidateSearchPage />} />
+          <Route path="/employer/interviews" element={<InterviewSchedulingPage />} />
  
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
