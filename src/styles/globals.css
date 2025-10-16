@@ -1,4 +1,4 @@
-/* src/styles/globals.css */
+/* src/styles/globals.css - PERBAIKAN HIGH CONTRAST */
 @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap');
 @import url('https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css');
 
@@ -283,4 +283,79 @@ button:focus, a:focus, input:focus, select:focus, textarea:focus {
     margin: 0;
     min-height: auto;
   }
+}
+
+/* PERBAIKAN: High contrast mode yang tidak ganggu widget */
+.high-contrast {
+  /* JANGAN gunakan filter di body - itu penyebab masalah */
+  background: #000000 !important;
+  color: #ffffff !important;
+}
+
+.high-contrast .bg-white {
+  background: #000000 !important;
+  color: #ffffff !important;
+  border-color: #ffffff !important;
+}
+
+.high-contrast .text-gray-600,
+.high-contrast .text-gray-500,
+.high-contrast .text-gray-700,
+.high-contrast .text-gray-900 {
+  color: #ffffff !important;
+}
+
+.high-contrast .border-gray-200,
+.high-contrast .border-gray-300 {
+  border-color: #ffffff !important;
+}
+
+/* EKSPLISIT: Force accessibility widget to stay fixed dan tidak terpengaruh high contrast */
+.accessibility-widget,
+.accessibility-panel {
+  position: fixed !important;
+  z-index: 9999 !important;
+}
+
+/* Pastikan widget TIDAK terpengaruh high contrast mode */
+.high-contrast .accessibility-widget {
+  background: linear-gradient(to right, #3b82f6, #10b981) !important;
+  border: 2px solid #ffffff !important;
+}
+
+.high-contrast .accessibility-widget i {
+  color: #ffffff !important;
+}
+
+.high-contrast .accessibility-panel {
+  background: #000000 !important;
+  border: 2px solid #ffffff !important;
+  color: #ffffff !important;
+}
+
+.high-contrast .accessibility-panel .bg-primary-100 {
+  background: #1e293b !important;
+}
+
+.high-contrast .accessibility-panel .text-primary-600 {
+  color: #60a5fa !important;
+}
+
+.high-contrast .accessibility-panel .text-gray-900 {
+  color: #ffffff !important;
+}
+
+.high-contrast .accessibility-panel .text-gray-500 {
+  color: #d1d5db !important;
+}
+
+/* EXCLUDE widget dari efek high contrast */
+.no-high-contrast-effect {
+  filter: none !important;
+  position: fixed !important;
+  z-index: 9999 !important;
+}
+
+.high-contrast .no-high-contrast-effect {
+  filter: none !important;
 }

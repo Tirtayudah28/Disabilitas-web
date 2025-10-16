@@ -1,4 +1,4 @@
-// src/contexts/AuthContext.js
+// src/contexts/AuthContext.js - PERBAIKAN
 import React, { createContext, useContext, useReducer, useEffect } from 'react';
 
 // Auth state structure
@@ -80,38 +80,26 @@ const authReducer = (state, action) => {
 // Create context
 const AuthContext = createContext();
 
-// Auth provider component
 export const AuthProvider = ({ children }) => {
   const [state, dispatch] = useReducer(authReducer, initialState);
 
-  // Check for existing token on app start
+  // Check for existing token on app start (tetap sama)
   useEffect(() => {
     const checkAuthStatus = async () => {
       const token = localStorage.getItem('token');
+      const savedUser = localStorage.getItem('user');
       
-      if (token) {
+      if (token && savedUser) {
         try {
-          // Verify token with backend
-          // const user = await verifyToken(token);
-          // dispatch({ type: AuthActions.LOGIN_SUCCESS, payload: { user, token } });
-          
-          // For demo, we'll use mock user
-          const mockUser = {
-            id: '1',
-            email: 'demo@inklusikerja.id',
-            fullName: 'Ahmad Surya',
-            userType: 'candidate',
-            disabilityType: 'Tuna Netra',
-            profileCompletion: 75
-          };
-          
+          const user = JSON.parse(savedUser);
           dispatch({ 
             type: AuthActions.LOGIN_SUCCESS, 
-            payload: { user: mockUser, token } 
+            payload: { user, token } 
           });
         } catch (error) {
           localStorage.removeItem('token');
-          dispatch({ type: AuthActions.LOGIN_FAILURE, payload: 'Token expired' });
+          localStorage.removeItem('user');
+          dispatch({ type: AuthActions.LOGIN_FAILURE, payload: 'Session expired' });
         }
       } else {
         dispatch({ type: AuthActions.LOGIN_FAILURE, payload: null });
@@ -121,35 +109,53 @@ export const AuthProvider = ({ children }) => {
     checkAuthStatus();
   }, []);
 
-  // Auth actions
-  const login = async (email, password) => {
+  // Auth actions - MODIFIKASI login function
+  const login = async (email, password, userType = 'candidate') => { // ← TAMBAH PARAMETER userType
     dispatch({ type: AuthActions.LOGIN_START });
     
     try {
       // Simulate API call
       await new Promise(resolve => setTimeout(resolve, 1500));
       
-      // Mock authentication - replace with actual API call
+      // Mock authentication - GUNAKAN userType DARI PARAMETER
       if (email && password) {
-        const mockUser = {
-          id: '1',
-          email,
-          fullName: 'Ahmad Surya',
-          userType: 'candidate',
-          disabilityType: 'Tuna Netra',
-          profileCompletion: 75,
-          accessibilityNeeds: ['Screen Reader', 'High Contrast']
-        };
+        let userData = {};
+        
+        // GUNAKAN userType YANG DIPILIH USER, bukan deteksi email
+        if (userType === 'employer') {
+          userData = {
+            id: '2',
+            email,
+            fullName: 'PT Tech Inklusif',
+            userType: 'employer',
+            companyName: 'PT Tech Inklusif',
+            industry: 'Technology',
+            profileCompletion: 85,
+            subscription: 'Premium'
+          };
+        } else {
+          userData = {
+            id: '1',
+            email,
+            fullName: 'Ahmad Surya',
+            userType: 'candidate',
+            disabilityType: 'Tuna Netra',
+            profileCompletion: 75,
+            accessibilityNeeds: ['Screen Reader', 'High Contrast']
+          };
+        }
         
         const token = 'mock-jwt-token-' + Date.now();
         
         localStorage.setItem('token', token);
+        localStorage.setItem('user', JSON.stringify(userData));
+        
         dispatch({ 
           type: AuthActions.LOGIN_SUCCESS, 
-          payload: { user: mockUser, token } 
+          payload: { user: userData, token } 
         });
         
-        return { success: true };
+        return { success: true, userType };
       } else {
         throw new Error('Email dan password harus diisi');
       }
@@ -169,22 +175,26 @@ export const AuthProvider = ({ children }) => {
       // Simulate API call
       await new Promise(resolve => setTimeout(resolve, 2000));
       
-      const mockUser = {
-        id: '1',
+      const newUser = {
+        id: Date.now().toString(),
         email: userData.email,
         fullName: userData.fullName,
         userType: userData.userType,
         disabilityType: userData.disabilityType,
-        accessibilityNeeds: userData.accessibilityNeeds,
+        companyName: userData.companyName,
+        industry: userData.industry,
+        accessibilityNeeds: userData.accessibilityNeeds || [],
         profileCompletion: 25 // New user
       };
       
       const token = 'mock-jwt-token-' + Date.now();
       
       localStorage.setItem('token', token);
+      localStorage.setItem('user', JSON.stringify(newUser)); // ← SIMPAN USER DATA
+      
       dispatch({ 
         type: AuthActions.LOGIN_SUCCESS, 
-        payload: { user: mockUser, token } 
+        payload: { user: newUser, token } 
       });
       
       return { success: true };
@@ -199,10 +209,13 @@ export const AuthProvider = ({ children }) => {
 
   const logout = () => {
     localStorage.removeItem('token');
+    localStorage.removeItem('user'); // ← HAPUS JUGA USER DATA
     dispatch({ type: AuthActions.LOGOUT });
   };
 
   const updateUser = (userData) => {
+    const updatedUser = { ...state.user, ...userData };
+    localStorage.setItem('user', JSON.stringify(updatedUser)); // ← UPDATE USER DATA
     dispatch({ 
       type: AuthActions.UPDATE_USER, 
       payload: userData 
@@ -213,7 +226,7 @@ export const AuthProvider = ({ children }) => {
     dispatch({ type: AuthActions.CLEAR_ERROR });
   };
 
-  const value = {
+    const value = {
     // State
     user: state.user,
     token: state.token,

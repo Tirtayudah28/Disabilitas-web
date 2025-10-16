@@ -1,17 +1,17 @@
-// src/pages/auth/LoginPage.js - WITH ROLE SELECTION
+// src/pages/auth/LoginPage.js - MODIFIKASI handleSubmit
 import React, { useState } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
+import { useAuth } from '../../contexts/AuthContext';
 
 const LoginPage = () => {
   const [formData, setFormData] = useState({
     email: '',
     password: '',
     rememberMe: false,
-    userType: 'candidate' // 'candidate' or 'employer'
+    userType: 'candidate'
   });
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState('');
   
+  const { login, isLoading, error } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
   
@@ -20,41 +20,21 @@ const LoginPage = () => {
       ...prev,
       [field]: value
     }));
-    // Clear error when user starts typing
-    if (error) setError('');
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setIsLoading(true);
-    setError('');
 
-    try {
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1500));
-      
-      // Mock authentication
-      if (formData.email && formData.password) {
-        console.log('Login successful:', formData);
-        
-        // Simpan data login sederhana
-        localStorage.setItem('isLoggedIn', 'true');
-        localStorage.setItem('userEmail', formData.email);
-        localStorage.setItem('userType', formData.userType);
-        
-        // Redirect berdasarkan user type
-        if (formData.userType === 'employer') {
-          navigate('/employer/dashboard', { replace: true });
-        } else {
-          navigate('/', { replace: true });
-        }
+    // KIRIM userType KE AUTHCONTEXT ← INI YANG PENTING
+    const result = await login(formData.email, formData.password, formData.userType);
+    
+    if (result.success) {
+      // Redirect berdasarkan user type yang dipilih
+      if (formData.userType === 'employer') {
+        navigate('/employer/dashboard', { replace: true });
       } else {
-        setError('Email dan password harus diisi');
+        navigate('/', { replace: true });
       }
-    } catch (err) {
-      setError('Login gagal. Periksa email dan password Anda.');
-    } finally {
-      setIsLoading(false);
     }
   };
 
@@ -79,7 +59,7 @@ const LoginPage = () => {
     document.body.classList.toggle('high-contrast');
   };
 
-  return (
+   return (
     <div className="min-h-screen bg-gradient-to-br from-primary-50 to-secondary-50 flex items-center justify-center py-8">
       <div className="max-w-md w-full space-y-8">
         {/* Header */}
@@ -229,6 +209,19 @@ const LoginPage = () => {
               )}
             </button>
           </form>
+        </div>
+
+        {/* Demo Info */}
+        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 text-center">
+          <p className="text-blue-700 text-sm">
+            <strong>Untuk Demo:</strong> Pilih role dan isi email & password apa saja
+          </p>
+          <p className="text-blue-600 text-xs mt-1">
+            {formData.userType === 'employer' 
+              ? 'Akan login sebagai Employer dan redirect ke Dashboard' 
+              : 'Akan login sebagai Pencari Kerja dan redirect ke Beranda'
+            }
+          </p>
         </div>
 
         {/* Accessibility Quick Options */}
