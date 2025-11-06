@@ -1,7 +1,8 @@
-// src/pages/auth/LoginPage.js - MODIFIKASI handleSubmit
+// src/pages/auth/LoginPage.js - VERSI REDUX
 import React, { useState } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
-import { useAuth } from '../../contexts/AuthContext';
+import { useDispatch, useSelector } from 'react-redux';
+import { login } from '../../store/authSlice'; // IMPORT REDUX ACTION
 
 const LoginPage = () => {
   const [formData, setFormData] = useState({
@@ -11,9 +12,12 @@ const LoginPage = () => {
     userType: 'candidate'
   });
   
-  const { login, isLoading, error } = useAuth();
+  const dispatch = useDispatch();
   const navigate = useNavigate();
   const location = useLocation();
+  
+  // AMBIL STATE DARI REDUX
+  const { isLoading, error } = useSelector(state => state.auth);
   
   const handleInputChange = (field, value) => {
     setFormData(prev => ({
@@ -25,10 +29,15 @@ const LoginPage = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    // KIRIM userType KE AUTHCONTEXT ← INI YANG PENTING
-    const result = await login(formData.email, formData.password, formData.userType);
-    
-    if (result.success) {
+    // DISPATCH REDUX ACTION
+    const result = await dispatch(login({
+      email: formData.email,
+      password: formData.password,
+      userType: formData.userType
+    }));
+
+    // CEK JIKA LOGIN BERHASIL
+    if (login.fulfilled.match(result)) {
       // Redirect berdasarkan user type yang dipilih
       if (formData.userType === 'employer') {
         navigate('/employer/dashboard', { replace: true });
@@ -59,7 +68,7 @@ const LoginPage = () => {
     document.body.classList.toggle('high-contrast');
   };
 
-   return (
+  return (
     <div className="min-h-screen bg-gradient-to-br from-primary-50 to-secondary-50 flex items-center justify-center py-8">
       <div className="max-w-md w-full space-y-8">
         {/* Header */}
@@ -276,19 +285,6 @@ const LoginPage = () => {
             >
               Daftar sebagai {formData.userType === 'employer' ? 'Employer' : 'Pencari Kerja'}
             </Link>
-          </p>
-        </div>
-
-        {/* Demo Info */}
-        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 text-center">
-          <p className="text-blue-700 text-sm">
-            <strong>Untuk Demo:</strong> Pilih role, isi email & password apa saja
-          </p>
-          <p className="text-blue-600 text-xs mt-1">
-            {formData.userType === 'employer' 
-              ? 'Akan redirect ke Employer Dashboard' 
-              : 'Akan redirect ke Halaman Utama'
-            }
           </p>
         </div>
 
