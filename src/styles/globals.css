@@ -21,11 +21,108 @@ body {
   font-family: 'Poppins', sans-serif;
 }
 
+/* PERBAIKAN: High contrast mode TANPA filter yang ganggu fixed positioning */
 .high-contrast {
-  --contrast-filter: contrast(150%) brightness(110%);
-  filter: var(--contrast-filter);
+  /* HAPUS filter: var(--contrast-filter); ← INI PENYEBAB MASALAH */
+  background: #000000 !important;
+  color: #ffffff !important;
 }
 
+.high-contrast .bg-white {
+  background: #000000 !important;
+  color: #ffffff !important;
+  border-color: #ffffff !important;
+}
+
+.high-contrast .bg-gray-50,
+.high-contrast .bg-gray-100 {
+  background: #111827 !important;
+  color: #ffffff !important;
+}
+
+.high-contrast .bg-primary-50 {
+  background: #1e3a8a !important;
+  color: #ffffff !important;
+}
+
+.high-contrast .text-gray-600,
+.high-contrast .text-gray-500,
+.high-contrast .text-gray-700,
+.high-contrast .text-gray-900 {
+  color: #ffffff !important;
+}
+
+.high-contrast .border-gray-200,
+.high-contrast .border-gray-300 {
+  border-color: #ffffff !important;
+}
+
+.high-contrast .shadow-lg,
+.high-contrast .shadow-xl {
+  box-shadow: 0 10px 25px rgba(255, 255, 255, 0.1) !important;
+}
+
+/* EKSPLISIT: Accessibility widget harus TETAP FIXED */
+.accessibility-widget-container {
+  position: fixed !important;
+  right: 24px !important;
+  bottom: 24px !important;
+  z-index: 9999 !important;
+  transform: none !important; /* Pastikan tidak ada transform */
+  filter: none !important; /* Pastikan tidak ada filter */
+}
+
+.accessibility-panel-container {
+  position: fixed !important;
+  right: 24px !important;
+  bottom: 80px !important;
+  z-index: 9998 !important;
+  transform: none !important;
+  filter: none !important;
+}
+
+/* Pastikan widget TIDAK terpengaruh high contrast mode */
+.high-contrast .accessibility-widget-container,
+.high-contrast .accessibility-panel-container {
+  filter: none !important;
+  transform: none !important;
+}
+
+.high-contrast .accessibility-widget-button {
+  background: linear-gradient(to right, #3b82f6, #10b981) !important;
+  border: 2px solid #ffffff !important;
+}
+
+.high-contrast .accessibility-widget-button i {
+  color: #ffffff !important;
+}
+
+.high-contrast .accessibility-panel {
+  background: #000000 !important;
+  border: 2px solid #ffffff !important;
+  color: #ffffff !important;
+}
+
+.high-contrast .accessibility-panel .bg-primary-100 {
+  background: #1e293b !important;
+}
+
+.high-contrast .accessibility-panel .text-primary-600 {
+  color: #60a5fa !important;
+}
+
+/* EXCLUDE widget dari efek high contrast */
+.no-high-contrast-effect {
+  filter: none !important;
+  position: fixed !important;
+  z-index: 9999 !important;
+}
+
+.high-contrast .no-high-contrast-effect {
+  filter: none !important;
+}
+
+/* Styles lainnya tetap sama */
 .large-text {
   font-size: 1.25rem;
 }
@@ -108,7 +205,7 @@ button:focus, a:focus, input:focus, select:focus, textarea:focus {
                     radial-gradient(circle at 75% 75%, rgba(168, 85, 247, 0.1) 0%, transparent 55%);
 }
 
-/* src/styles/globals.css - Tambahkan styles ini */
+/* Job card styles */
 .job-card {
   transition: all 0.3s ease;
   border: 1px solid #e5e7eb;
@@ -163,7 +260,7 @@ button:focus, a:focus, input:focus, select:focus, textarea:focus {
   to { transform: rotate(360deg); }
 }
 
-/* src/styles/globals.css - Tambahkan styles ini */
+/* Tab styles */
 .tab-content {
   display: none;
   animation: fadeIn 0.5s ease-in-out;
@@ -210,16 +307,6 @@ button:focus, a:focus, input:focus, select:focus, textarea:focus {
 .skill-tag:hover {
   transform: scale(1.05);
 }
-
-.hover-lift {
-  transition: transform 0.3s ease, box-shadow 0.3s ease;
-}
-
-.hover-lift:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1);
-}
-/* Tambahkan di src/styles/globals.css */
 
 /* Resume Styles */
 .resume-template {
@@ -285,77 +372,21 @@ button:focus, a:focus, input:focus, select:focus, textarea:focus {
   }
 }
 
-/* PERBAIKAN: High contrast mode yang tidak ganggu widget */
-.high-contrast {
-  /* JANGAN gunakan filter di body - itu penyebab masalah */
-  background: #000000 !important;
-  color: #ffffff !important;
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
-.high-contrast .bg-white {
-  background: #000000 !important;
-  color: #ffffff !important;
-  border-color: #ffffff !important;
+.page-enter {
+  animation: fadeInUp 0.6s ease-out;
 }
 
-.high-contrast .text-gray-600,
-.high-contrast .text-gray-500,
-.high-contrast .text-gray-700,
-.high-contrast .text-gray-900 {
-  color: #ffffff !important;
-}
-
-.high-contrast .border-gray-200,
-.high-contrast .border-gray-300 {
-  border-color: #ffffff !important;
-}
-
-/* EKSPLISIT: Force accessibility widget to stay fixed dan tidak terpengaruh high contrast */
-.accessibility-widget,
-.accessibility-panel {
-  position: fixed !important;
-  z-index: 9999 !important;
-}
-
-/* Pastikan widget TIDAK terpengaruh high contrast mode */
-.high-contrast .accessibility-widget {
-  background: linear-gradient(to right, #3b82f6, #10b981) !important;
-  border: 2px solid #ffffff !important;
-}
-
-.high-contrast .accessibility-widget i {
-  color: #ffffff !important;
-}
-
-.high-contrast .accessibility-panel {
-  background: #000000 !important;
-  border: 2px solid #ffffff !important;
-  color: #ffffff !important;
-}
-
-.high-contrast .accessibility-panel .bg-primary-100 {
-  background: #1e293b !important;
-}
-
-.high-contrast .accessibility-panel .text-primary-600 {
-  color: #60a5fa !important;
-}
-
-.high-contrast .accessibility-panel .text-gray-900 {
-  color: #ffffff !important;
-}
-
-.high-contrast .accessibility-panel .text-gray-500 {
-  color: #d1d5db !important;
-}
-
-/* EXCLUDE widget dari efek high contrast */
-.no-high-contrast-effect {
-  filter: none !important;
-  position: fixed !important;
-  z-index: 9999 !important;
-}
-
-.high-contrast .no-high-contrast-effect {
-  filter: none !important;
+.loading-pulse {
+  animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
 }

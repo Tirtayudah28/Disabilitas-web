@@ -1,5 +1,5 @@
 // src/App.js - VERSI SUDAH DIPERBAIKI
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { Provider } from 'react-redux';
 import { store } from './store'; // IMPORT REDUX STORE
@@ -9,14 +9,18 @@ import Header from './components/layout/Header';
 import Footer from './components/layout/Footer';
 import AccessibilityWidget from './components/layout/AccessibilityWidget';
 import SkipLink from './components/common/SkipLink';
+import AppLoading from './components/layout/AppLoading';
 import './styles/globals.css';
 
 // Import semua pages
+import LowonganLandingPage from './pages/LowonganLandingPage';
 import LowonganPage from './pages/LowonganPage';
 import ResumePage from './pages/ResumePage';
 import CompaniesPage from './pages/CompaniesPage'; // ← PERBAIKAN: Import yang benar
 import LoginPage from './pages/auth/LoginPage';
+import EmployerLoginPage from './pages/auth/EmployerLoginPage';
 import RegistrationPage from './pages/auth/RegistrationPage';
+import EmployerRegistrationPage from './pages/auth/EmployerRegistrationPage';
 import VerificationPage from './pages/auth/VerificationPage';
 import ForgotPasswordPage from './pages/auth/ForgotPasswordPage';
 import JobDetailPage from './pages/JobDetailPage';
@@ -31,6 +35,22 @@ import InterviewSchedulingPage from './pages/employer/InterviewSchedulingPage';
 import ProfileWrapper from './components/ProfileWrapper';
 
 function App() {
+  const [isLoading, setIsLoading] = useState(true);
+
+   useEffect(() => {
+    // Simulasi loading resources
+    const timer = setTimeout(() => {
+      setIsLoading(false);
+    }, 2500); // 2.5 detik loading
+
+    return () => clearTimeout(timer);
+  }, []);
+
+  // Tampilkan loading screen
+  if (isLoading) {
+    return <AppLoading />;
+  }
+
   return (
     <Provider store={store}>
       <Router>
@@ -42,9 +62,13 @@ function App() {
           <main id="main-content" className="min-h-screen">
             <Routes>
               {/* SEMUA ROUTES TERBUKA - tidak ada protected route */}
-              <Route path="/" element={<LowonganPage />} />
+              <Route path="/" element={<LowonganLandingPage />} />
+              <Route path="/lowongan-landing" element={<LowonganLandingPage />} />
+              <Route path="/lowongan" element={<LowonganPage />} />
               <Route path="/login" element={<LoginPage />} />
+              <Route path="/employer/login" element={<EmployerLoginPage />} />
               <Route path="/register" element={<RegistrationPage />} />
+              <Route path="/employer/register" element={<EmployerRegistrationPage />} />
               <Route path="/verification" element={<VerificationPage />} />
               <Route path="/forgot-password" element={<ForgotPasswordPage />} />
               <Route path="/lowongan" element={<LowonganPage />} />

@@ -275,10 +275,9 @@ const Header = () => {
               Masuk
             </Link>
             <Link 
-              to="/register?type=employer" 
+              to="/employer/login" 
               className="bg-primary-500 text-white px-4 py-2 rounded-lg hover:bg-primary-600 transition font-medium flex items-center gap-2 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2"
             >
-              <i className="fas fa-building" aria-hidden="true"></i> 
               <span> Untuk Perusahaan</span>
             </Link>
           </div>

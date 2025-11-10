@@ -1,4 +1,4 @@
-// src/components/layout/AccessibilityWidget.js
+// src/components/layout/AccessibilityWidget.js - VERSI PERBAIKAN
 import React, { useState } from 'react';
 import { useAccessibility } from '../../hooks/useAccessibility';
 
@@ -48,7 +48,7 @@ const AccessibilityWidget = () => {
 
   return (
     <>
-      {/* Main Widget Button */}
+      {/* Main Widget Button - PASTIKAN POSISI FIXED */}
       <button
         onClick={toggleWidget}
         className={`
@@ -58,10 +58,15 @@ const AccessibilityWidget = () => {
           shadow-lg hover:shadow-xl 
           transition-all duration-300 
           flex items-center justify-center
-          ${isOpen ? 'bottom-32' : 'bottom-6'} /* Naik ke atas saat terbuka */
+          border-2 border-white
+          ${isOpen ? 'bottom-32' : 'bottom-6'}
         `}
         aria-label="Kontrol Aksesibilitas"
         aria-expanded={isOpen}
+        style={{ 
+          position: 'fixed', // FORCE FIXED POSITION
+          zIndex: 9999 // HIGHER Z-INDEX
+        }}
       >
         <i className={`fas fa-universal-access text-white text-xl ${isSpeaking ? 'animate-pulse' : ''}`}></i>
         
@@ -71,9 +76,16 @@ const AccessibilityWidget = () => {
         )}
       </button>
 
-      {/* Widget Panel */}
+      {/* Widget Panel - PASTIKAN POSISI FIXED DAN Z-INDEX TINGGI */}
       {isOpen && (
-        <div className="fixed right-6 bottom-32 z-40 w-80 max-w-[90vw]">
+        <div 
+          className="fixed right-6 z-40 w-80 max-w-[90vw]"
+          style={{ 
+            position: 'fixed', // FORCE FIXED POSITION
+            bottom: '128px', // 32px dari tombol (32px = 8 * 4)
+            zIndex: 9998 // SLIGHTLY LOWER THAN BUTTON
+          }}
+        >
           {/* Panel Content */}
           <div className="bg-white rounded-2xl shadow-2xl border border-gray-200 mb-3">
             {/* Header */}

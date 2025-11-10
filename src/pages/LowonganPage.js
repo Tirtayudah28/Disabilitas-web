@@ -1,9 +1,11 @@
-// src/pages/LowonganPage.js
+// src/pages/LowonganPage.js - UPDATE UNTUK HANDLE URL PARAMETERS
 import React, { useState, useEffect } from 'react';
-import { Link, useNavigate } from 'react-router-dom'; // Tambahkan useNavigate
+import { Link, useNavigate, useLocation } from 'react-router-dom';
+import JobCard from '../components/JobCard';
 
 const LowonganPage = () => {
-  const navigate = useNavigate(); // Tambahkan ini
+  const navigate = useNavigate();
+  const location = useLocation();
   const [searchTerm, setSearchTerm] = useState('');
   const [showAdvancedFilters, setShowAdvancedFilters] = useState(false);
   const [selectedFilters, setSelectedFilters] = useState({
@@ -14,6 +16,25 @@ const LowonganPage = () => {
   });
   const [bookmarkedJobs, setBookmarkedJobs] = useState([]);
   const [isSearching, setIsSearching] = useState(false);
+  const [urlParams, setUrlParams] = useState({});
+
+  // Handle URL parameters ketika komponen mount atau URL berubah
+  useEffect(() => {
+    const searchParams = new URLSearchParams(location.search);
+    const params = {};
+    
+    // Ambil semua parameter dari URL
+    for (let [key, value] of searchParams.entries()) {
+      params[key] = value;
+    }
+    
+    setUrlParams(params);
+    
+    // Set search term dari URL parameter 'q'
+    if (params.q) {
+      setSearchTerm(params.q);
+    }
+  }, [location.search]);
 
   // Sample job data
   const [jobs] = useState([
@@ -32,7 +53,7 @@ const LowonganPage = () => {
       description: "Kami mencari UI/UX Designer yang passionate tentang inklusivitas dan aksesibilitas. Bergabunglah dengan tim kami yang berdedikasi menciptakan produk digital yang accessible untuk semua.",
       applicants: 23,
       logo: "TI",
-      logoColor: "from-primary-500 to-secondary-500"
+      logoColor: "from-blue-500 to-green-500"
     },
     {
       id: 2,
@@ -70,15 +91,21 @@ const LowonganPage = () => {
     }
   ]);
 
-  const handleSearch = () => {
-    if (!searchTerm.trim()) return;
+ const handleSearch = () => {
+    // Build URL parameters - selalu bisa search meski form kosong
+    const params = new URLSearchParams();
+    
+    if (searchTerm) params.append('q', searchTerm);
+    // Bisa tambahkan parameter lain di sini jika needed
+    
+    // Update URL tanpa reload page
+    navigate(`/lowongan?${params.toString()}`, { replace: true });
     
     setIsSearching(true);
     // Simulate API call
     setTimeout(() => {
       setIsSearching(false);
-      showNotification(`Menampilkan hasil untuk "${searchTerm}"`, 'success');
-    }, 1000);
+    }, 500);
   };
 
   const handleBookmark = (jobId) => {
@@ -91,20 +118,16 @@ const LowonganPage = () => {
     });
   };
 
-  // Ganti fungsi handleApply yang lama dengan ini:
   const handleApply = (job) => {
     navigate(`/lowongan/${job.id}/apply`, { 
-      state: { job } // Kirim data lowongan melalui state
+      state: { job }
     });
   };
-  // const handleApply = (jobTitle, company) => {
-  //   showNotification(`Lamaran untuk ${jobTitle} di ${company} berhasil dikirim!`, 'success');
-  // };
 
   const showNotification = (message, type = 'info') => {
     // Create notification element
     const notification = document.createElement('div');
-    const bgColor = type === 'success' ? 'bg-green-500' : type === 'error' ? 'bg-red-500' : 'bg-primary-500';
+    const bgColor = type === 'success' ? 'bg-green-500' : type === 'error' ? 'bg-red-500' : 'bg-blue-500';
     
     notification.className = `fixed top-4 right-4 ${bgColor} text-white p-4 rounded-lg shadow-lg z-50`;
     notification.innerHTML = `
@@ -147,19 +170,24 @@ const LowonganPage = () => {
     });
   };
 
-  return (
-    <div className="min-h-screen bg-gradient-to-br from-primary-50 to-secondary-50">
+   return (
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-green-50">
       {/* Main Content */}
       <main id="main-content" className="container mx-auto px-4 py-8">
-        {/* Page Header */}
-        <div className="text-center mb-8">
-          <h1 className="text-4xl font-bold text-primary-700 mb-4">Temukan Lowongan yang Tepat</h1>
+        {/* Page Header - Tampilkan keyword dari URL jika ada */}
+        {/* <div className="text-center mb-8">
+          <h1 className="text-4xl font-bold text-gray-900 mb-4">
+            {urlParams.q ? `Hasil untuk "${urlParams.q}"` : 'Semua Lowongan Tersedia'}
+          </h1>
           <p className="text-lg text-gray-600 max-w-2xl mx-auto">
-            Cari lowongan kerja yang sesuai dengan keahlian dan kebutuhan aksesibilitas Anda
+            {urlParams.q 
+              ? `Menampilkan lowongan terkait "${urlParams.q}"`
+              : 'Temukan lowongan kerja yang sesuai dengan keahlian dan kebutuhan aksesibilitas Anda'
+            }
           </p>
-        </div>
+        </div> */}
 
-        {/* Search and Filter Section */}
+        {/* Search and Filter Section - SAMA DENGAN LANDING PAGE */}
         <div className="bg-white rounded-2xl shadow-lg p-6 mb-8">
           {/* Quick Search Bar */}
           <div className="flex flex-col md:flex-row gap-4 mb-6">
@@ -171,14 +199,14 @@ const LowonganPage = () => {
                 onChange={(e) => setSearchTerm(e.target.value)}
                 onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
                 placeholder="Posisi, perusahaan, atau kata kunci..." 
-                className="w-full pl-10 pr-4 py-3 border rounded-lg focus:border-primary-500 focus:ring-2 focus:ring-primary-200"
+                className="w-full pl-10 pr-4 py-3 border-2 border-gray-300 rounded-lg focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-colors"
               />
             </div>
             <div className="flex gap-2">
               <button 
                 onClick={handleSearch}
                 disabled={isSearching}
-                className="bg-primary-500 text-white px-6 py-3 rounded-lg hover:bg-primary-600 transition font-medium flex items-center gap-2 disabled:opacity-50"
+                className="bg-blue-500 text-white px-6 py-3 rounded-lg hover:bg-blue-600 transition font-medium flex items-center gap-2 disabled:opacity-50"
               >
                 {isSearching ? (
                   <>
@@ -192,8 +220,8 @@ const LowonganPage = () => {
               </button>
               <button 
                 onClick={() => setShowAdvancedFilters(!showAdvancedFilters)}
-                className={`border px-4 py-3 rounded-lg hover:bg-gray-50 transition ${
-                  showAdvancedFilters ? 'bg-primary-500 text-white border-primary-500' : 'border-gray-300'
+                className={`border-2 px-4 py-3 rounded-lg hover:bg-gray-50 transition ${
+                  showAdvancedFilters ? 'bg-blue-500 text-white border-blue-500' : 'border-gray-300'
                 }`}
               >
                 <i className="fas fa-sliders-h"></i>
@@ -206,7 +234,7 @@ const LowonganPage = () => {
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
               <div>
                 <label className="block text-sm font-medium mb-2">Lokasi</label>
-                <select className="w-full p-3 border rounded-lg focus:border-primary-500 focus:ring-2 focus:ring-primary-200">
+                <select className="w-full p-3 border-2 border-gray-300 rounded-lg focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-colors">
                   <option value="">Semua Lokasi</option>
                   <option value="remote">Remote</option>
                   <option value="hybrid">Hybrid</option>
@@ -218,7 +246,7 @@ const LowonganPage = () => {
               
               <div>
                 <label className="block text-sm font-medium mb-2">Jenis Pekerjaan</label>
-                <select className="w-full p-3 border rounded-lg focus:border-primary-500 focus:ring-2 focus:ring-primary-200">
+                <select className="w-full p-3 border-2 border-gray-300 rounded-lg focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-colors">
                   <option value="">Semua Jenis</option>
                   <option value="full-time">Full Time</option>
                   <option value="part-time">Part Time</option>
@@ -232,13 +260,13 @@ const LowonganPage = () => {
                 <input 
                   type="text" 
                   placeholder="Contoh: UI Design, Programming" 
-                  className="w-full p-3 border rounded-lg focus:border-primary-500 focus:ring-2 focus:ring-primary-200"
+                  className="w-full p-3 border-2 border-gray-300 rounded-lg focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-colors"
                 />
               </div>
               
               <div>
                 <label className="block text-sm font-medium mb-2">Akomodasi</label>
-                <select className="w-full p-3 border rounded-lg focus:border-primary-500 focus:ring-2 focus:ring-primary-200">
+                <select className="w-full p-3 border-2 border-gray-300 rounded-lg focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-colors">
                   <option value="">Semua Akomodasi</option>
                   <option value="screen-reader">Screen Reader Support</option>
                   <option value="wheelchair">Akses Kursi Roda</option>
@@ -253,8 +281,7 @@ const LowonganPage = () => {
           {/* Quick Filter Chips */}
           <div className="mt-4 flex flex-wrap gap-2">
             {[
-              // { label: "Rekomendasi AI", icon: "star", color: "primary" },
-              { label: "Disabilitas Fisik", icon: "bolt", color: "green" },
+              { label: "Disabilitas Fisik", icon: "wheelchair", color: "green" },
               { label: "Disabilitas Visual", icon: "eye", color: "blue" },
               { label: "Disabilitas Pendengaran", icon: "deaf", color: "purple" },
               { label: "Baru Diposting", icon: "clock", color: "orange" }
@@ -291,7 +318,7 @@ const LowonganPage = () => {
                       key={type.value}
                       className={`flex items-center p-2 rounded cursor-pointer transition ${
                         selectedFilters.disabilityTypes.includes(type.value) 
-                          ? 'bg-primary-100 text-primary-800' 
+                          ? 'bg-blue-100 text-blue-800' 
                           : 'hover:bg-gray-50'
                       }`}
                     >
@@ -299,7 +326,7 @@ const LowonganPage = () => {
                         type="checkbox" 
                         checked={selectedFilters.disabilityTypes.includes(type.value)}
                         onChange={() => toggleFilter('disabilityTypes', type.value)}
-                        className="mr-3 h-4 w-4 text-primary-500"
+                        className="mr-3 h-4 w-4 text-blue-500"
                       />
                       <span>{type.label}</span>
                     </label>
@@ -321,7 +348,7 @@ const LowonganPage = () => {
                       key={range.value}
                       className={`flex items-center p-2 rounded cursor-pointer transition ${
                         selectedFilters.salaryRange === range.value
-                          ? 'bg-primary-100 text-primary-800' 
+                          ? 'bg-blue-100 text-blue-800' 
                           : 'hover:bg-gray-50'
                       }`}
                     >
@@ -330,7 +357,7 @@ const LowonganPage = () => {
                         name="salary"
                         checked={selectedFilters.salaryRange === range.value}
                         onChange={() => toggleFilter('salaryRange', range.value)}
-                        className="mr-3 h-4 w-4 text-primary-500"
+                        className="mr-3 h-4 w-4 text-blue-500"
                       />
                       <span>{range.label}</span>
                     </label>
@@ -351,7 +378,7 @@ const LowonganPage = () => {
                       key={size.value}
                       className={`flex items-center p-2 rounded cursor-pointer transition ${
                         selectedFilters.companySize.includes(size.value)
-                          ? 'bg-primary-100 text-primary-800' 
+                          ? 'bg-blue-100 text-blue-800' 
                           : 'hover:bg-gray-50'
                       }`}
                     >
@@ -359,7 +386,7 @@ const LowonganPage = () => {
                         type="checkbox" 
                         checked={selectedFilters.companySize.includes(size.value)}
                         onChange={() => toggleFilter('companySize', size.value)}
-                        className="mr-3 h-4 w-4 text-primary-500"
+                        className="mr-3 h-4 w-4 text-blue-500"
                       />
                       <span>{size.label}</span>
                     </label>
@@ -367,7 +394,7 @@ const LowonganPage = () => {
                 </div>
               </div>
 
-              <button className="w-full bg-primary-500 text-white py-2 rounded-lg hover:bg-primary-600 transition">
+              <button className="w-full bg-blue-500 text-white py-2 rounded-lg hover:bg-blue-600 transition">
                 Terapkan Filter
               </button>
               <button className="w-full border border-gray-300 text-gray-700 py-2 rounded-lg hover:bg-gray-50 transition mt-2">
@@ -409,7 +436,7 @@ const LowonganPage = () => {
               </div>
               <div className="flex items-center gap-3">
                 <span className="text-sm text-gray-600">Urutkan:</span>
-                <select className="border rounded-lg px-3 py-2">
+                <select className="border-2 border-gray-300 rounded-lg px-3 py-2 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-colors">
                   <option>Kesesuaian Terbaik</option>
                   <option>Terbaru</option>
                   <option>Gaji Tertinggi</option>
@@ -433,116 +460,21 @@ const LowonganPage = () => {
 
             {/* Pagination */}
             <div className="flex justify-center items-center space-x-2 mt-8">
-              <button className="px-3 py-2 border rounded-lg hover:bg-gray-50 disabled:opacity-50">
+              <button className="px-3 py-2 border-2 border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 transition-colors">
                 <i className="fas fa-chevron-left"></i>
               </button>
-              <button className="px-3 py-2 border rounded-lg bg-primary-500 text-white">1</button>
-              <button className="px-3 py-2 border rounded-lg hover:bg-gray-50">2</button>
-              <button className="px-3 py-2 border rounded-lg hover:bg-gray-50">3</button>
+              <button className="px-3 py-2 border-2 border-blue-500 bg-blue-500 text-white rounded-lg">1</button>
+              <button className="px-3 py-2 border-2 border-gray-300 rounded-lg hover:bg-gray-50 transition-colors">2</button>
+              <button className="px-3 py-2 border-2 border-gray-300 rounded-lg hover:bg-gray-50 transition-colors">3</button>
               <span className="px-3 py-2">...</span>
-              <button className="px-3 py-2 border rounded-lg hover:bg-gray-50">10</button>
-              <button className="px-3 py-2 border rounded-lg hover:bg-gray-50">
+              <button className="px-3 py-2 border-2 border-gray-300 rounded-lg hover:bg-gray-50 transition-colors">10</button>
+              <button className="px-3 py-2 border-2 border-gray-300 rounded-lg hover:bg-gray-50 transition-colors">
                 <i className="fas fa-chevron-right"></i>
               </button>
             </div>
           </div>
         </div>
       </main>
-    </div>
-  );
-};
-
-// Job Card Component - Update bagian tombol
-const JobCard = ({ job, isBookmarked, onBookmark, onApply }) => {
-  const navigate = useNavigate(); // Tambahkan useNavigate di sini juga
-  
-  const getMatchBadgeClass = (match) => {
-    if (match >= 90) return "bg-green-100 text-green-800 px-2 py-1 rounded-full text-xs font-medium";
-    return "bg-blue-100 text-blue-800 px-2 py-1 rounded-full text-xs font-medium";
-  };
-
-  return (
-    <div className="job-card bg-white rounded-2xl shadow-lg p-6 border border-gray-200 hover:border-primary-500 hover:shadow-xl transition-all">
-      <div className="flex justify-between items-start mb-4">
-        <div className="flex items-start space-x-4">
-          <div className={`w-16 h-16 bg-gradient-to-br ${job.logoColor} rounded-lg flex items-center justify-center text-white font-bold text-xl`}>
-            {job.logo}
-          </div>
-          <div>
-            <div className="flex items-center gap-2 mb-1">
-              <h3 className="text-xl font-bold">{job.title}</h3>
-              <span className={getMatchBadgeClass(job.match)}>
-                {job.match >= 90 && <i className="fas fa-bolt mr-1"></i>}
-                {job.match}% Match
-              </span>
-            </div>
-            <p className="text-primary-600 font-medium">{job.company} • {job.location}</p>
-            <div className="flex items-center gap-4 mt-2 text-sm text-gray-600">
-              <span><i className="fas fa-clock mr-1"></i>{job.type}</span>
-              <span><i className="fas fa-money-bill-wave mr-1"></i>{job.salary}</span>
-              <span><i className="fas fa-calendar mr-1"></i>{job.posted}</span>
-            </div>
-          </div>
-        </div>
-        <button 
-          onClick={() => onBookmark(job.id)}
-          className={`${isBookmarked ? 'text-primary-500' : 'text-gray-400'} hover:text-primary-600`}
-        >
-          <i className={`${isBookmarked ? 'fas' : 'far'} fa-bookmark text-xl`}></i>
-        </button>
-      </div>
-
-      <p className="text-gray-700 mb-4">{job.description}</p>
-
-      {/* Skills Tags */}
-      <div className="flex flex-wrap gap-2 mb-4">
-        {job.skills.map((skill, index) => (
-          <span key={index} className="bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-sm">
-            {skill}
-          </span>
-        ))}
-      </div>
-
-      {/* Accommodation Tags */}
-      <div className="flex flex-wrap gap-2 mb-4">
-        {job.accommodations.map((accommodation, index) => (
-          <span key={index} className="accommodation-tag px-3 py-1 rounded-full text-sm">
-            <i className="fas fa-check mr-1"></i>
-            {accommodation}
-          </span>
-        ))}
-      </div>
-
-      {/* Disability Support */}
-      <div className="bg-green-50 p-3 rounded-lg mb-4">
-        <div className="flex items-center gap-2 text-green-800 font-medium mb-1">
-          <i className="fas fa-check-circle"></i>
-          <span>Didukung untuk: {job.disabilitySupport.join(', ')}</span>
-        </div>
-        <p className="text-green-700 text-sm">
-          Perusahaan ini memiliki pengalaman bekerja dengan penyandang disabilitas dan menyediakan lingkungan kerja yang inklusif.
-        </p>
-      </div>
-
-      <div className="flex justify-between items-center">
-        <div className="flex gap-2">
-          {/* PERBAIKAN: Update tombol "Lamar Sekarang" */}
-          <button 
-            onClick={() => navigate(`/lowongan/${job.id}/apply`, { state: { job } })}
-            className="bg-primary-500 text-white px-6 py-2 rounded-lg hover:bg-primary-600 transition font-medium"
-          >
-            Lamar Sekarang
-          </button>
-          {/* PERBAIKAN: Tambahkan Link ke halaman detail */}
-          <Link 
-            to={`/lowongan/${job.id}`}
-            className="border border-primary-500 text-primary-500 px-4 py-2 rounded-lg hover:bg-primary-50 transition font-medium inline-block"
-          >
-            Lihat Detail
-          </Link>
-        </div>
-        <span className="text-sm text-gray-500">{job.applicants} pelamar</span>
-      </div>
     </div>
   );
 };
