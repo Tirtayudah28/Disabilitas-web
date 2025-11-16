@@ -1,11 +1,14 @@
 // src/pages/LowonganPage.js - UPDATE UNTUK HANDLE URL PARAMETERS
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
+import { useSearch } from '../contexts/SearchContext';
 import JobCard from '../components/JobCard';
 
 const LowonganPage = () => {
   const navigate = useNavigate();
   const location = useLocation();
+  const { hasSearched, markAsSearched } = useSearch();
+
   const [searchTerm, setSearchTerm] = useState('');
   const [showAdvancedFilters, setShowAdvancedFilters] = useState(false);
   const [selectedFilters, setSelectedFilters] = useState({
@@ -33,6 +36,8 @@ const LowonganPage = () => {
     // Set search term dari URL parameter 'q'
     if (params.q) {
       setSearchTerm(params.q);
+      // MARK THAT USER HAS SEARCHED WHEN COMING FROM LANDING PAGE
+      markAsSearched(params.q);
     }
   }, [location.search]);
 

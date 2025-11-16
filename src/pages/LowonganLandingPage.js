@@ -1,9 +1,12 @@
-// src/pages/LowonganLandingPage.js - VERSI PROFESIONAL DENGAN SEARCH SAMA
-import React, { useState } from 'react';
+// src/pages/LowonganLandingPage.js - VERSI DIPERBAIKI
+import React, { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
+import { useSearch } from '../contexts/SearchContext';
 
 const LowonganLandingPage = () => {
   const navigate = useNavigate();
+  const { markAsSearched } = useSearch();
+
   const [searchTerm, setSearchTerm] = useState('');
   const [showAdvancedFilters, setShowAdvancedFilters] = useState(false);
   const [selectedFilters, setSelectedFilters] = useState({
@@ -12,6 +15,23 @@ const LowonganLandingPage = () => {
     companySize: ['startup', 'menengah'],
     postedDate: '24jam'
   });
+
+  // Cek status login user
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+
+  useEffect(() => {
+    // Cek apakah user sudah login
+    const checkAuthStatus = () => {
+      const token = localStorage.getItem('authToken');
+      const user = localStorage.getItem('user');
+      
+      if (token && user) {
+        setIsLoggedIn(true);
+      }
+    };
+
+    checkAuthStatus();
+  }, []);
 
   const companies = [
     {
@@ -56,13 +76,17 @@ const LowonganLandingPage = () => {
     }
   ];
 
-  const handleSearch = () => {
+   const handleSearch = () => {
+    // USER BELUM LOGIN TAPI BISA LANGSUNG KE LOWONGAN PAGE DENGAN SEARCH
+    markAsSearched(searchTerm);
     const params = new URLSearchParams();
     if (searchTerm) params.append('q', searchTerm);
-    navigate(`/lowongan?${params.toString()}`, { replace: true });
+    navigate(`/lowongan?${params.toString()}`);
   };
 
-  const handleQuickSearch = (keyword) => {
+    const handleQuickSearch = (keyword) => {
+    // USER BELUM LOGIN TAPI BISA LANGSUNG KE LOWONGAN PAGE DENGAN SEARCH
+    markAsSearched(keyword);
     navigate(`/lowongan?q=${encodeURIComponent(keyword)}`);
   };
 
@@ -90,6 +114,27 @@ const LowonganLandingPage = () => {
     });
   };
 
+  // Handle Google Login
+  const handleGoogleLogin = () => {
+    // Simulasi login dengan Google
+    const mockUser = {
+      id: 1,
+      name: 'John Doe',
+      email: 'john@example.com',
+      token: 'google-auth-token-123'
+    };
+    
+    // Simpan data user ke localStorage
+    localStorage.setItem('authToken', mockUser.token);
+    localStorage.setItem('user', JSON.stringify(mockUser));
+    
+    // Set status login
+    setIsLoggedIn(true);
+    
+    // Redirect ke halaman lowongan (tanpa search parameters)
+    navigate('/lowongan');
+  };
+
   return (
     <div className="min-h-screen bg-white">
       {/* Hero Search Section */}
@@ -112,9 +157,9 @@ const LowonganLandingPage = () => {
             </p>
           </div>
 
-          {/* Search Form - SAMA DENGAN LOWONGANPAGE */}
+          {/* Search Form */}
           <div className="bg-white rounded-2xl shadow-lg p-6 mb-8 border border-gray-200">
-            {/* Quick Search Bar - SAMA DENGAN LOWONGANPAGE */}
+            {/* Quick Search Bar */}
             <div className="flex flex-col md:flex-row gap-4 mb-6">
               <div className="flex-1 relative">
                 <i className="fas fa-search absolute left-3 top-3 text-gray-400"></i>
@@ -145,7 +190,7 @@ const LowonganLandingPage = () => {
               </div>
             </div>
 
-            {/* Advanced Filters - SAMA DENGAN LOWONGANPAGE */}
+            {/* Advanced Filters */}
             {showAdvancedFilters && (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                 <div>
@@ -194,7 +239,7 @@ const LowonganLandingPage = () => {
               </div>
             )}  
 
-            {/* Quick Filter Chips - SAMA DENGAN LOWONGANPAGE */}
+            {/* Quick Filter Chips */}
             <div className="mt-4 flex flex-wrap gap-2">
               {[
                 { label: "Disabilitas Fisik", icon: "wheelchair", color: "green" },
@@ -231,38 +276,6 @@ const LowonganLandingPage = () => {
         </div>
       </div>
 
-      {/* Companies Section */}
-      {/* <div className="py-16 bg-gray-50">
-        <div className="container mx-auto px-4 max-w-6xl">
-          <div className="text-center mb-12">
-            <h2 className="text-3xl font-bold text-gray-900 mb-4">
-              Top Companies Hiring
-            </h2>
-            <p className="text-gray-600 max-w-2xl mx-auto">
-              Join leading companies committed to inclusive hiring practices
-            </p>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6">
-            {companies.map((company) => (
-              <div 
-                key={company.id}
-                className="bg-white rounded-xl p-6 text-center hover:shadow-lg transition-shadow border border-gray-200 group cursor-pointer"
-              >
-                <div className={`w-12 h-12 bg-gradient-to-br ${company.color} rounded-lg flex items-center justify-center text-white font-bold text-sm mx-auto mb-4 group-hover:scale-110 transition-transform`}>
-                  {company.logo}
-                </div>
-                <h3 className="font-semibold text-gray-900 mb-2 text-sm">{company.name}</h3>
-                <p className="text-gray-500 text-xs mb-3">{company.industry}</p>
-                <div className="text-blue-600 text-xs font-medium">
-                  {company.jobs} openings
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </div> */}
-
       {/* CTA Section */}
       <div className="py-16 bg-white">
         <div className="container mx-auto px-4 max-w-6xl">
@@ -286,7 +299,7 @@ const LowonganLandingPage = () => {
               {/* Content - Login Options */}
               <div className="lg:w-3/5 text-center lg:text-left">
                 <h2 className="text-2xl font-bold text-white mb-3">
-                  Temukan pekerjaan yang tepat untuk Anda di Jobstreet
+                  Temukan pekerjaan yang tepat untuk Anda di InklusiKerja
                 </h2>
                 <p className="text-blue-100 mb-6">
                   Masuk ke profil Anda untuk mendapatkan pekerjaan yang lebih cocok
@@ -295,7 +308,10 @@ const LowonganLandingPage = () => {
                 {/* Login Options */}
                 <div className="max-w-md mx-auto lg:mx-0">
                   {/* Google Login */}
-                  <button className="w-full bg-white text-gray-800 px-6 py-3 rounded-lg font-medium hover:bg-gray-50 transition-all shadow-md flex items-center justify-center gap-3 mb-4">
+                  <button 
+                    onClick={handleGoogleLogin}
+                    className="w-full bg-white text-gray-800 px-6 py-3 rounded-lg font-medium hover:bg-gray-50 transition-all shadow-md flex items-center justify-center gap-3 mb-4"
+                  >
                     <div className="w-5 h-5">
                       <svg viewBox="0 0 24 24">
                         <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
@@ -371,7 +387,7 @@ const LowonganLandingPage = () => {
         </div>
       </div>
 
-         {/* Quick Search Links Section */}
+      {/* Quick Search Links Section */}
       <div className="bg-gray-50 py-16">
         <div className="container mx-auto px-4">
           <div className="max-w-4xl mx-auto">

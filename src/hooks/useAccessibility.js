@@ -217,3 +217,31 @@ export const useAccessibility = () => {
     isSpeaking: accessibility.isSpeaking,
   };
 };
+
+// Di src/hooks/useAccessibility.js - Tambahkan fungsi bantuan
+export const speakHelpCommands = () => {
+  if ('speechSynthesis' in window) {
+    const helpText = `
+      Daftar perintah navigasi suara: 
+      Katakan BERANDA untuk menuju halaman utama,
+      Katakan CARI LOWONGAN untuk mencari pekerjaan,
+      Katakan PROFIL untuk mengakses profil Anda,
+      Katakan RESUME untuk mengelola resume,
+      Katakan PERUSAHAAN untuk melihat perusahaan,
+      Katakan LAMARAN untuk melihat riwayat lamar,
+      Katakan KEMBALI untuk kembali ke halaman sebelumnya,
+      Katakan REFRESH untuk memuat ulang halaman,
+      Katakan BANTUAN untuk mendengar panduan ini lagi
+    `;
+    
+    const utterance = new SpeechSynthesisUtterance(helpText);
+    utterance.lang = 'id-ID';
+    utterance.rate = 0.8;
+    
+    const voices = speechSynthesis.getVoices();
+    const indonesianVoice = voices.find(voice => voice.lang.includes('id'));
+    if (indonesianVoice) utterance.voice = indonesianVoice;
+    
+    speechSynthesis.speak(utterance);
+  }
+};

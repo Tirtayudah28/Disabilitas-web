@@ -38,7 +38,7 @@ const LoginPage = () => {
     }));
 
     if (login.fulfilled.match(result)) {
-      navigate('/', { replace: true });
+      navigate('/lowongan', { replace: true });
     }
   };
 
@@ -55,7 +55,7 @@ const LoginPage = () => {
     
     dispatch(login(googleUserData)).then((result) => {
       if (login.fulfilled.match(result)) {
-        navigate('/', { replace: true });
+        navigate('/lowongan', { replace: true });
       }
     });
   };

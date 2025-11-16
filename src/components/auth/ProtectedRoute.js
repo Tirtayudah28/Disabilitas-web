@@ -1,31 +1,20 @@
-// src/components/auth/ProtectedRoute.js
+// src/components/auth/ProtectedRoute.js - PERBAIKI UNTUK ALLOW GUEST ACCESS KE LOWONGAN
 import React from 'react';
-import { Navigate, useLocation } from 'react-router-dom';
-import { useAuth } from '../../contexts/AuthContext';
+import { Navigate } from 'react-router-dom';
 
-const ProtectedRoute = ({ children, requiredRole = null }) => {
-  const { isAuthenticated, user, isLoading } = useAuth();
-  const location = useLocation();
-
-  if (isLoading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-center">
-          <i className="fas fa-spinner fa-spin text-4xl text-primary-500 mb-4"></i>
-          <p className="text-gray-600">Memuat...</p>
-        </div>
-      </div>
-    );
+const ProtectedRoute = ({ children, allowGuest = false }) => {
+  // Cek authentication dari localStorage
+  const token = localStorage.getItem('authToken');
+  const user = localStorage.getItem('user');
+  
+  // Jika route mengizinkan guest (seperti /lowongan), biarkan akses
+  if (allowGuest) {
+    return children;
   }
-
-  if (!isAuthenticated) {
-    // Redirect to login page with return url
-    return <Navigate to="/login" state={{ from: location }} replace />;
-  }
-
-  if (requiredRole && user?.userType !== requiredRole) {
-    // Redirect to unauthorized page or home
-    return <Navigate to="/unauthorized" replace />;
+  
+  // Jika route protected dan user belum login, redirect ke login
+  if (!token || !user) {
+    return <Navigate to="/login" replace />;
   }
 
   return children;
