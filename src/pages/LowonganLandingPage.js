@@ -81,13 +81,13 @@ const LowonganLandingPage = () => {
     markAsSearched(searchTerm);
     const params = new URLSearchParams();
     if (searchTerm) params.append('q', searchTerm);
-    navigate(`/lowongan?${params.toString()}`);
+    navigate(`/jobs?${params.toString()}`);
   };
 
     const handleQuickSearch = (keyword) => {
     // USER BELUM LOGIN TAPI BISA LANGSUNG KE LOWONGAN PAGE DENGAN SEARCH
     markAsSearched(keyword);
-    navigate(`/lowongan?q=${encodeURIComponent(keyword)}`);
+    navigate(`/jobs?q=${encodeURIComponent(keyword)}`);
   };
 
   const toggleFilter = (filterType, value) => {
