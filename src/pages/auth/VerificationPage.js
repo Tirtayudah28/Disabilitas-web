@@ -1,16 +1,27 @@
+//fatir: UPDATE LOGIN/REGISTER
+
 // src/pages/auth/VerificationPage.js
-import React, { useState, useEffect } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
+import axios from "axios";
+import React, { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
+import { useAuth } from "../../contexts/AuthContext";
 
 const VerificationPage = () => {
-  const [verificationCode, setVerificationCode] = useState(['', '', '', '', '', '']);
+  const [verificationCode, setVerificationCode] = useState([
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+  ]);
   const [isLoading, setIsLoading] = useState(false);
   const [countdown, setCountdown] = useState(60);
   const [canResend, setCanResend] = useState(false);
-  
+
   const navigate = useNavigate();
-  const location = useLocation();
-  const email = location.state?.email || 'user@example.com';
+  const email = localStorage.getItem("useremail");
+  const {token} = useAuth()
 
   useEffect(() => {
     if (countdown > 0) {
@@ -21,13 +32,19 @@ const VerificationPage = () => {
     }
   }, [countdown]);
 
+  //fatir: auto-redirect apabila belum register
+  useEffect(() => {
+    if (!email || token) {
+      navigate("/", { replace: true });
+    }
+  }, [token]);
+
   const handleCodeChange = (index, value) => {
     if (value.length <= 1 && /^\d*$/.test(value)) {
       const newCode = [...verificationCode];
       newCode[index] = value;
       setVerificationCode(newCode);
 
-      // Auto-focus next input
       if (value && index < 5) {
         document.getElementById(`verification-${index + 1}`).focus();
       }
@@ -35,41 +52,47 @@ const VerificationPage = () => {
   };
 
   const handleKeyDown = (index, e) => {
-    if (e.key === 'Backspace' && !verificationCode[index] && index > 0) {
+    if (e.key === "Backspace" && !verificationCode[index] && index > 0) {
       document.getElementById(`verification-${index - 1}`).focus();
     }
   };
 
+  //fatir: modifikasi handleVerify
   const handleVerify = async (e) => {
     e.preventDefault();
     setIsLoading(true);
 
+    const otpCode = verificationCode.join("");
     try {
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      const code = verificationCode.join('');
-      
-      if (code.length === 6) {
-        console.log('Verification successful with code:', code);
-        navigate('/profile-completion', { 
-          state: { email, verified: true }
-        });
-      } else {
-        console.log('Invalid code');
-      }
-    } catch (error) {
-      console.error('Verification failed:', error);
+      const res = await axios.post("/api/auth/verify-otp", {
+        email,
+        otp: otpCode,
+      });
+
+      console.log(res.data);
+      localStorage.removeItem("useremail");
+      navigate("/login");
+      //ganti dengan pemberitahuan yg lebih baik
+      alert(
+        res.data.message ||
+          "Verifikasi berhasil, hanya perlu login untuk melanjutkan"
+      );
+    } catch (err) {
+      //ganti dengan pemberitahuan yg lebih baik
+      alert(err.response?.data?.message);
     } finally {
       setIsLoading(false);
     }
   };
 
+  //fatir: modifikasi resend code
   const handleResendCode = () => {
     setCountdown(60);
     setCanResend(false);
-    console.log('Resending verification code to:', email);
+    console.log("Resending verification code to:", email);
   };
 
-  const isCodeComplete = verificationCode.every(digit => digit !== '');
+  const isCodeComplete = verificationCode.every((digit) => digit !== "");
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-primary-50 to-secondary-50 flex items-center justify-center py-8">
@@ -93,7 +116,7 @@ const VerificationPage = () => {
               <label className="block text-sm font-medium text-gray-700 mb-3 text-center">
                 Masukkan 6-digit kode verifikasi
               </label>
-              
+
               <div className="flex justify-center space-x-2">
                 {verificationCode.map((digit, index) => (
                   <input
@@ -124,7 +147,7 @@ const VerificationPage = () => {
                   Memverifikasi...
                 </>
               ) : (
-                'Verifikasi Akun'
+                "Verifikasi Akun"
               )}
             </button>
           </form>
@@ -132,7 +155,7 @@ const VerificationPage = () => {
           {/* Resend Code */}
           <div className="mt-6 text-center">
             <p className="text-gray-600 text-sm">
-              Tidak menerima kode?{' '}
+              Tidak menerima kode?{" "}
               {canResend ? (
                 <button
                   type="button"
