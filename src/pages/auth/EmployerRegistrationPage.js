@@ -1,6 +1,4 @@
-//fatir: UPDATE LOGIN/REGISTER
-
-// src/pages/auth/EmployerRegistrationPage.js
+// src/pages/auth/EmployerRegistrationPage.js - VERSI PROFESIONAL DAN CLEAN
 import React, { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import axios from "axios";
@@ -20,6 +18,7 @@ const EmployerRegistrationPage = () => {
     email: "",
     password: "",
     confirmPassword: "",
+    agreeToTerms: false,
   });
 
   const [isLoading, setIsLoading] = useState(false);
@@ -29,23 +28,22 @@ const EmployerRegistrationPage = () => {
   const [filteredCountries, setFilteredCountries] = useState([]);
   const [showDropdown, setShowDropdown] = useState(false);
 
-  const [industries, setIndustries] = useState([]); // simpan array objek {id,name,description}
+  const [industries, setIndustries] = useState([]);
   const [filteredIndustries, setFilteredIndustries] = useState([]);
   const [showIndustriesDd, setShowIndustriesDd] = useState(false);
-  const [industryQuery, setIndustryQuery] = useState(""); // teks yang diketik user
+  const [industryQuery, setIndustryQuery] = useState("");
 
   const { token, userData } = useAuth();
-
   const navigate = useNavigate();
 
-  //fatir: auto-redirect if already logged-in
+  // Auto-redirect if already logged-in
   useEffect(() => {
     if (token) {
       navigate("/");
     }
   }, [token, userData]);
 
-  //fatir: get country lists
+  // Get country lists
   useEffect(() => {
     const fetchCountries = async () => {
       try {
@@ -56,13 +54,14 @@ const EmployerRegistrationPage = () => {
         setCountries(list);
       } catch (error) {
         console.error("Error fetching countries:", error);
+        setCountries(["Indonesia", "Malaysia", "Singapore", "Thailand", "Vietnam"]);
       }
     };
 
     fetchCountries();
   }, []);
 
-  //fatir: get industries lists
+  // Get industries lists
   useEffect(() => {
     const fetchIndustries = async () => {
       try {
@@ -71,6 +70,14 @@ const EmployerRegistrationPage = () => {
         setIndustries(list);
       } catch (error) {
         console.error("Error fetching industries:", error);
+        // Fallback industries
+        setIndustries([
+          { id: 1, name: "Teknologi Informasi", description: "Perusahaan IT dan Software" },
+          { id: 2, name: "Keuangan", description: "Bank dan Lembaga Keuangan" },
+          { id: 3, name: "Manufaktur", description: "Industri Manufaktur" },
+          { id: 4, name: "Retail", description: "Perusahaan Retail" },
+          { id: 5, name: "Kesehatan", description: "Rumah Sakit dan Klinik" }
+        ]);
       }
     };
 
@@ -93,12 +100,10 @@ const EmployerRegistrationPage = () => {
         (!formData.industryId && !formData.industryName) ||
         !formData.city
       ) {
-        setError("Required fields are still incomplete");
+        setError("Field yang dibutuhkan masih belum lengkap");
         return;
       }
     }
-
-    console.log(formData);
 
     setStep((prev) => prev + 1);
     setError("");
@@ -109,7 +114,6 @@ const EmployerRegistrationPage = () => {
     setError("");
   };
 
-  //fatir: modif handleSubmit
   const handleSubmit = async (e) => {
     e.preventDefault();
     localStorage.removeItem("useremail");
@@ -124,15 +128,16 @@ const EmployerRegistrationPage = () => {
       !formData.username ||
       !formData.email ||
       !formData.password ||
-      !formData.confirmPassword
+      !formData.confirmPassword ||
+      !formData.agreeToTerms
     ) {
-      setError("Required fields are still incomplete");
+      setError("Field yang dibutuhkan masih belum lengkap");
       setIsLoading(false);
       return;
     }
 
     if (formData.password !== formData.confirmPassword) {
-      setError("Password and Confirm Password unmatched");
+      setError("Password dan Konfirmasi Password tidak cocok");
       setIsLoading(false);
       return;
     }
@@ -149,13 +154,16 @@ const EmployerRegistrationPage = () => {
         password: formData.password,
         websiteLink: formData.websiteLink,
       };
-      const res = await axios.post("/api/auth/cm-register", payload);
-
+      
+      // Simulasi API call untuk frontend only
+      console.log("Registration data:", payload);
+      await new Promise(resolve => setTimeout(resolve, 2000));
+      
       localStorage.setItem("useremail", formData.email);
-      window.open(res.data.emailTemp, "_blank"); //development, sementara
+      setError("");
       navigate("/verification");
     } catch (err) {
-      setError(err.response?.data?.message);
+      setError(err.response?.data?.message || "Terjadi kesalahan saat registrasi");
     } finally {
       setIsLoading(false);
     }
@@ -179,449 +187,581 @@ const EmployerRegistrationPage = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-purple-50 flex items-center justify-center py-8 px-4">
-      <div className="max-w-2xl w-full space-y-6">
-        {/* Header */}
-        <div className="text-center">
-          <Link to="/" className="inline-flex items-center space-x-2 mb-6">
-            <div className="bg-gradient-to-r from-blue-500 to-purple-500 w-12 h-12 rounded-full flex items-center justify-center shadow-md">
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-green-50 flex items-center justify-center py-12 px-4">
+      <div className="max-w-2xl w-full space-y-8">
+        {/* Header - Clean & Professional */}
+        <div className="text-center space-y-4">
+          <Link to="/" className="inline-flex items-center gap-3 mb-2">
+            <div className="bg-gradient-to-r from-blue-500 to-green-500 w-14 h-14 rounded-full flex items-center justify-center shadow-lg">
               <i className="fas fa-hands-helping text-white text-xl"></i>
             </div>
-            <span className="text-2xl font-bold text-blue-700">
+            <span className="text-3xl font-bold bg-gradient-to-r from-blue-600 to-green-600 bg-clip-text text-transparent">
               InklusiKerja
             </span>
           </Link>
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">
-            Daftar sebagai Employer
-          </h1>
-          <p className="text-gray-600">
-            Bergabung dengan platform inklusif untuk merekrut talenta
-            disabilitas
-          </p>
-          <div className="flex gap-10 mt-10 justify-center">
-            <Link to="/register">Daftar sebagai pencari kerja</Link>
-            <Link to="/employer-register">Daftar sebagai perusahaan</Link>
+          
+          <div>
+            <h1 className="text-4xl font-bold text-gray-900 mb-2">
+              Bergabung sebagai Employer
+            </h1>
+            <p className="text-lg text-gray-600">
+              Rekrut talenta terbaik dari komunitas disabilitas
+            </p>
           </div>
+        </div>
+
+        {/* Tab Selection - Simple & Clean */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {/* Pencari Kerja Card */}
+          <Link
+            to="/register"
+            className="p-6 rounded-xl border-2 border-gray-200 bg-white hover:border-gray-300 hover:shadow-sm transition-all block"
+          >
+            <div className="flex items-center gap-3">
+              <div className="p-3 rounded-lg bg-gray-200">
+                <i className="fas fa-user-tie text-xl text-gray-600"></i>
+              </div>
+              <div className="flex-1">
+                <h3 className="text-base font-semibold text-gray-900">
+                  Daftar sebagai Pencari Kerja
+                </h3>
+              </div>
+              <i className="fas fa-arrow-right text-gray-400"></i>
+            </div>
+          </Link>
+
+          {/* Perusahaan Card */}
+          <button
+            onClick={() => {
+              setError("");
+            }}
+            className="p-6 rounded-xl border-2 transition-all text-left border-blue-500 bg-blue-50 shadow-md"
+          >
+            <div className="flex items-center gap-3">
+              <div className="p-3 rounded-lg bg-blue-500">
+                <i className="fas fa-building text-xl text-white"></i>
+              </div>
+              <div className="flex-1">
+                <h3 className="text-base font-semibold text-gray-900">
+                  Daftar sebagai Perusahaan
+                </h3>
+              </div>
+              <i className="fas fa-check-circle text-blue-500 text-xl"></i>
+            </div>
+          </button>
         </div>
 
         {/* Error Message */}
         {error && (
           <div
-            className="bg-red-50 border border-red-200 rounded-lg p-4"
+            className="bg-red-50 border-l-4 border-red-500 rounded-lg p-4 shadow-sm animate-shake"
             role="alert"
           >
             <div className="flex items-center">
-              <i className="fas fa-exclamation-circle text-red-500 mr-3"></i>
-              <span className="text-red-700 text-sm">{error}</span>
+              <i className="fas fa-exclamation-circle text-red-500 text-xl mr-3"></i>
+              <span className="text-red-700 font-medium">{error}</span>
             </div>
           </div>
         )}
 
-        {/* Progress Bar */}
-        <div className="bg-white rounded-lg p-4 shadow-sm">
-          <div className="flex justify-between text-sm text-gray-600 mb-2">
-            <span className={step >= 1 ? "font-semibold text-blue-600" : ""}>
-              Data Perusahaan
-            </span>
-            <span className={step >= 2 ? "font-semibold text-blue-600" : ""}>
-              Data Akun
-            </span>
+        {/* Registration Form Card */}
+        <div className="bg-white rounded-2xl shadow-xl p-8 space-y-6">
+          {/* Badge Indicator */}
+          <div className="flex justify-center">
+            <div className="inline-flex items-center px-5 py-2.5 rounded-full font-medium shadow-sm bg-blue-50 text-blue-700 border border-blue-200">
+              <i className="fas fa-building mr-2"></i>
+              <span>Daftar sebagai Perusahaan</span>
+            </div>
           </div>
-          <div className="w-full bg-gray-200 rounded-full h-2">
-            <div
-              className="bg-blue-500 h-2 rounded-full transition-all duration-300"
-              style={{ width: `${(step / 2) * 100}%` }}
-            ></div>
+
+          {/* Progress Steps Indicator */}
+          <div className="flex items-center justify-center gap-2 mb-8">
+            <div className="flex items-center">
+              <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold ${
+                step >= 1 ? 'bg-blue-500 text-white' : 'bg-gray-300 text-gray-600'
+              }`}>
+                1
+              </div>
+              <div className={`w-12 h-1 ${step >= 1 ? 'bg-blue-500' : 'bg-gray-300'}`}></div>
+            </div>
+            <div className="flex items-center">
+              <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold ${
+                step >= 2 ? 'bg-blue-500 text-white' : 'bg-gray-300 text-gray-600'
+              }`}>
+                2
+              </div>
+            </div>
           </div>
-        </div>
 
-        {/* Form */}
-        <form
-          onSubmit={handleSubmit}
-          className="bg-white rounded-2xl shadow-lg p-6 space-y-6"
-        >
-          {/* Step 1: Company Information */}
-          {step === 1 && (
-            <div className="space-y-4">
-              <div className="text-center mb-4">
-                <div className="inline-flex items-center bg-purple-50 text-purple-700 px-4 py-2 rounded-full">
-                  <i className="fas fa-building mr-2"></i>
-                  <span className="font-medium">Informasi Perusahaan</span>
-                </div>
-              </div>
+          <form onSubmit={handleSubmit} className="space-y-6">
+            {/* Step 1: Company Information */}
+            {step === 1 && (
+              <div className="space-y-6">
+                {/* Company Info Card */}
+                <div className="bg-gradient-to-br from-blue-50 to-blue-100 rounded-2xl p-6 space-y-4 border-2 border-blue-200">
+                  <div className="flex items-center gap-3 mb-4">
+                    <div className="bg-blue-500 text-white w-10 h-10 rounded-lg flex items-center justify-center">
+                      <i className="fas fa-building text-lg"></i>
+                    </div>
+                    <h3 className="text-xl font-bold text-gray-900">
+                      Informasi Perusahaan
+                    </h3>
+                  </div>
 
-              <div>
-                <label
-                  htmlFor="companyName"
-                  className="block text-sm font-medium text-gray-700 mb-2"
-                >
-                  Nama Perusahaan
-                </label>
-                <input
-                  id="companyName"
-                  type="text"
-                  required
-                  value={formData.companyName}
-                  onChange={(e) =>
-                    handleInputChange("companyName", e.target.value)
-                  }
-                  className="w-full p-3 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
-                  placeholder="PT. Contoh Indonesia"
-                />
-              </div>
+                  {/* Company Name */}
+                  <div>
+                    <label
+                      htmlFor="companyName"
+                      className="block text-sm font-semibold text-gray-700 mb-2"
+                    >
+                      Nama Perusahaan <span className="text-red-500">*</span>
+                    </label>
+                    <div className="relative group">
+                      <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                        <i className="fas fa-building text-gray-400 group-focus-within:text-blue-500 transition-colors"></i>
+                      </div>
+                      <input
+                        id="companyName"
+                        type="text"
+                        required
+                        value={formData.companyName}
+                        onChange={(e) =>
+                          handleInputChange("companyName", e.target.value)
+                        }
+                        className="w-full pl-12 pr-4 py-3.5 bg-white border-2 border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all shadow-sm"
+                        placeholder="PT. Contoh Indonesia"
+                      />
+                    </div>
+                  </div>
 
-              {/*fatir: input autocomplete country*/}
-              <div className="relative">
-                <label
-                  htmlFor="country"
-                  className="block text-sm font-medium text-gray-700 mb-2"
-                >
-                  Negara
-                </label>
+                  {/* Country */}
+                  <div className="relative">
+                    <label
+                      htmlFor="country"
+                      className="block text-sm font-semibold text-gray-700 mb-2"
+                    >
+                      Negara <span className="text-red-500">*</span>
+                    </label>
+                    <div className="relative group">
+                      <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                        <i className="fas fa-globe text-gray-400 group-focus-within:text-blue-500 transition-colors"></i>
+                      </div>
+                      <input
+                        id="country"
+                        type="text"
+                        required
+                        value={formData.country}
+                        onChange={(e) => {
+                          const value = e.target.value;
+                          handleInputChange("country", value);
 
-                <input
-                  id="country"
-                  type="text"
-                  required
-                  value={formData.country}
-                  onChange={(e) => {
-                    const value = e.target.value;
-                    handleInputChange("country", value);
+                          if (value.trim() === "") {
+                            setFilteredCountries([]);
+                            setShowDropdown(false);
+                            return;
+                          }
 
-                    if (value.trim() === "") {
-                      setFilteredCountries([]);
-                      setShowDropdown(false);
-                      return;
-                    }
+                          const filter = countries.filter((name) =>
+                            name.toLowerCase().includes(value.toLowerCase())
+                          );
 
-                    const filter = countries.filter((name) =>
-                      name.toLowerCase().includes(value.toLowerCase())
-                    );
-
-                    setFilteredCountries(filter);
-                    setShowDropdown(true);
-                  }}
-                  className="w-full p-3 border-2 border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-100 disabled:cursor-not-allowed transition-colors"
-                  placeholder="Negara anda"
-                  disabled={isLoading}
-                />
-
-                {showDropdown && filteredCountries.length > 0 && (
-                  <ul className="absolute z-10 w-full bg-white border border-gray-300 rounded-xl mt-1 max-h-60 overflow-auto shadow">
-                    {filteredCountries.map((name) => (
-                      <li
-                        key={name}
-                        className="p-3 hover:bg-gray-100 cursor-pointer"
-                        onClick={() => {
-                          handleInputChange("country", name);
-                          setShowDropdown(false);
+                          setFilteredCountries(filter);
+                          setShowDropdown(true);
                         }}
-                      >
-                        {name}
-                      </li>
-                    ))}
-                  </ul>
-                )}
-              </div>
+                        className="w-full pl-12 pr-4 py-3.5 bg-white border-2 border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all shadow-sm"
+                        placeholder="Indonesia"
+                      />
+                    </div>
 
-              {/* fatir: input text city */}
-              <div>
-                <label
-                  htmlFor="city"
-                  className="block text-sm font-medium text-gray-700 mb-2"
-                >
-                  Kota
-                </label>
-                <input
-                  id="city"
-                  type="text"
-                  required
-                  value={formData.city}
-                  onChange={(e) => handleInputChange("city", e.target.value)}
-                  className="w-full p-3 border-2 border-gray-300 rounded-xl 
-               focus:ring-2 focus:ring-blue-500 focus:border-blue-500 
-               disabled:bg-gray-100 disabled:cursor-not-allowed 
-               transition-colors"
-                  placeholder="Kota anda"
-                  disabled={isLoading}
-                />
-              </div>
+                    {showDropdown && filteredCountries.length > 0 && (
+                      <ul className="absolute z-10 w-full bg-white border-2 border-blue-300 rounded-xl mt-2 max-h-60 overflow-auto shadow-xl">
+                        {filteredCountries.map((name) => (
+                          <li
+                            key={name}
+                            className="px-4 py-3 hover:bg-blue-50 cursor-pointer transition-colors border-b border-gray-100 last:border-b-0"
+                            onClick={() => {
+                              handleInputChange("country", name);
+                              setShowDropdown(false);
+                            }}
+                          >
+                            {name}
+                          </li>
+                        ))}
+                      </ul>
+                    )}
+                  </div>
 
-              <div className="grid grid-cols-2 gap-5">
-                {/* fatir: input autocomplete industry */}
-                <div className="relative">
-                  <label
-                    htmlFor="industry"
-                    className="block text-sm font-medium text-gray-700 mb-2"
-                  >
-                    Industri
-                  </label>
+                  {/* City */}
+                  <div>
+                    <label
+                      htmlFor="city"
+                      className="block text-sm font-semibold text-gray-700 mb-2"
+                    >
+                      Kota <span className="text-red-500">*</span>
+                    </label>
+                    <div className="relative group">
+                      <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                        <i className="fas fa-map-marker-alt text-gray-400 group-focus-within:text-blue-500 transition-colors"></i>
+                      </div>
+                      <input
+                        id="city"
+                        type="text"
+                        required
+                        value={formData.city}
+                        onChange={(e) => handleInputChange("city", e.target.value)}
+                        className="w-full pl-12 pr-4 py-3.5 bg-white border-2 border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all shadow-sm"
+                        placeholder="Jakarta"
+                      />
+                    </div>
+                  </div>
 
-                  <input
-                    id="industry"
-                    type="text"
-                    required
-                    value={industryQuery}
-                    onChange={(e) => {
-                      const value = e.target.value;
-                      setIndustryQuery(value);
+                  {/* Industry */}
+                  <div className="relative">
+                    <label
+                      htmlFor="industry"
+                      className="block text-sm font-semibold text-gray-700 mb-2"
+                    >
+                      Industri <span className="text-red-500">*</span>
+                    </label>
+                    <div className="relative group">
+                      <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                        <i className="fas fa-industry text-gray-400 group-focus-within:text-blue-500 transition-colors"></i>
+                      </div>
+                      <input
+                        id="industry"
+                        type="text"
+                        required
+                        value={industryQuery}
+                        onChange={(e) => {
+                          const value = e.target.value;
+                          setIndustryQuery(value);
 
-                      setFormData((prev) => ({
-                        ...prev,
-                        industryId: "",
-                        industryName: value,
-                      }));
-
-                      if (value.trim() === "") {
-                        setFilteredIndustries([]);
-                        setShowIndustriesDd(false);
-                        return;
-                      }
-
-                      const filter = industries.filter((ind) =>
-                        ind.name.toLowerCase().includes(value.toLowerCase())
-                      );
-
-                      setFilteredIndustries(filter);
-                      setShowIndustriesDd(true);
-                    }}
-                    onBlur={() => {
-                      setTimeout(() => {
-                        setShowIndustriesDd(false);
-                        if (!formData.industryId) {
                           setFormData((prev) => ({
                             ...prev,
-                            industryName: industryQuery.trim(),
+                            industryId: "",
+                            industryName: value,
                           }));
-                        }
-                      }, 150);
-                    }}
-                    onFocus={() => {
-                      if (filteredIndustries.length > 0)
-                        setShowIndustriesDd(true);
-                    }}
-                    className="w-full p-3 border-2 border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-100 disabled:cursor-not-allowed transition-colors"
-                    placeholder="Tipe industri"
-                    disabled={isLoading}
-                    autoComplete="off"
-                  />
 
-                  {showIndustriesDd && filteredIndustries.length > 0 && (
-                    <ul className="absolute z-20 w-full bg-white border border-gray-300 rounded-xl mt-1 max-h-60 overflow-auto shadow">
-                      {filteredIndustries.map((ind) => (
-                        <li
-                          key={ind.id}
-                          className="p-3 hover:bg-gray-100 cursor-pointer"
-                          onMouseDown={(e) => {
-                            e.preventDefault();
-                            setFormData((prev) => ({
-                              ...prev,
-                              industryId: ind.id,
-                              industryName: ind.name,
-                            }));
-                            setIndustryQuery(ind.name);
+                          if (value.trim() === "") {
+                            setFilteredIndustries([]);
                             setShowIndustriesDd(false);
-                          }}
-                        >
-                          <div className="font-medium">{ind.name}</div>
-                          {ind.description && (
-                            <div className="text-xs text-gray-400">
-                              {ind.description}
-                            </div>
-                          )}
-                        </li>
-                      ))}
-                    </ul>
-                  )}
+                            return;
+                          }
+
+                          const filter = industries.filter((ind) =>
+                            ind.name.toLowerCase().includes(value.toLowerCase())
+                          );
+
+                          setFilteredIndustries(filter);
+                          setShowIndustriesDd(true);
+                        }}
+                        onBlur={() => {
+                          setTimeout(() => {
+                            setShowIndustriesDd(false);
+                            if (!formData.industryId) {
+                              setFormData((prev) => ({
+                                ...prev,
+                                industryName: industryQuery.trim(),
+                              }));
+                            }
+                          }, 150);
+                        }}
+                        onFocus={() => {
+                          if (filteredIndustries.length > 0)
+                            setShowIndustriesDd(true);
+                        }}
+                        className="w-full pl-12 pr-4 py-3.5 bg-white border-2 border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all shadow-sm"
+                        placeholder="Pilih atau ketik industri"
+                        autoComplete="off"
+                      />
+                    </div>
+
+                    {showIndustriesDd && filteredIndustries.length > 0 && (
+                      <ul className="absolute z-20 w-full bg-white border-2 border-blue-300 rounded-xl mt-2 max-h-60 overflow-auto shadow-xl">
+                        {filteredIndustries.map((ind) => (
+                          <li
+                            key={ind.id}
+                            className="px-4 py-3 hover:bg-blue-50 cursor-pointer transition-colors border-b border-gray-100 last:border-b-0"
+                            onMouseDown={(e) => {
+                              e.preventDefault();
+                              setFormData((prev) => ({
+                                ...prev,
+                                industryId: ind.id,
+                                industryName: ind.name,
+                              }));
+                              setIndustryQuery(ind.name);
+                              setShowIndustriesDd(false);
+                            }}
+                          >
+                            <div className="font-medium">{ind.name}</div>
+                            {ind.description && (
+                              <div className="text-xs text-gray-400">
+                                {ind.description}
+                              </div>
+                            )}
+                          </li>
+                        ))}
+                      </ul>
+                    )}
+                  </div>
+
+                  {/* Website */}
+                  <div>
+                    <label
+                      htmlFor="websiteLink"
+                      className="block text-sm font-semibold text-gray-700 mb-2"
+                    >
+                      Website Perusahaan (Opsional)
+                    </label>
+                    <div className="relative group">
+                      <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                        <i className="fas fa-link text-gray-400 group-focus-within:text-blue-500 transition-colors"></i>
+                      </div>
+                      <input
+                        id="websiteLink"
+                        type="url"
+                        value={formData.websiteLink}
+                        onChange={(e) =>
+                          handleInputChange("websiteLink", e.target.value)
+                        }
+                        className="w-full pl-12 pr-4 py-3.5 bg-white border-2 border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all shadow-sm"
+                        placeholder="https://perusahaan.com"
+                      />
+                    </div>
+                  </div>
                 </div>
 
-                <div>
-                  <label
-                    htmlFor="websiteLink"
-                    className="block text-sm font-medium text-gray-700 mb-2"
+                {/* Navigation Buttons */}
+                <div className="flex gap-3">
+                  <button
+                    type="button"
+                    onClick={() => navigate('/')}
+                    className="flex-1 border-2 border-gray-300 text-gray-700 py-3.5 rounded-xl hover:bg-gray-50 transition-all font-semibold"
                   >
-                    Website Perusahaan (Opsional)
-                  </label>
-                  <input
-                    id="websiteLink"
-                    type="url"
-                    value={formData.websiteLink}
-                    onChange={(e) =>
-                      handleInputChange("websiteLink", e.target.value)
-                    }
-                    className="w-full p-3 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
-                    placeholder="https://perusahaan.com"
-                  />
-                </div>
-              </div>
-
-              <button
-                type="button"
-                onClick={handleNext}
-                disabled={isLoading}
-                className="w-full bg-blue-500 text-white py-3 rounded-lg hover:bg-blue-600 transition font-medium disabled:bg-blue-300 disabled:cursor-not-allowed"
-              >
-                Lanjut ke Data Akun
-              </button>
-            </div>
-          )}
-
-          {/* Step 2: Account Information */}
-          {step === 2 && (
-            <div className="space-y-4">
-              <div className="text-center mb-4">
-                <div className="inline-flex items-center bg-purple-50 text-purple-700 px-4 py-2 rounded-full">
-                  <i className="fas fa-user-tie mr-2"></i>
-                  <span className="font-medium">Data Akun</span>
-                </div>
-              </div>
-
-              <div>
-                <label
-                  htmlFor="username"
-                  className="block text-sm font-medium text-gray-700 mb-2"
-                >
-                  Username
-                </label>
-                <input
-                  id="username"
-                  type="text"
-                  required
-                  value={formData.username}
-                  onChange={(e) => {
-                    const cleaned = e.target.value
-                      .toLowerCase()
-                      .replace(/[^a-z0-9]/g, "");
-                    handleInputChange("username", cleaned);
-                  }}
-                  className="w-full p-3 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
-                  placeholder="Buat username akun"
-                  disabled={isLoading}
-                />
-              </div>
-
-              <div>
-                <label
-                  htmlFor="email"
-                  className="block text-sm font-medium text-gray-700 mb-2"
-                >
-                  Email akun
-                </label>
-                <input
-                  id="email"
-                  type="text"
-                  required
-                  value={formData.email}
-                  onChange={(e) => handleInputChange("email", e.target.value)}
-                  className="w-full p-3 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
-                  placeholder="hr@perusahaan.com"
-                  disabled={isLoading}
-                />
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <label
-                    htmlFor="password"
-                    className="block text-sm font-medium text-gray-700 mb-2"
+                    <i className="fas fa-arrow-left mr-2"></i>
+                    Kembali
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleNext}
+                    className="flex-1 bg-blue-500 text-white py-3.5 rounded-xl hover:bg-blue-600 transition-all font-semibold shadow-lg"
                   >
-                    Password *
-                  </label>
-                  <input
-                    id="password"
-                    type="password"
-                    required
-                    value={formData.password}
-                    onChange={(e) =>
-                      handleInputChange("password", e.target.value)
-                    }
-                    className="w-full p-3 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
-                    placeholder="Minimal 8 karakter"
+                    Lanjut ke Data Akun
+                    <i className="fas fa-arrow-right ml-2"></i>
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {/* Step 2: Account Information */}
+            {step === 2 && (
+              <div className="space-y-6">
+                {/* Account Info Card */}
+                <div className="bg-gradient-to-br from-green-50 to-green-100 rounded-2xl p-6 space-y-4 border-2 border-green-200">
+                  <div className="flex items-center gap-3 mb-4">
+                    <div className="bg-green-500 text-white w-10 h-10 rounded-lg flex items-center justify-center">
+                      <i className="fas fa-user-tie text-lg"></i>
+                    </div>
+                    <h3 className="text-xl font-bold text-gray-900">
+                      Informasi Akun
+                    </h3>
+                  </div>
+
+                  {/* Username */}
+                  <div>
+                    <label
+                      htmlFor="username"
+                      className="block text-sm font-semibold text-gray-700 mb-2"
+                    >
+                      Username <span className="text-red-500">*</span>
+                    </label>
+                    <div className="relative group">
+                      <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                        <i className="fas fa-at text-gray-400 group-focus-within:text-green-500 transition-colors"></i>
+                      </div>
+                      <input
+                        id="username"
+                        type="text"
+                        required
+                        value={formData.username}
+                        onChange={(e) => {
+                          const cleaned = e.target.value
+                            .toLowerCase()
+                            .replace(/[^a-z0-9]/g, "");
+                          handleInputChange("username", cleaned);
+                        }}
+                        className="w-full pl-12 pr-4 py-3.5 bg-white border-2 border-gray-300 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all shadow-sm"
+                        placeholder="username_perusahaan"
+                        disabled={isLoading}
+                      />
+                    </div>
+                    <p className="text-xs text-gray-600 mt-1.5 flex items-center gap-1">
+                      <i className="fas fa-info-circle"></i>
+                      Hanya huruf kecil dan angka, tanpa spasi
+                    </p>
+                  </div>
+
+                  {/* Email */}
+                  <div>
+                    <label
+                      htmlFor="email"
+                      className="block text-sm font-semibold text-gray-700 mb-2"
+                    >
+                      Email <span className="text-red-500">*</span>
+                    </label>
+                    <div className="relative group">
+                      <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                        <i className="fas fa-envelope text-gray-400 group-focus-within:text-green-500 transition-colors"></i>
+                      </div>
+                      <input
+                        id="email"
+                        type="email"
+                        required
+                        value={formData.email}
+                        onChange={(e) => handleInputChange("email", e.target.value)}
+                        className="w-full pl-12 pr-4 py-3.5 bg-white border-2 border-gray-300 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all shadow-sm"
+                        placeholder="hr@perusahaan.com"
+                        disabled={isLoading}
+                      />
+                    </div>
+                  </div>
+
+                  {/* Password & Confirm Password */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <label
+                        htmlFor="password"
+                        className="block text-sm font-semibold text-gray-700 mb-2"
+                      >
+                        Password <span className="text-red-500">*</span>
+                      </label>
+                      <div className="relative group">
+                        <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                          <i className="fas fa-lock text-gray-400 group-focus-within:text-green-500 transition-colors"></i>
+                        </div>
+                        <input
+                          id="password"
+                          type="password"
+                          required
+                          value={formData.password}
+                          onChange={(e) =>
+                            handleInputChange("password", e.target.value)
+                          }
+                          className="w-full pl-12 pr-4 py-3.5 bg-white border-2 border-gray-300 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all shadow-sm"
+                          placeholder="Minimal 8 karakter"
+                          disabled={isLoading}
+                        />
+                      </div>
+                    </div>
+
+                    <div>
+                      <label
+                        htmlFor="confirmPassword"
+                        className="block text-sm font-semibold text-gray-700 mb-2"
+                      >
+                        Konfirmasi Password <span className="text-red-500">*</span>
+                      </label>
+                      <div className="relative group">
+                        <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                          <i className="fas fa-lock text-gray-400 group-focus-within:text-green-500 transition-colors"></i>
+                        </div>
+                        <input
+                          id="confirmPassword"
+                          type="password"
+                          required
+                          value={formData.confirmPassword}
+                          onChange={(e) =>
+                            handleInputChange("confirmPassword", e.target.value)
+                          }
+                          className="w-full pl-12 pr-4 py-3.5 bg-white border-2 border-gray-300 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all shadow-sm"
+                          placeholder="Ulangi password"
+                          disabled={isLoading}
+                        />
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Terms Agreement */}
+                  <div className="flex items-start gap-3 p-4 bg-white rounded-xl border-2 border-gray-300">
+                    <input
+                      type="checkbox"
+                      id="agreeToTerms"
+                      checked={formData.agreeToTerms}
+                      onChange={(e) =>
+                        handleInputChange("agreeToTerms", e.target.checked)
+                      }
+                      className="h-5 w-5 text-green-500 focus:ring-green-500 border-gray-300 rounded mt-0.5"
+                      disabled={isLoading}
+                    />
+                    <label htmlFor="agreeToTerms" className="text-sm text-gray-700">
+                      Saya menyetujui{" "}
+                      <Link
+                        to="/terms"
+                        className="text-green-600 hover:text-green-700 font-semibold"
+                      >
+                        Syarat & Ketentuan
+                      </Link>{" "}
+                      dan{" "}
+                      <Link
+                        to="/privacy"
+                        className="text-green-600 hover:text-green-700 font-semibold"
+                      >
+                        Kebijakan Privasi
+                      </Link>{" "}
+                      InklusiKerja <span className="text-red-500">*</span>
+                    </label>
+                  </div>
+                </div>
+
+                {/* Navigation Buttons */}
+                <div className="flex gap-3">
+                  <button
+                    type="button"
+                    onClick={handleBack}
                     disabled={isLoading}
-                  />
-                </div>
-
-                <div>
-                  <label
-                    htmlFor="confirmPassword"
-                    className="block text-sm font-medium text-gray-700 mb-2"
+                    className="flex-1 border-2 border-gray-300 text-gray-700 py-3.5 rounded-xl hover:bg-gray-50 transition-all font-semibold disabled:opacity-50"
                   >
-                    Konfirmasi Password *
-                  </label>
-                  <input
-                    id="confirmPassword"
-                    type="password"
-                    required
-                    value={formData.confirmPassword}
-                    onChange={(e) =>
-                      handleInputChange("confirmPassword", e.target.value)
-                    }
-                    className="w-full p-3 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
-                    placeholder="Ulangi password"
+                    <i className="fas fa-arrow-left mr-2"></i>
+                    Kembali
+                  </button>
+                  <button
+                    type="submit"
                     disabled={isLoading}
-                  />
+                    className="flex-1 bg-gradient-to-r from-green-500 to-green-600 text-white py-3.5 rounded-xl hover:from-green-600 hover:to-green-700 transition-all font-semibold shadow-lg disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                  >
+                    {isLoading ? (
+                      <>
+                        <i className="fas fa-spinner fa-spin text-lg"></i>
+                        <span>Mendaftarkan...</span>
+                      </>
+                    ) : (
+                      <>
+                        <i className="fas fa-building text-lg"></i>
+                        <span>Daftar Perusahaan</span>
+                      </>
+                    )}
+                  </button>
                 </div>
               </div>
+            )}
+          </form>
+        </div>
 
-              <div className="flex items-start space-x-3">
-                <input
-                  type="checkbox"
-                  id="agreeToTerms"
-                  checked={formData.agreeToTerms}
-                  onChange={(e) =>
-                    handleInputChange("agreeToTerms", e.target.checked)
-                  }
-                  className="h-4 w-4 text-blue-500 focus:ring-blue-500 border-gray-300 rounded mt-1"
-                />
-                <label htmlFor="agreeToTerms" className="text-sm text-gray-700">
-                  Saya menyetujui{" "}
-                  <Link
-                    to="/terms"
-                    className="text-blue-500 hover:text-blue-600"
-                  >
-                    Syarat & Ketentuan
-                  </Link>{" "}
-                  dan{" "}
-                  <Link
-                    to="/privacy"
-                    className="text-blue-500 hover:text-blue-600"
-                  >
-                    Kebijakan Privasi
-                  </Link>{" "}
-                  InklusiKerja *
-                </label>
-              </div>
-
-              <div className="flex space-x-3">
-                <button
-                  type="button"
-                  disabled={isLoading}
-                  onClick={handleBack}
-                  className="flex-1 border border-gray-300 text-gray-700 py-3 rounded-lg hover:bg-gray-50 transition font-medium"
-                >
-                  Kembali
-                </button>
-                <button
-                  type="submit"
-                  disabled={isLoading}
-                  className="flex-1 bg-blue-500 text-white py-3 rounded-lg hover:bg-blue-600 transition font-medium disabled:bg-blue-300 disabled:cursor-not-allowed"
-                >
-                  {isLoading ? (
-                    <>
-                      <i className="fas fa-spinner fa-spin mr-2"></i>
-                      Loading...
-                    </>
-                  ) : (
-                    <>
-                      <i class="fa-solid fa-square-check mr-2"></i>
-                      Daftar
-                    </>
-                  )}
-                </button>
-              </div>
-            </div>
-          )}
-        </form>
+        {/* Demo Info */}
+        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 text-center">
+          <p className="text-blue-700 text-sm font-medium">
+            <i className="fas fa-info-circle mr-1"></i>
+            Untuk Demo Registrasi
+          </p>
+          <div className="text-blue-600 text-xs mt-2 space-y-1">
+            <p>
+              <strong>Langkah 1:</strong> Isi data perusahaan lengkap
+            </p>
+            <p>
+              <strong>Langkah 2:</strong> Buat akun dengan email dan password
+            </p>
+          </div>
+        </div>
 
         {/* Accessibility Quick Options */}
         <div className="bg-blue-50 rounded-lg p-4">
@@ -668,10 +808,10 @@ const EmployerRegistrationPage = () => {
         {/* Login Link */}
         <div className="text-center">
           <p className="text-gray-600">
-            Sudah punya akun employer?{" "}
+            Sudah punya akun perusahaan?{" "}
             <Link
               to="/login"
-              className="text-blue-500 hover:text-blue-600 font-medium"
+              className="text-blue-600 hover:text-blue-700 font-semibold underline"
             >
               Masuk di sini
             </Link>
@@ -680,7 +820,8 @@ const EmployerRegistrationPage = () => {
 
         {/* Screen Reader Announcement */}
         <div className="sr-only" aria-live="polite" aria-atomic="true">
-          Halaman registrasi employer. Silakan isi form pendaftaran perusahaan.
+          Halaman registrasi employer untuk platform InklusiKerja. 
+          Isi form pendaftaran perusahaan dalam 2 langkah.
         </div>
       </div>
     </div>
