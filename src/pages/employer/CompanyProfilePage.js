@@ -1,520 +1,464 @@
-// src/pages/employer/CompanyProfilePage.js
-import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
+// src/pages/ProfilePage.js - VERSI FIXED
+import axios from "axios";
+import React, { useEffect, useState } from "react";
+import { Link, useNavigate, useParams } from "react-router-dom";
+import defaultCm from "../../assets/default-company.png";
+import { useAuth } from "../../contexts/AuthContext";
+import { useSnackbar } from "notistack";
+import CmEditProfilePopup from "../../components/popups/CmEditProfilePopup";
 
-const CompanyProfilePage = () => {
-  const [activeTab, setActiveTab] = useState('profile');
-  const [isEditing, setIsEditing] = useState(false);
-  
-  // Mock company data - sama seperti di dashboard untuk konsistensi
-  const [companyData, setCompanyData] = useState({
-    name: "PT Tech Inklusif",
-    industry: "Technology",
-    size: "51-200 employees",
-    plan: "Premium",
-    joinedDate: "2023-05-15",
-    website: "https://techinklusif.com",
-    email: "hr@techinklusif.com",
-    phone: "+62 21 1234 5678",
-    address: "Jl. Sudirman No. 123, Jakarta Selatan",
-    description: "Perusahaan teknologi yang berfokus pada pengembangan solusi inklusif untuk semua kalangan.",
-    inclusivityStatement: "Kami berkomitmen menciptakan lingkungan kerja yang inklusif dan mendukung bagi semua karyawan, termasuk penyandang disabilitas. Kami percaya bahwa diversitas adalah kekuatan yang mendorong inovasi.",
-    logo: null,
-    benefits: ["Health Insurance", "Flexible Hours", "Remote Work", "Training Budget", "Mental Health Support"],
-    accommodations: ["Wheelchair Access", "Screen Reader Support", "Sign Language Interpreter", "Ergonomic Equipment"]
-  });
+const ProfilePage = () => {
+  const { token, userData } = useAuth();
+  const { userId } = useParams();
+  const navigate = useNavigate();
+  const { enqueueSnackbar } = useSnackbar();
 
-  const [socialMedia, setSocialMedia] = useState({
-    linkedin: "https://linkedin.com/company/techinklusif",
-    twitter: "https://twitter.com/techinklusif",
-    facebook: "https://facebook.com/techinklusif",
-    instagram: "https://instagram.com/techinklusif"
-  });
+  const [loading, setLoading] = useState(false);
 
-  const tabs = [
-    { id: 'profile', label: 'Profil Perusahaan', icon: 'building' },
-    { id: 'branding', label: 'Branding', icon: 'palette' },
-    { id: 'social', label: 'Media Sosial', icon: 'share-alt' },
-    { id: 'settings', label: 'Pengaturan', icon: 'cog' }
-  ];
+  const [profileData, setProfileData] = useState({});
+  const [educations, setEducations] = useState([]);
+  const [experiences, setExperiences] = useState([]);
+  const [skills, setSkills] = useState([]);
+  const [disabilities, setDisabilities] = useState([]);
 
-  const handleSave = () => {
-    console.log('Saving company data:', companyData);
-    setIsEditing(false);
-    // Di real app, ini akan API call
+  const [countries, setCountries] = useState([]);
+
+  const [showEditProfPopup, setShowEditProfPopup] = useState(false);
+
+  useEffect(() => {
+    if (loading) {
+      document.body.style.cursor = "wait";
+    } else {
+      document.body.style.cursor = "default";
+    }
+
+    return () => {
+      document.body.style.cursor = "default";
+    };
+  }, [loading]);
+
+  //profile completion calculations
+  const computeProfileCompletion = () => {
+    const hasDisability =
+      Array.isArray(disabilities) && disabilities.length > 0;
+    const hasSkill = Array.isArray(skills) && skills.length > 0;
+    const hasExperience = Array.isArray(experiences) && experiences.length > 0;
+    const hasEducation = Array.isArray(educations) && educations.length > 0;
+
+    const detailsCount = [
+      hasDisability,
+      hasSkill,
+      hasExperience,
+      hasEducation,
+    ].filter(Boolean).length;
+
+    const hasBio = Boolean(
+      profileData?.profile?.bio && String(profileData.bio).trim() !== ""
+    );
+    const hasPic = Boolean(
+      profileData?.profilePicture &&
+        String(profileData.profilePicture).trim() !== ""
+    );
+
+    // default
+    let percent = 0;
+
+    if (hasBio && hasPic) {
+      if (detailsCount === 4) percent = 100;
+      else if (detailsCount === 3) percent = 75;
+      else if (detailsCount === 2) percent = 50;
+      else if (detailsCount === 1)
+        percent = 50; // sesuai request (kurang 3 => 50%)
+      else percent = 25;
+    } else {
+      // ada missing bio/pic
+      if (detailsCount === 0 && !hasBio && !hasPic) percent = 10;
+      else percent = 25;
+    }
+
+    return {
+      percent,
+      hasBio,
+      hasPic,
+      detailsCount,
+      breakdown: {
+        hasDisability,
+        hasSkill,
+        hasExperience,
+        hasEducation,
+      },
+    };
   };
+  const profileCompletion = computeProfileCompletion();
 
-  const handleLogoUpload = (event) => {
-    const file = event.target.files[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        setCompanyData({...companyData, logo: e.target.result});
-      };
-      reader.readAsDataURL(file);
+  //fatir: get countries
+  useEffect(() => {
+    const fetchCountries = async () => {
+      try {
+        const res = await axios.get(
+          "https://restcountries.com/v3.1/all?fields=name"
+        );
+        const list = res.data.map((c) => c.name.common).sort();
+        setCountries(list);
+      } catch (error) {
+        console.error("Error fetching countries:", error);
+        setCountries([
+          "Indonesia",
+          "Malaysia",
+          "Singapore",
+          "Thailand",
+          "Vietnam",
+        ]);
+      }
+    };
+
+    fetchCountries();
+  }, []);
+
+  //fatir: get user by id
+  const getUserById = async () => {
+    try {
+      const res = await axios.get(`/api/user/${userId}`);
+
+      if (res.data.data.role === "job-seeker") {
+        navigate(`/js/${userId}`);
+      }
+      setProfileData(res.data.data);
+      console.log(res.data);
+    } catch (error) {
+      console.error("Error fetching user:", error);
+      navigate("/");
     }
   };
 
-  const getInitials = (name) => {
-    return name.split(' ').map(word => word[0]).join('').toUpperCase();
+  useEffect(() => {
+    getUserById();
+  }, [userId]);
+
+  /*
+    fatir: EDITING/UPDATING OPERATIONS
+  */
+  //handle edit profile
+  const handleEditProfile = async (form) => {
+    setLoading(true);
+    try {
+      const payload = {};
+      Object.keys(form).forEach((key) => {
+        if (profileData?.company?.[key] !== form[key]) {
+          payload[key] = form[key] === "" ? null : form[key];
+        }
+      });
+      if (Object.keys(payload).length === 0) {
+        enqueueSnackbar("Tidak ada perubahan data", { variant: "info" });
+        return;
+      }
+
+      console.log(payload);
+
+      const res = await axios.put("/api/user/cm/profile", payload, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      enqueueSnackbar(res.data.message || "Profil berhasil diperbarui", {
+        variant: "success",
+      });
+
+      getUserById();
+    } catch (error) {
+      enqueueSnackbar(
+        error?.response?.data?.message || "Gagal mengupdate profil",
+        { variant: "warning" }
+      );
+    } finally {
+      setLoading(false);
+    }
+  };
+  //handle edit profile picture
+  const handleEditPfp = async (e, mode = "upload") => {
+    setLoading(true);
+    try {
+      let payload;
+      let headers = {
+        Authorization: `Bearer ${token}`,
+      };
+
+      if (mode === "upload") {
+        const file = e.target?.files?.[0];
+        if (!file) return;
+
+        const formData = new FormData();
+        formData.append("profilePicture", file);
+
+        payload = formData;
+        headers["Content-Type"] = "multipart/form-data";
+      }
+
+      if (mode === "delete") {
+        payload = {};
+      }
+
+      const res = await axios.patch(
+        "/api/user/update-profile-picture",
+        payload,
+        { headers }
+      );
+
+      enqueueSnackbar(res.data.message, { variant: "success" });
+
+      getUserById();
+    } catch (error) {
+      enqueueSnackbar(
+        error.response?.data?.message ||
+          (mode === "delete"
+            ? "Gagal menghapus foto profil."
+            : "Gagal memperbarui foto profil."),
+        { variant: "warning" }
+      );
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-primary-50 to-secondary-50">
-      <main id="main-content" className="container mx-auto px-4 py-8">
-        {/* Header */}
-        <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center mb-8">
-          <div>
-            <h1 className="text-3xl font-bold text-primary-700 mb-2">Profil Perusahaan</h1>
-            <p className="text-gray-600">
-              Kelola informasi dan branding perusahaan Anda
-            </p>
-          </div>
-          <div className="flex gap-3 mt-4 lg:mt-0">
-            {!isEditing ? (
-              <button 
-                onClick={() => setIsEditing(true)}
-                className="bg-primary-500 text-white px-6 py-3 rounded-lg hover:bg-primary-600 transition font-medium flex items-center gap-2"
-              >
-                <i className="fas fa-edit"></i>
-                Edit Profil
-              </button>
-            ) : (
-              <div className="flex gap-2">
-                <button 
-                  onClick={handleSave}
-                  className="bg-green-500 text-white px-6 py-3 rounded-lg hover:bg-green-600 transition font-medium flex items-center gap-2"
+    <>
+      <div className="flex gap-10 min-h-screen bg-gradient-to-br from-primary-50 to-secondary-50 mx-auto lg:px-36 py-8">
+        {/* Main Content */}
+        <main id="main-content" className="container">
+          {/* Profile Header */}
+          <div className="bg-white rounded shadow-lg overflow-hidden mb-4 relative">
+            {userData?.id === profileData?.id && (
+              <div className="absolute top-3 right-3 flex gap-5">
+                <Link to={`/employer`}>
+                  <button className="px-5 py-2 rounded bg-white">
+                    Dashboard{" "}
+                    <i
+                      className="fas fa-tachometer-alt w-4"
+                      aria-hidden="true"
+                    ></i>{" "}
+                  </button>
+                </Link>
+                <button
+                  className="px-5 py-2 rounded bg-white"
+                  onClick={() => setShowEditProfPopup(!showEditProfPopup)}
                 >
-                  <i className="fas fa-save"></i>
-                  Simpan Perubahan
-                </button>
-                <button 
-                  onClick={() => setIsEditing(false)}
-                  className="border border-gray-300 text-gray-700 px-6 py-3 rounded-lg hover:bg-gray-50 transition font-medium"
-                >
-                  Batal
+                  Edit Profile <i class="fa-solid fa-pen-to-square"></i>
                 </button>
               </div>
             )}
-            <Link 
-              to="/employer/dashboard"
-              className="border border-primary-500 text-primary-500 px-4 py-3 rounded-lg hover:bg-primary-50 transition flex items-center gap-2"
-            >
-              <i className="fas fa-arrow-left"></i>
-              Kembali
-            </Link>
-          </div>
-        </div>
-
-        <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
-          {/* Sidebar */}
-          <div className="lg:col-span-1">
-            <div className="bg-white rounded-2xl shadow-lg p-6 sticky top-32">
-              {/* Company Logo & Basic Info */}
-              <div className="text-center mb-6">
-                <div className="relative inline-block mb-4">
-                  {companyData.logo ? (
-                    <img 
-                      src={companyData.logo} 
-                      alt={companyData.name}
-                      className="w-20 h-20 rounded-2xl object-cover border-4 border-white shadow-lg"
+            <div className="bg-gradient-to-r from-violet-700 to-violet-300 h-28"></div>
+            <div className="px-8 pb-8">
+              <div className="flex flex-col items-start -mt-16">
+                <div className="relative">
+                  <div className="h-32 w-32 aspect-square rounded-full bg-white">
+                    <img
+                      src={profileData?.profilePicture || defaultCm}
+                      alt="profile picture"
+                      className="h-32 w-32 aspect-square rounded-full object-cover"
                     />
-                  ) : (
-                    <div className="w-20 h-20 bg-gradient-to-br from-primary-500 to-secondary-500 rounded-2xl flex items-center justify-center text-white font-bold text-2xl mx-auto shadow-lg">
-                      {getInitials(companyData.name)}
-                    </div>
-                  )}
-                  {isEditing && (
-                    <label className="absolute -bottom-2 -right-2 bg-primary-500 text-white p-2 rounded-full cursor-pointer hover:bg-primary-600 transition">
-                      <i className="fas fa-camera text-sm"></i>
-                      <input 
-                        type="file" 
+                  </div>
+                  {userData?.id === profileData?.id && (
+                    <>
+                      <label
+                        htmlFor="profilePictureInput"
+                        className={`${
+                          profileData?.profilePicture
+                            ? "absolute right-0 bottom-0"
+                            : "absolute bottom-2 right-2"
+                        } bg-white/70 p-2 rounded-full shadow-md hover:bg-gray-100 transition cursor-pointer`}
+                      >
+                        <i className="fas fa-camera text-gray-600"></i>
+                      </label>
+
+                      <input
+                        id="profilePictureInput"
+                        type="file"
                         accept="image/*"
-                        onChange={handleLogoUpload}
                         className="hidden"
+                        onChange={(e) => handleEditPfp(e, "upload")}
                       />
-                    </label>
+                      {profileData?.profilePicture && (
+                        <button
+                          title="Delete Profile Picture"
+                          onClick={(e) => handleEditPfp(null, "delete")}
+                          className="absolute -bottom-4 right-10 p-2 bg-white/70 rounded-full shadow-md hover:bg-gray-100 transition cursor-pointer"
+                        >
+                          <i class="fa-solid fa-trash text-gray-600"></i>
+                        </button>
+                      )}
+                    </>
                   )}
                 </div>
-                <h3 className="font-bold text-gray-900">{companyData.name}</h3>
-                <p className="text-sm text-gray-600">{companyData.industry}</p>
-                <span className="inline-block bg-green-100 text-green-800 text-xs px-2 py-1 rounded-full mt-2">
-                  {companyData.plan}
-                </span>
-              </div>
 
-              {/* Navigation */}
-              <nav className="space-y-2">
-                {tabs.map(tab => (
-                  <button
-                    key={tab.id}
-                    onClick={() => setActiveTab(tab.id)}
-                    className={`w-full text-left px-4 py-3 rounded-lg flex items-center gap-3 transition ${
-                      activeTab === tab.id 
-                        ? 'bg-primary-100 text-primary-600 border-l-4 border-primary-500' 
-                        : 'hover:bg-gray-50'
-                    }`}
-                  >
-                    <i className={`fas fa-${tab.icon} text-primary-500 w-5 text-center`}></i>
-                    <span className="text-sm">{tab.label}</span>
-                  </button>
-                ))}
-              </nav>
+                <div className="flex flex-col mt-6 flex-1 md:flex-row md:items-center justify-between">
+                  <div>
+                    <h1 className="text-3xl font-bold text-gray-900">
+                      {profileData?.company?.companyName}{" "}
+                      <Link
+                        to={`/cm/${profileData?.id}`}
+                        className="text-base text-blue-600 font-normal"
+                      >
+                        @{profileData?.username}
+                      </Link>
+                    </h1>
+                    <p className="mt-1 text-gray-600 capitalize">
+                      {profileData?.company?.Industry?.name ||
+                        profileData?.company?.industryName}
+                    </p>
 
-              {/* Quick Stats */}
-              <div className="border-t mt-6 pt-6">
-                <div className="space-y-3">
-                  <div className="flex justify-between text-sm">
-                    <span className="text-gray-600">Member Since</span>
-                    <span className="font-medium text-primary-600">{companyData.joinedDate}</span>
-                  </div>
-                  <div className="flex justify-between text-sm">
-                    <span className="text-gray-600">Profile Views</span>
-                    <span className="font-medium text-green-600">1,560</span>
-                  </div>
-                  <div className="flex justify-between text-sm">
-                    <span className="text-gray-600">Completion</span>
-                    <span className="font-medium text-blue-600">85%</span>
+                    <div className="flex items-center mt-2 text-gray-600">
+                      <i className="fas fa-map-marker-alt mr-2"></i>
+                      <span className="capitalize">
+                        {profileData?.company?.country},{" "}
+                        {profileData?.company?.city}
+                      </span>
+                      <span className="mx-2">•</span>
+                      <i className="fas fa-clock mr-2"></i>
+                      <span>
+                        Bergabung sejak{" "}
+                        {profileData?.createdAt
+                          ? new Intl.DateTimeFormat("id-ID", {
+                              day: "numeric",
+                              month: "long",
+                              year: "numeric",
+                            }).format(new Date(profileData.createdAt))
+                          : "-"}
+                      </span>
+                    </div>
+
+                    <div className="flex gap-4 mt-4">
+                      {profileData?.company?.websiteLink && (
+                        <a
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          href={profileData?.company?.websiteLink}
+                        >
+                          <button className="bg-blue-600 text-sm text-white cursor-pointer hover:bg-blue-700 rounded-full px-5 py-2">
+                            <i class="fa-solid fa-link"></i> Kunjungi Website
+                          </button>
+                        </a>
+                      )}
+                      <Link to={"#"}>
+                        <button className="text-sm text-blue-700 border border-blue-700 cursor-pointer hover:bg-gray-100 rounded-full px-5 py-2">
+                          <i class="fa-solid fa-eye"></i> Lihat Pekerjaan
+                        </button>
+                      </Link>
+                    </div>
                   </div>
                 </div>
               </div>
+
+              {/* Profile Completion */}
+              {userData?.id === profileData?.id && (
+                <div className="mt-6 bg-primary-50 rounded-lg p-4">
+                  <div className="flex justify-between items-center mb-2">
+                    <span className="font-medium">Kelengkapan Profil</span>
+                    <span className="font-bold text-primary-600">
+                      {profileCompletion.percent}%
+                    </span>
+                  </div>
+                  <div className="w-full bg-gray-200 rounded-full h-2 overflow-hidden">
+                    <div
+                      className={`h-2 rounded-full transition-all duration-300 ${
+                        profileCompletion.percent >= 75
+                          ? "bg-green-500"
+                          : profileCompletion.percent >= 50
+                          ? "bg-yellow-400"
+                          : "bg-red-400"
+                      }`}
+                      style={{ width: `${profileCompletion.percent}%` }}
+                    />
+                  </div>
+                  <p className="text-sm text-gray-600 mt-2">
+                    {profileCompletion.percent !== 100
+                      ? "Lengkapi profil Anda untuk meningkatkan peluang diterima kerja"
+                      : "Profil anda sudah sempurna!"}
+                  </p>
+                </div>
+              )}
             </div>
           </div>
 
-          {/* Main Content */}
-          <div className="lg:col-span-3">
-            {/* Profile Tab */}
-            {activeTab === 'profile' && (
-              <div className="space-y-6">
-                {/* Basic Information */}
-                <div className="bg-white rounded-2xl shadow-lg p-6">
-                  <h3 className="text-lg font-bold text-gray-900 mb-4">Informasi Dasar</h3>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Nama Perusahaan
-                      </label>
-                      <input 
-                        type="text" 
-                        value={companyData.name}
-                        onChange={(e) => setCompanyData({...companyData, name: e.target.value})}
-                        disabled={!isEditing}
-                        className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 disabled:bg-gray-100 disabled:text-gray-500"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Industri
-                      </label>
-                      <input 
-                        type="text" 
-                        value={companyData.industry}
-                        onChange={(e) => setCompanyData({...companyData, industry: e.target.value})}
-                        disabled={!isEditing}
-                        className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 disabled:bg-gray-100 disabled:text-gray-500"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Ukuran Perusahaan
-                      </label>
-                      <select 
-                        value={companyData.size}
-                        onChange={(e) => setCompanyData({...companyData, size: e.target.value})}
-                        disabled={!isEditing}
-                        className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 disabled:bg-gray-100 disabled:text-gray-500"
-                      >
-                        <option value="1-10 employees">1-10 employees</option>
-                        <option value="11-50 employees">11-50 employees</option>
-                        <option value="51-200 employees">51-200 employees</option>
-                        <option value="201-500 employees">201-500 employees</option>
-                        <option value="501-1000 employees">501-1000 employees</option>
-                        <option value="1000+ employees">1000+ employees</option>
-                      </select>
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Website
-                      </label>
-                      <input 
-                        type="url" 
-                        value={companyData.website}
-                        onChange={(e) => setCompanyData({...companyData, website: e.target.value})}
-                        disabled={!isEditing}
-                        className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 disabled:bg-gray-100 disabled:text-gray-500"
-                      />
-                    </div>
-                  </div>
-                </div>
-
-                {/* Contact Information */}
-                <div className="bg-white rounded-2xl shadow-lg p-6">
-                  <h3 className="text-lg font-bold text-gray-900 mb-4">Informasi Kontak</h3>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Email Perusahaan
-                      </label>
-                      <input 
-                        type="email" 
-                        value={companyData.email}
-                        onChange={(e) => setCompanyData({...companyData, email: e.target.value})}
-                        disabled={!isEditing}
-                        className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 disabled:bg-gray-100 disabled:text-gray-500"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Telepon
-                      </label>
-                      <input 
-                        type="tel" 
-                        value={companyData.phone}
-                        onChange={(e) => setCompanyData({...companyData, phone: e.target.value})}
-                        disabled={!isEditing}
-                        className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 disabled:bg-gray-100 disabled:text-gray-500"
-                      />
-                    </div>
-                    <div className="md:col-span-2">
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Alamat
-                      </label>
-                      <textarea 
-                        value={companyData.address}
-                        onChange={(e) => setCompanyData({...companyData, address: e.target.value})}
-                        disabled={!isEditing}
-                        rows="3"
-                        className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 disabled:bg-gray-100 disabled:text-gray-500"
-                      />
-                    </div>
-                  </div>
-                </div>
-
-                {/* Company Description */}
-                <div className="bg-white rounded-2xl shadow-lg p-6">
-                  <h3 className="text-lg font-bold text-gray-900 mb-4">Deskripsi Perusahaan</h3>
-                  <textarea 
-                    value={companyData.description}
-                    onChange={(e) => setCompanyData({...companyData, description: e.target.value})}
-                    disabled={!isEditing}
-                    rows="4"
-                    className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 disabled:bg-gray-100 disabled:text-gray-500"
-                    placeholder="Deskripsikan perusahaan Anda, misi, visi, dan nilai-nilai..."
-                  />
-                </div>
-
-                {/* Inclusivity Statement */}
-                <div className="bg-white rounded-2xl shadow-lg p-6">
-                  <h3 className="text-lg font-bold text-gray-900 mb-4">
-                    <i className="fas fa-heart text-red-500 mr-2"></i>
-                    Pernyataan Inklusivitas
-                  </h3>
-                  <textarea 
-                    value={companyData.inclusivityStatement}
-                    onChange={(e) => setCompanyData({...companyData, inclusivityStatement: e.target.value})}
-                    disabled={!isEditing}
-                    rows="5"
-                    className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 disabled:bg-gray-100 disabled:text-gray-500"
-                    placeholder="Bagaimana komitmen perusahaan Anda terhadap inklusivitas dan diversitas?"
-                  />
-                  <p className="text-sm text-gray-500 mt-2">
-                    Pernyataan ini akan ditampilkan kepada kandidat dan menunjukkan komitmen perusahaan terhadap lingkungan kerja inklusif.
-                  </p>
-                </div>
-
-                {/* Benefits & Accommodations */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  {/* Employee Benefits */}
-                  <div className="bg-white rounded-2xl shadow-lg p-6">
-                    <h3 className="text-lg font-bold text-gray-900 mb-4">Benefit Karyawan</h3>
-                    <div className="space-y-2">
-                      {companyData.benefits.map((benefit, index) => (
-                        <div key={index} className="flex items-center gap-3">
-                          <i className="fas fa-check text-green-500"></i>
-                          <span className="text-gray-700">{benefit}</span>
-                        </div>
-                      ))}
-                    </div>
-                    {isEditing && (
-                      <button className="mt-4 text-primary-500 hover:text-primary-600 text-sm font-medium">
-                        + Tambah Benefit
-                      </button>
-                    )}
-                  </div>
-
-                  {/* Accommodations */}
-                  <div className="bg-white rounded-2xl shadow-lg p-6">
-                    <h3 className="text-lg font-bold text-gray-900 mb-4">
-                      <i className="fas fa-universal-access text-primary-500 mr-2"></i>
-                      Fasilitas Aksesibilitas
-                    </h3>
-                    <div className="space-y-2">
-                      {companyData.accommodations.map((accommodation, index) => (
-                        <div key={index} className="flex items-center gap-3">
-                          <i className="fas fa-check text-blue-500"></i>
-                          <span className="text-gray-700">{accommodation}</span>
-                        </div>
-                      ))}
-                    </div>
-                    {isEditing && (
-                      <button className="mt-4 text-primary-500 hover:text-primary-600 text-sm font-medium">
-                        + Tambah Fasilitas
-                      </button>
-                    )}
-                  </div>
-                </div>
+          <div className="flex flex-col bg-white shadow-lg overflow-hidden p-7 mb-4">
+            <h1 className="text-2xl font-bold text-gray-900">Tentang</h1>
+            {profileData?.company?.companyDescription && (
+              <p className="mt-3 text-gray-600 leading-relaxed">
+                {profileData?.company?.companyDescription}
+              </p>
+            )}
+            <div className="mt-8">
+              <h2 className="font-semibold text-gray-900">Nama Perusahaan</h2>
+              <p className="mt-1 text-gray-600">
+                {profileData?.company?.companyName}
+              </p>
+            </div>
+            <div className="mt-6">
+              <h2 className="font-semibold text-gray-900">Industri</h2>
+              <p className="mt-1 text-gray-600 capitalize">
+                {profileData?.company?.Industry?.name ||
+                  profileData?.company?.industryName}
+              </p>
+            </div>
+            <div className="mt-6">
+              <h2 className="font-semibold text-gray-900">Lokasi</h2>
+              <p className="mt-1 text-gray-600 capitalize">
+                {`${profileData?.company?.country}, ${profileData?.company?.city}`}
+              </p>
+              {profileData?.company?.address && (
+                <p className="mt-1 text-gray-600">
+                  {profileData?.company?.address}
+                </p>
+              )}
+            </div>
+            {profileData?.company?.establishedYear && (
+              <div className="mt-6">
+                <h2 className="font-semibold text-gray-900">Tahun Berdiri</h2>
+                <p className="mt-1 text-gray-600">
+                  {profileData?.company?.establishedYear}
+                </p>
               </div>
             )}
-
-            {/* Branding Tab */}
-            {activeTab === 'branding' && (
-              <div className="space-y-6">
-                <div className="bg-white rounded-2xl shadow-lg p-6">
-                  <h3 className="text-lg font-bold text-gray-900 mb-4">Brand Identity</h3>
-                  <p className="text-gray-600 mb-6">Kelola logo, warna, dan identitas visual perusahaan Anda.</p>
-                  
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-4">
-                        Logo Perusahaan
-                      </label>
-                      <div className="border-2 border-dashed border-gray-300 rounded-2xl p-8 text-center">
-                        {companyData.logo ? (
-                          <div className="space-y-4">
-                            <img 
-                              src={companyData.logo} 
-                              alt="Company Logo" 
-                              className="w-32 h-32 rounded-lg object-cover mx-auto"
-                            />
-                            <button 
-                              onClick={() => setCompanyData({...companyData, logo: null})}
-                              className="text-red-500 hover:text-red-600 text-sm"
-                            >
-                              Hapus Logo
-                            </button>
-                          </div>
-                        ) : (
-                          <div>
-                            <i className="fas fa-cloud-upload-alt text-4xl text-gray-400 mb-4"></i>
-                            <p className="text-gray-500 mb-2">Upload logo perusahaan</p>
-                            <label className="bg-primary-500 text-white px-4 py-2 rounded-lg cursor-pointer hover:bg-primary-600 transition">
-                              Pilih File
-                              <input 
-                                type="file" 
-                                accept="image/*"
-                                onChange={handleLogoUpload}
-                                className="hidden"
-                              />
-                            </label>
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                    
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-4">
-                        Brand Colors
-                      </label>
-                      <div className="space-y-4">
-                        <div className="flex items-center gap-3">
-                          <div className="w-8 h-8 bg-primary-500 rounded"></div>
-                          <span>Primary Color</span>
-                        </div>
-                        <div className="flex items-center gap-3">
-                          <div className="w-8 h-8 bg-secondary-500 rounded"></div>
-                          <span>Secondary Color</span>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {/* Social Media Tab */}
-            {activeTab === 'social' && (
-              <div className="space-y-6">
-                <div className="bg-white rounded-2xl shadow-lg p-6">
-                  <h3 className="text-lg font-bold text-gray-900 mb-4">Media Sosial</h3>
-                  <p className="text-gray-600 mb-6">Tautkan akun media sosial perusahaan Anda.</p>
-                  
-                  <div className="space-y-4">
-                    {Object.entries(socialMedia).map(([platform, url]) => (
-                      <div key={platform} className="flex items-center gap-4">
-                        <div className="w-10 h-10 bg-gray-100 rounded-lg flex items-center justify-center">
-                          <i className={`fab fa-${platform} text-gray-600`}></i>
-                        </div>
-                        <input 
-                          type="url" 
-                          value={url}
-                          onChange={(e) => setSocialMedia({...socialMedia, [platform]: e.target.value})}
-                          placeholder={`https://${platform}.com/yourcompany`}
-                          className="flex-1 p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
-                        />
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {/* Settings Tab */}
-            {activeTab === 'settings' && (
-              <div className="space-y-6">
-                <div className="bg-white rounded-2xl shadow-lg p-6">
-                  <h3 className="text-lg font-bold text-gray-900 mb-4">Pengaturan Profil</h3>
-                  
-                  <div className="space-y-6">
-                    <div>
-                      <h4 className="font-medium text-gray-900 mb-3">Visibilitas Profil</h4>
-                      <div className="space-y-2">
-                        <label className="flex items-center gap-3">
-                          <input type="radio" name="visibility" defaultChecked className="text-primary-500" />
-                          <span>Publik - Dapat dilihat oleh semua kandidat</span>
-                        </label>
-                        <label className="flex items-center gap-3">
-                          <input type="radio" name="visibility" className="text-primary-500" />
-                          <span>Privat - Hanya kandidat yang dilamar yang dapat melihat</span>
-                        </label>
-                      </div>
-                    </div>
-
-                    <div className="border-t pt-6">
-                      <h4 className="font-medium text-gray-900 mb-3">Notifikasi</h4>
-                      <div className="space-y-2">
-                        <label className="flex items-center gap-3">
-                          <input type="checkbox" defaultChecked className="text-primary-500 rounded" />
-                          <span>Email notifikasi untuk lamaran baru</span>
-                        </label>
-                        <label className="flex items-center gap-3">
-                          <input type="checkbox" defaultChecked className="text-primary-500 rounded" />
-                          <span>Reminder untuk interview</span>
-                        </label>
-                        <label className="flex items-center gap-3">
-                          <input type="checkbox" className="text-primary-500 rounded" />
-                          <span>Update mingguan tentang aktivitas</span>
-                        </label>
-                      </div>
-                    </div>
-
-                    <div className="border-t pt-6">
-                      <button className="bg-red-500 text-white px-6 py-2 rounded-lg hover:bg-red-600 transition font-medium">
-                        <i className="fas fa-trash mr-2"></i>
-                        Hapus Akun Perusahaan
-                      </button>
-                      <p className="text-sm text-gray-500 mt-2">
-                        Tindakan ini tidak dapat dibatalkan. Semua data perusahaan akan dihapus permanen.
-                      </p>
-                    </div>
-                  </div>
+            {profileData?.company?.websiteLink && (
+              <div className="mt-6">
+                <h2 className="font-semibold text-gray-900">
+                  Official Website
+                </h2>
+                <div className="mt-1">
+                  <a
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-blue-600"
+                    href={profileData?.company?.websiteLink}
+                  >
+                    {profileData?.company?.websiteLink}
+                  </a>
                 </div>
               </div>
             )}
           </div>
-        </div>
-      </main>
-    </div>
+
+          <div className="flex flex-col bg-white shadow-lg overflow-hidden p-7 mb-4">
+            <h1 className="text-xl font-bold text-gray-900">
+              Lowongan Pekerjaan Terbaru
+            </h1>
+          </div>
+        </main>
+        {/* Aside */}
+        <aside className="flex flex-col">
+          <h2>Orang/Perusahaan lain</h2>
+          <div className="h-56 w-56"></div>
+        </aside>
+      </div>
+      <CmEditProfilePopup
+        isVisible={showEditProfPopup}
+        onClose={() => setShowEditProfPopup(false)}
+        profileData={profileData}
+        onEdit={handleEditProfile}
+        countries={countries}
+      />
+    </>
   );
 };
 
-export default CompanyProfilePage;
+export default ProfilePage;

@@ -1,104 +1,330 @@
 // src/pages/JobDetailPage.js
-import React, { useState } from 'react';
-import { useParams, useNavigate, Link } from 'react-router-dom';
+import React, { useEffect, useState } from "react";
+import { useParams, useNavigate, Link } from "react-router-dom";
+import { useAuth } from "../contexts/AuthContext";
+import axios from "axios";
+import defaultCm from "../assets/default-company.png";
+import { enqueueSnackbar } from "notistack";
+import AddJobDisPopup from "../components/popups/AddJobDisPopup";
+import AddJobSkiPopup from "../components/popups/AddJobSkiPopup";
+import EditJobPopup from "../components/popups/EditJobPopup";
+import { formatCurrency } from "../utils/formatCurrency";
+import ActionStatusJobPopup from "../components/popups/ActionStatusJobPopup";
+import RescheduleJobPopup from "../components/popups/RescheduleJobPopup";
 
 const JobDetailPage = () => {
-  const { id } = useParams();
+  const [loading, setLoading] = useState(false);
+  const { userData, token } = useAuth();
+  const { jobId } = useParams();
   const navigate = useNavigate();
   const [isApplying, setIsApplying] = useState(false);
   const [isBookmarked, setIsBookmarked] = useState(false);
 
-  // Mock data - in real app, this would come from API
-  const job = {
-    id: 1,
-    title: "UI/UX Designer",
-    company: "PT Tech Inklusif",
-    location: "Jakarta • Remote",
-    type: "Full Time",
-    salary: "Rp 8-12 juta",
-    posted: "2 jam lalu",
-    match: 95,
-    skills: ["Figma", "User Research", "Prototyping", "Accessibility", "Wireframing", "UI Design"],
-    accommodations: ["Screen Reader Support", "Remote Work", "Flexible Hours", "Assistive Technology"],
-    disabilitySupport: ["Tuna Netra", "Tuna Rungu", "Tuna Daksa"],
-    description: "Kami mencari UI/UX Designer yang passionate tentang inklusivitas dan aksesibilitas. Bergabunglah dengan tim kami yang berdedikasi menciptakan produk digital yang accessible untuk semua.",
-    fullDescription: `
-      <p>Sebagai UI/UX Designer di PT Tech Inklusif, Anda akan bertanggung jawab untuk:</p>
-      <ul>
-        <li>Mendesain interface yang accessible untuk aplikasi mobile dan web</li>
-        <li>Melakukan user research dengan peserta dari berbagai latar belakang disabilitas</li>
-        <li>Berkolaborasi dengan developer untuk implementasi desain yang optimal</li>
-        <li>Membuat prototype dan melakukan usability testing</li>
-        <li>Memastikan semua desain memenuhi standar WCAG 2.1 AA</li>
-      </ul>
-      
-      <p><strong>Kenapa bergabung dengan kami?</strong></p>
-      <p>Kami adalah perusahaan teknologi yang berfokus pada inklusivitas. 40% tim kami adalah penyandang disabilitas, dan kami memiliki budaya kerja yang sangat supportive.</p>
-    `,
-    requirements: [
-      "Pengalaman 2+ tahun sebagai UI/UX Designer",
-      "Memahami prinsip desain inklusif dan aksesibilitas",
-      "Mahir menggunakan Figma, Adobe XD, atau tools desain lainnya",
-      "Pengalaman dengan user research dan usability testing",
-      "Portofolio yang menunjukkan karya desain accessible"
-    ],
-    benefits: [
-      "Asuransi kesehatan comprehensive",
-      "Flexible working hours",
-      "Remote work options", 
-      "Training dan development budget",
-      "Environment yang benar-benar inklusif",
-      "Alat kerja yang disesuaikan dengan kebutuhan"
-    ],
-    companyInfo: {
-      name: "PT Tech Inklusif",
-      description: "Perusahaan teknologi yang berfokus pada pembuatan produk digital yang accessible untuk semua kalangan, termasuk penyandang disabilitas.",
-      size: "51-200 employees",
-      industry: "Technology",
-      website: "https://techinklusif.com",
-      founded: "2018",
-      culture: "Inklusif, Supportive, Innovative"
-    },
-    applicants: 23,
-    views: 156,
-    logo: "TI",
-    logoColor: "from-primary-500 to-secondary-500"
-  };
+  const [job, setJob] = useState({});
+  const [jobSkills, setJobSkills] = useState([]);
+  const [jobDisabilities, setJobDisabilties] = useState([]);
+
+  const [showAddJobSkiPopup, setShowAddJobSkiPopup] = useState(false);
+  const [showAddJobDisPopup, setShowAddJobDisPopup] = useState(false);
+  const [showEditJobPopup, setShowEditJobPopup] = useState(false);
+  const [showActStaPopup, setShowActStaPopup] = useState(false);
+  const [showRescPopup, setShowRescPopup] = useState(false);
+
+  const isOwner = job?.Company?.User?.id === userData?.id;
 
   const handleApply = () => {
-  // Navigasi ke halaman application form
-  navigate(`/application/${job.id}`, { state: { job } });
-};
-
-  const handleBookmark = () => {
-    setIsBookmarked(!isBookmarked);
-    showNotification(
-      isBookmarked ? "Lowongan dihapus dari favorit" : "Lowongan disimpan ke favorit",
-      'success'
-    );
+    // Navigasi ke halaman application form
+    navigate(`/application/${job.id}`, { state: { job } });
   };
 
-  const showNotification = (message, type = 'info') => {
-    const notification = document.createElement('div');
-    const bgColor = type === 'success' ? 'bg-green-500' : 'bg-primary-500';
-    
-    notification.className = `fixed top-4 right-4 ${bgColor} text-white p-4 rounded-lg shadow-lg z-50`;
-    notification.innerHTML = `
-      <div class="flex items-center">
-        <i class="fas fa-${type === 'success' ? 'check-circle' : 'info-circle'} mr-2"></i>
-        <span>${message}</span>
-      </div>
-    `;
-    
-    document.body.appendChild(notification);
-    
-    setTimeout(() => {
-      if (notification.parentNode) {
-        notification.remove();
+  //get job
+  const getJobById = async () => {
+    try {
+      const res = await axios.get(`/api/job/${jobId}`);
+
+      setJob(res.data.data);
+
+      if (
+        res.data.data.status !== "open" &&
+        job?.Company?.User?.id === userData?.id
+      ) {
+        navigate("/");
       }
-    }, 3000);
+    } catch (error) {
+      console.error("Error fetching job:", error);
+      navigate("/");
+    }
   };
 
+  //fatir: get job skill
+  const getJobSkills = async () => {
+    try {
+      const res = await axios.get(`/api/job/${jobId}/skills`);
+      setJobSkills(res.data.data);
+    } catch (error) {
+      console.error("Error fetching user:", error);
+      navigate("/");
+    }
+  };
+  //fatir: get job disability
+  const getJobDisabilities = async () => {
+    try {
+      const res = await axios.get(`/api/job/${jobId}/disabilities`);
+      setJobDisabilties(res.data.data);
+    } catch (error) {
+      console.error("Error fetching user:", error);
+      navigate("/");
+    }
+  };
+
+  useEffect(() => {
+    const fetchAll = async () => {
+      setLoading(true);
+      try {
+        await Promise.all([getJobById(), getJobDisabilities(), getJobSkills()]);
+      } catch (err) {
+        console.error(err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchAll();
+  }, [jobId]);
+
+  //edit job
+  const handleEditProfile = async (form) => {
+    setLoading(true);
+    try {
+      const payload = {};
+      Object.keys(form).forEach((key) => {
+        if (job?.[key] !== form[key]) {
+          payload[key] = form[key] === "" ? null : form[key];
+        }
+      });
+
+      if (form.locationType === "on-site") {
+        payload.address = form.address || null;
+      }
+
+      if (Object.keys(payload).length === 0) {
+        enqueueSnackbar("Tidak ada perubahan data", { variant: "info" });
+        return;
+      }
+
+      const res = await axios.put(`/api/job/${jobId}`, payload, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      enqueueSnackbar(res.data.message || "Lowongan berhasil diperbarui", {
+        variant: "success",
+      });
+
+      getJobById();
+    } catch (error) {
+      enqueueSnackbar(
+        error?.response?.data?.message || "Gagal mengupdate lowongan",
+        { variant: "warning" }
+      );
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  //add new disability
+  const handleAddDisability = async (form) => {
+    const payload = {
+      disabilityId: form.disabilityId,
+      disabilityName: form.disabilityId ? null : form.disabilityName,
+      type: form.type,
+    };
+    const headers = {
+      Authorization: `Bearer ${token}`,
+    };
+    setLoading(true);
+    try {
+      const res = await axios.post(`/api/job/${jobId}/disability`, payload, {
+        headers,
+      });
+
+      enqueueSnackbar(res.data.message, { variant: "success" });
+
+      getJobDisabilities();
+    } catch (error) {
+      enqueueSnackbar(
+        error.response?.data?.message || "Gagal menambahkan disabilitas baru",
+        { variant: "warning" }
+      );
+    } finally {
+      setLoading(false);
+    }
+  };
+  //add new skill
+  const handleAddSKill = async (form) => {
+    const payload = {
+      skillId: form.skillId,
+      skillName: form.skillId ? null : form.skillName,
+    };
+    const headers = {
+      Authorization: `Bearer ${token}`,
+    };
+
+    setLoading(true);
+    try {
+      const res = await axios.post(`/api/job/${jobId}/skill`, payload, {
+        headers,
+      });
+
+      enqueueSnackbar(res.data.message, { variant: "success" });
+
+      getJobSkills();
+    } catch (error) {
+      enqueueSnackbar(
+        error.response?.data?.message || "Gagal menambahkan keahlian baru",
+        { variant: "warning" }
+      );
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  //handle delete disability
+  const handleDeleteDisability = async (id) => {
+    if (!id) return;
+
+    const headers = {
+      Authorization: `Bearer ${token}`,
+    };
+    setLoading(true);
+    try {
+      const res = await axios.delete(`/api/job/${jobId}/disability/${id}`, {
+        headers,
+      });
+
+      enqueueSnackbar(res.data.message, { variant: "success" });
+
+      getJobDisabilities();
+    } catch (error) {
+      enqueueSnackbar(
+        error.response?.data?.message || "Gagal menghapus disabilitas user",
+        { variant: "error" }
+      );
+    } finally {
+      setLoading(false);
+    }
+  };
+  //handle delete skill
+  const handleDeleteSkill = async (id) => {
+    if (!id) return;
+
+    const headers = {
+      Authorization: `Bearer ${token}`,
+    };
+    setLoading(true);
+    try {
+      const res = await axios.delete(`/api/job/${jobId}/skill/${id}`, {
+        headers,
+      });
+
+      enqueueSnackbar(res.data.message, { variant: "success" });
+
+      getJobSkills();
+    } catch (error) {
+      enqueueSnackbar(
+        error.response?.data?.message || "Gagal menghapus keahlian user",
+        { variant: "error" }
+      );
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  //handle action status
+  const handleActionStatus = async (payload) => {
+    setLoading(true);
+    try {
+      const res = await axios.patch(`/api/job/${jobId}/status`, payload, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      enqueueSnackbar(
+        res.data.message || "Status lowongan berhasil diperbarui",
+        {
+          variant: "success",
+        }
+      );
+
+      getJobById();
+    } catch (error) {
+      enqueueSnackbar(
+        error?.response?.data?.message || "Gagal mengupdate status lowongan",
+        { variant: "warning" }
+      );
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  //handle reschedule
+  const handleReschedule = async (payload) => {
+    setLoading(true);
+    try {
+      const res = await axios.patch(`/api/job/${jobId}/reschedule`, payload, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      enqueueSnackbar(res.data.message || "Tanggal berhasil diperbarui", {
+        variant: "success",
+      });
+
+      getJobById();
+    } catch (error) {
+      enqueueSnackbar(
+        error?.response?.data?.message || "Gagal mengupdate tanggal lowongan",
+        { variant: "warning" }
+      );
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const getStatusPilColor = (statusPil) => {
+    if (statusPil === "pending" && job?.status === "pending") {
+      return "bg-green-500";
+    }
+    if (statusPil === "pending" && job?.status !== "pending") {
+      return "bg-blue-500";
+    }
+
+    if (statusPil === "open" && job?.status === "open") {
+      return "bg-green-500";
+    }
+    if (statusPil === "open" && job?.status !== "open") {
+      if (job?.status === "pending") {
+        return "bg-gray-500";
+      } else {
+        return "bg-blue-500";
+      }
+    }
+
+    if (statusPil === "closed" && job?.status === "closed") {
+      return "bg-green-500";
+    }
+    if (statusPil === "closed" && job?.status !== "closed") {
+      if (job?.status !== "cancelled") {
+        return "bg-gray-500";
+      } else {
+        return "bg-blue-500";
+      }
+    }
+
+    if (statusPil === "cancelled" && job?.status === "cancelled") {
+      return "bg-green-500";
+    }
+    if (statusPil === "cancelled" && job?.status !== "cancelled") {
+      return "bg-gray-500";
+    }
+  };
   // Similar jobs data
   const similarJobs = [
     {
@@ -109,290 +335,426 @@ const JobDetailPage = () => {
       salary: "Rp 9-13 juta",
       match: 88,
       logo: "SI",
-      logoColor: "from-blue-500 to-green-500"
+      logoColor: "from-blue-500 to-green-500",
     },
     {
       id: 3,
       title: "UX Researcher",
       company: "Research Lab",
       location: "Bandung • Hybrid",
-      salary: "Rp 7-10 juta", 
+      salary: "Rp 7-10 juta",
       match: 82,
       logo: "RL",
-      logoColor: "from-purple-500 to-pink-500"
-    }
+      logoColor: "from-purple-500 to-pink-500",
+    },
   ];
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-primary-50 to-secondary-50">
-      {/* Main Content */}
-      <main id="main-content" className="container mx-auto px-4 py-8">
-        {/* Breadcrumb */}
-        <nav className="flex items-center space-x-2 text-sm text-gray-600 mb-6">
-          <Link to="/" className="hover:text-primary-600">Beranda</Link>
-          <i className="fas fa-chevron-right text-xs"></i>
-          <Link to="/lowongan" className="hover:text-primary-600">Lowongan</Link>
-          <i className="fas fa-chevron-right text-xs"></i>
-          <span className="text-primary-600">{job.title}</span>
-        </nav>
-
-        <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
-          {/* Main Content */}
-          <div className="lg:col-span-3">
-            {/* Job Header */}
-            <div className="bg-white rounded-2xl shadow-lg p-6 mb-6">
-              <div className="flex justify-between items-start mb-4">
-                <div className="flex items-start space-x-4">
-                  <div className={`w-20 h-20 bg-gradient-to-br ${job.logoColor} rounded-xl flex items-center justify-center text-white font-bold text-2xl`}>
-                    {job.logo}
-                  </div>
-                  <div>
-                    <h1 className="text-3xl font-bold text-gray-900 mb-2">{job.title}</h1>
-                    <p className="text-xl text-primary-600 font-medium mb-3">{job.company}</p>
-                    <div className="flex flex-wrap gap-4 text-gray-600">
-                      <span className="flex items-center gap-2">
-                        <i className="fas fa-map-marker-alt"></i>
-                        {job.location}
-                      </span>
-                      <span className="flex items-center gap-2">
-                        <i className="fas fa-clock"></i>
-                        {job.type}
-                      </span>
-                      <span className="flex items-center gap-2">
-                        <i className="fas fa-money-bill-wave"></i>
-                        {job.salary}
-                      </span>
-                      <span className="flex items-center gap-2">
-                        <i className="fas fa-calendar"></i>
-                        {job.posted}
-                      </span>
+    <>
+      <div className="min-h-screen bg-gradient-to-br from-primary-50 to-secondary-50">
+        <main
+          id="main-content"
+          className="container mx-auto lg:px-32 xl:px-36 py-8"
+        >
+          <div className="grid grid-cols-1 lg:grid-cols-4 gap-4">
+            {/* Main Content */}
+            <div className="lg:col-span-3">
+              {/* Job Header */}
+              <div className="bg-white rounded shadow-lg p-6 mb-4">
+                <div className="flex justify-between">
+                  <div className="flex flex-col items-start gap-2">
+                    <Link to={`/cm/${job?.Company?.User?.id}`}>
+                      <div className="flex items-center gap-4 p-2 transition cursor-pointer hover:bg-gray-100">
+                        <img
+                          src={job?.Company?.User?.profilePicture || defaultCm}
+                          alt="Profile Picture"
+                          className="h-10 w-10 object-cover aspect-square"
+                        />
+                        <div>
+                          <h3 className="font-semibold text-sm">
+                            {job?.Company?.companyName}
+                          </h3>
+                          <p className="text-xs text-blue-600">
+                            @{job?.Company?.User?.username}
+                          </p>
+                        </div>
+                      </div>
+                    </Link>
+                    <div className="flex flex-col gap-1">
+                      <h1 className="text-3xl font-bold text-blue-600">
+                        {job?.title}
+                      </h1>
+                      <p className="text-gray-600">
+                        Diposting pada{" "}
+                        {job?.startDate
+                          ? new Intl.DateTimeFormat("id-ID", {
+                              day: "numeric",
+                              month: "long",
+                              year: "numeric",
+                            }).format(new Date(job.startDate))
+                          : ""}
+                      </p>
+                      {job?.address && (
+                        <span className="flex items-center gap-2 text-sm text-gray-600">
+                          <i className="fas fa-map-marker-alt"></i>
+                          {job?.address}
+                        </span>
+                      )}
+                      <div className="flex gap-4 mt-2 text-sm capitalize font-semibold">
+                        {job?.employmentType !== "blank" && (
+                          <span className="px-4 py-1 rounded-full border border-blue-400 text-blue-600">
+                            {job?.employmentType}
+                          </span>
+                        )}
+                        {job?.locationType !== "blank" && (
+                          <span className="px-4 py-1 rounded-full border border-blue-400 text-blue-600">
+                            {job?.locationType}
+                          </span>
+                        )}
+                        {job?.minSalary && (
+                          <span className="px-4 py-1 rounded-full border border-blue-400 text-blue-600">
+                            Rp{formatCurrency(job?.minSalary)}{" "}
+                            {job?.maxSalary &&
+                              `- Rp${formatCurrency(job?.maxSalary)}`}
+                          </span>
+                        )}
+                      </div>
                     </div>
                   </div>
+                  {isOwner ? (
+                    <div className="flex flex-col gap-3">
+                      <button
+                        onClick={() => setShowActStaPopup(!showActStaPopup)}
+                        className="px-5 py-2 rounded text-blue-600 border border-blue-400 hover:bg-gray-100 transition"
+                      >
+                        <i class="fa-solid fa-pen-to-square mr-2"></i> Action
+                        Status
+                      </button>
+                      <button
+                        onClick={() => setShowRescPopup(!showRescPopup)}
+                        className="px-5 py-2 rounded text-blue-600 border border-blue-400 hover:bg-gray-100 transition"
+                      >
+                        <i class="fa-solid fa-calendar mr-2"></i> Reschedule
+                      </button>
+                      <button
+                        onClick={() => setShowEditJobPopup(!showEditJobPopup)}
+                        className="px-5 py-2 rounded bg-blue-600 hover:bg-blue-700 text-gray-50 transition"
+                      >
+                        <i class="fa-solid fa-pen-to-square mr-2"></i> Edit
+                        Lowongan
+                      </button>
+                    </div>
+                  ) : !isOwner && userData.role === "job-seeker" ? (
+                    <div className="flex flex-col gap-3">
+                      <button
+                        onClick={handleApply}
+                        disabled={isApplying}
+                        className="w-full bg-primary-500 text-white py-3 rounded-lg hover:bg-primary-600 transition font-medium disabled:bg-primary-300 flex items-center justify-center gap-2 mt-10"
+                      >
+                        {isApplying ? (
+                          <>
+                            <i className="fas fa-spinner fa-spin"></i>
+                            Mengirim Lamaran...
+                          </>
+                        ) : (
+                          <>
+                            <i className="fas fa-paper-plane"></i>
+                            Lamar Sekarang
+                          </>
+                        )}
+                      </button>
+                      <div className="text-right">
+                        <div className="bg-green-100 text-green-800 px-3 py-2 rounded-lg font-bold text-lg mb-2">
+                          <i className="fas fa-bolt mr-1"></i>
+                          {job.match}% Match
+                        </div>
+                        <p className="text-sm text-gray-600">
+                          Sangat sesuai dengan profil Anda
+                        </p>
+                      </div>
+                    </div>
+                  ) : null}
                 </div>
-                
-                {/* Match Badge */}
-                <div className="text-right">
-                  <div className="bg-green-100 text-green-800 px-3 py-2 rounded-lg font-bold text-lg mb-2">
-                    <i className="fas fa-bolt mr-1"></i>
-                    {job.match}% Match
+                {isOwner && (
+                  <div className="flex w-full gap-5 mt-10">
+                    <div className="flex-1">
+                      <div
+                        className={`h-7 mb-2 rounded-full bg-blue-600 ${getStatusPilColor(
+                          "pending"
+                        )}`}
+                      ></div>
+                      <p className="text-gray-600 text-sm text-center">
+                        Pending
+                      </p>
+                    </div>
+                    <div className="flex-1">
+                      <div
+                        className={`h-7 mb-2 rounded-full bg-blue-600 ${getStatusPilColor(
+                          "open"
+                        )}`}
+                      ></div>
+                      <p className="text-gray-600 text-sm text-center">Open</p>
+                    </div>
+                    <div className="flex-1">
+                      <div
+                        className={`h-7 mb-2 rounded-full bg-blue-600 ${getStatusPilColor(
+                          "closed"
+                        )}`}
+                      ></div>
+                      <p className="text-gray-600 text-sm text-center">
+                        Closed
+                      </p>
+                    </div>
+                    <div className="flex-1">
+                      <div
+                        className={`h-7 mb-2 rounded-full bg-blue-600 ${getStatusPilColor(
+                          "cancelled"
+                        )}`}
+                      ></div>
+                      <p className="text-gray-600 text-sm text-center">
+                        Cancelled
+                      </p>
+                    </div>
                   </div>
-                  <p className="text-sm text-gray-600">Sangat sesuai dengan profil Anda</p>
+                )}
+              </div>
+
+              {/* Description Tab */}
+              <div className="bg-white rounded shadow-lg p-6">
+                <div>
+                  <h3 className="text-xl font-bold mb-4">
+                    Tentang Pekerjaan Ini
+                  </h3>
+                  <p className="leading-loose whitespace-pre-line">
+                    {job?.description}
+                  </p>
                 </div>
               </div>
 
-              {/* Action Buttons */}
-              <div className="flex gap-3">
-                <button 
+              {/* Skill & Disabilty */}
+              <div className="flex gap-4 mt-4">
+                <div className="bg-white rounded shadow-lg p-6 flex-1">
+                  <div className="flex justify-between items-center mb-4">
+                    <h2 className="text-lg font-bold text-gray-900">
+                      Keahlian terkait
+                    </h2>
+                    {isOwner && (
+                      <button
+                        onClick={() =>
+                          setShowAddJobSkiPopup(!showAddJobSkiPopup)
+                        }
+                      >
+                        <i class="fa-solid fa-plus"></i>
+                      </button>
+                    )}
+                  </div>
+
+                  {jobSkills && jobSkills.length > 0 ? (
+                    jobSkills.map((s) => (
+                      <div
+                        className="flex justify-between items-start px-2 py-4 hover:bg-gray-100 transition border-b border-gray-300"
+                        key={s.id}
+                      >
+                        <div className="flex flex-col gap-1">
+                          <h3 className="capitalize">
+                            {s.skillName || s.Skill.name}
+                          </h3>
+                          {s.description && (
+                            <p className="text-gray-600 text-sm">
+                              {s.description}
+                            </p>
+                          )}
+                        </div>
+                        {isOwner && (
+                          <button onClick={() => handleDeleteSkill(s.id)}>
+                            <i className="fa-solid fa-trash"></i>
+                          </button>
+                        )}
+                      </div>
+                    ))
+                  ) : (
+                    <p className="text-gray-600 text-sm">
+                      Tidak ada data keahlian.
+                    </p>
+                  )}
+                </div>
+                <div className="bg-white rounded shadow-lg p-6 flex-1">
+                  <div className="flex justify-between items-center mb-4">
+                    <h2 className="text-lg font-bold text-gray-900">
+                      Disabilitas terkait
+                    </h2>
+                    {isOwner && (
+                      <button
+                        onClick={() =>
+                          setShowAddJobDisPopup(!showAddJobDisPopup)
+                        }
+                      >
+                        <i class="fa-solid fa-plus"></i>
+                      </button>
+                    )}
+                  </div>
+
+                  {jobDisabilities && jobDisabilities.length > 0 ? (
+                    jobDisabilities.map((d) => (
+                      <div
+                        className="flex justify-between items-start px-2 py-4 hover:bg-gray-100 transition border-b border-gray-300"
+                        key={d.id}
+                      >
+                        <div className="flex flex-col gap-1">
+                          <h3 className="capitalize">
+                            {d.disabilityName || d.Disability.name} /{" "}
+                            <span className="text-blue-600">
+                              {d.type || d.Disability.type}
+                            </span>
+                          </h3>
+                          {d.description && (
+                            <p className="text-gray-600 text-sm">
+                              {d.description}
+                            </p>
+                          )}
+                        </div>
+                        {isOwner && (
+                          <button onClick={() => handleDeleteDisability(d.id)}>
+                            <i className="fa-solid fa-trash"></i>
+                          </button>
+                        )}
+                      </div>
+                    ))
+                  ) : (
+                    <p className="text-gray-600 text-sm">
+                      Tidak ada data disabilitas.
+                    </p>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            {/* Sidebar */}
+            <div className="lg:col-span-1 space-y-6">
+              {/* Company Info */}
+              <div className="bg-white rounded shadow-lg p-6">
+                <h3 className="font-bold text-lg mb-4">Tentang Perusahaan</h3>
+                <Link to={`/cm/${job?.Company?.User?.id}`}>
+                  <div className="flex gap-4 p-2 transition hover:bg-gray-100 cursor-pointer">
+                    <img
+                      src={job?.Company?.User?.profilePicture || defaultCm}
+                      alt="Profile Picture"
+                      className="h-16 w-16 object-cover aspect-square"
+                    />
+                    <div>
+                      <h4 className="font-semibold text-gray-900">
+                        {job?.Company?.companyName}
+                      </h4>
+                      <p className="text-gray-600 text-sm">
+                        {job?.Company?.industryName}
+                      </p>
+                      <p className="text-gray-600 text-sm">
+                        {job?.Company?.establishedYear}
+                      </p>
+                    </div>
+                  </div>
+                </Link>
+              </div>
+
+              {/* Similar Jobs */}
+              <div className="bg-white rounded shadow-lg p-6">
+                <h3 className="font-bold text-lg mb-4">Lowongan Serupa</h3>
+                <div className="space-y-4">
+                  {similarJobs.map((similarJob) => (
+                    <div
+                      key={similarJob.id}
+                      className="border border-gray-200 rounded-lg p-3 hover:border-primary-500 transition"
+                    >
+                      <div className="flex items-center space-x-3 mb-2">
+                        <div
+                          className={`w-10 h-10 bg-gradient-to-br ${similarJob.logoColor} rounded flex items-center justify-center text-white font-bold text-sm`}
+                        >
+                          {similarJob.logo}
+                        </div>
+                        <div>
+                          <h4 className="font-medium text-gray-900">
+                            {similarJob.title}
+                          </h4>
+                          <p className="text-sm text-gray-600">
+                            {similarJob.company}
+                          </p>
+                        </div>
+                      </div>
+                      <div className="flex justify-between items-center text-sm">
+                        <span className="text-primary-600 font-medium">
+                          {similarJob.salary}
+                        </span>
+                        <span className="bg-blue-100 text-blue-800 px-2 py-1 rounded text-xs">
+                          {similarJob.match}% match
+                        </span>
+                      </div>
+                      <button className="w-full mt-2 text-primary-500 hover:text-primary-600 text-sm font-medium">
+                        Lihat Detail →
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Quick Apply */}
+              <div className="bg-primary-50 border border-primary-200 rounded p-6">
+                <h3 className="font-bold text-lg mb-2 text-primary-800">
+                  Lamar Cepat
+                </h3>
+                <p className="text-primary-700 text-sm mb-4">
+                  Gunakan profil Anda untuk melamar dengan satu klik
+                </p>
+                <button
                   onClick={handleApply}
                   disabled={isApplying}
-                  className="flex-1 bg-primary-500 text-white py-3 rounded-lg hover:bg-primary-600 transition font-medium disabled:bg-primary-300 flex items-center justify-center gap-2"
+                  className="w-full bg-primary-500 text-white py-3 rounded-lg hover:bg-primary-600 transition font-medium disabled:bg-primary-300 flex items-center justify-center gap-2"
                 >
                   {isApplying ? (
                     <>
                       <i className="fas fa-spinner fa-spin"></i>
-                      Mengirim Lamaran...
+                      Memproses...
                     </>
                   ) : (
                     <>
-                      <i className="fas fa-paper-plane"></i>
+                      <i className="fas fa-bolt"></i>
                       Lamar Sekarang
                     </>
                   )}
                 </button>
-                <button 
-                  onClick={handleBookmark}
-                  className={`px-6 py-3 border rounded-lg transition flex items-center gap-2 ${
-                    isBookmarked 
-                      ? 'border-primary-500 bg-primary-50 text-primary-600' 
-                      : 'border-gray-300 hover:bg-gray-50'
-                  }`}
-                >
-                  <i className={`${isBookmarked ? 'fas' : 'far'} fa-bookmark`}></i>
-                  {isBookmarked ? 'Disimpan' : 'Simpan'}
-                </button>
-                <button className="px-6 py-3 border border-gray-300 rounded-lg hover:bg-gray-50 transition">
-                  <i className="fas fa-share-alt"></i>
-                </button>
-              </div>
-            </div>
-
-            {/* Job Details Tabs */}
-            <div className="bg-white rounded-2xl shadow-lg">
-              {/* Tab Navigation */}
-              <div className="border-b border-gray-200">
-                <nav className="flex -mb-px">
-                  {['Deskripsi', 'Persyaratan', 'Benefit', 'Perusahaan'].map((tab) => (
-                    <button
-                      key={tab}
-                      className="flex-1 py-4 px-6 text-center border-b-2 border-transparent hover:text-primary-600 hover:border-primary-300 transition"
-                    >
-                      {tab}
-                    </button>
-                  ))}
-                </nav>
-              </div>
-
-              {/* Tab Content */}
-              <div className="p-6">
-                {/* Description Tab */}
-                <div>
-                  <h3 className="text-xl font-bold mb-4">Deskripsi Pekerjaan</h3>
-                  <div 
-                    className="prose max-w-none text-gray-700 mb-6"
-                    dangerouslySetInnerHTML={{ __html: job.fullDescription }}
-                  />
-                  
-                  {/* Skills Required */}
-                  <div className="mb-6">
-                    <h4 className="text-lg font-semibold mb-3">Keahlian yang Dibutuhkan</h4>
-                    <div className="flex flex-wrap gap-2">
-                      {job.skills.map((skill, index) => (
-                        <span key={index} className="bg-blue-100 text-blue-800 px-3 py-2 rounded-lg font-medium">
-                          {skill}
-                        </span>
-                      ))}
-                    </div>
-                  </div>
-
-                  {/* Accommodations */}
-                  <div className="bg-green-50 border border-green-200 rounded-xl p-4">
-                    <h4 className="text-lg font-semibold text-green-800 mb-3 flex items-center gap-2">
-                      <i className="fas fa-universal-access"></i>
-                      Dukungan Aksesibilitas
-                    </h4>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
-                      {job.accommodations.map((accommodation, index) => (
-                        <div key={index} className="flex items-center gap-2 text-green-700">
-                          <i className="fas fa-check-circle text-green-500"></i>
-                          {accommodation}
-                        </div>
-                      ))}
-                    </div>
-                    <p className="text-green-600 mt-3 text-sm">
-                      <strong>Didukung untuk:</strong> {job.disabilitySupport.join(', ')}
-                    </p>
-                  </div>
-                </div>
-
-                {/* Requirements Tab would go here */}
-                {/* Benefits Tab would go here */}
-                {/* Company Tab would go here */}
-              </div>
-            </div>
-
-            {/* Application Stats */}
-            <div className="bg-white rounded-2xl shadow-lg p-6 mt-6">
-              <h3 className="text-lg font-bold mb-4">Statistik Lowongan</h3>
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-center">
-                <div>
-                  <div className="text-2xl font-bold text-primary-600">{job.applicants}</div>
-                  <div className="text-sm text-gray-600">Pelamar</div>
-                </div>
-                <div>
-                  <div className="text-2xl font-bold text-blue-600">{job.views}</div>
-                  <div className="text-sm text-gray-600">Dilihat</div>
-                </div>
-                <div>
-                  <div className="text-2xl font-bold text-green-600">5</div>
-                  <div className="text-sm text-gray-600">Diwawancara</div>
-                </div>
-                <div>
-                  <div className="text-2xl font-bold text-orange-600">3</div>
-                  <div className="text-sm text-gray-600">Hari Lagi</div>
-                </div>
               </div>
             </div>
           </div>
-
-          {/* Sidebar */}
-          <div className="lg:col-span-1 space-y-6">
-            {/* Company Info */}
-            <div className="bg-white rounded-2xl shadow-lg p-6">
-              <h3 className="font-bold text-lg mb-4">Tentang Perusahaan</h3>
-              <div className="text-center mb-4">
-                <div className={`w-16 h-16 bg-gradient-to-br ${job.logoColor} rounded-lg flex items-center justify-center text-white font-bold text-xl mx-auto mb-3`}>
-                  {job.logo}
-                </div>
-                <h4 className="font-bold text-gray-900">{job.companyInfo.name}</h4>
-                <p className="text-sm text-gray-600">{job.companyInfo.size}</p>
-              </div>
-              <p className="text-gray-700 text-sm mb-4">{job.companyInfo.description}</p>
-              <div className="space-y-2 text-sm">
-                <div className="flex justify-between">
-                  <span className="text-gray-600">Industri:</span>
-                  <span className="font-medium">{job.companyInfo.industry}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-gray-600">Berdiri:</span>
-                  <span className="font-medium">{job.companyInfo.founded}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-gray-600">Budaya:</span>
-                  <span className="font-medium">{job.companyInfo.culture}</span>
-                </div>
-              </div>
-              <button className="w-full mt-4 border border-primary-500 text-primary-500 py-2 rounded-lg hover:bg-primary-50 transition">
-                Kunjungi Website
-              </button>
-            </div>
-
-            {/* Similar Jobs */}
-            <div className="bg-white rounded-2xl shadow-lg p-6">
-              <h3 className="font-bold text-lg mb-4">Lowongan Serupa</h3>
-              <div className="space-y-4">
-                {similarJobs.map(similarJob => (
-                  <div key={similarJob.id} className="border border-gray-200 rounded-lg p-3 hover:border-primary-500 transition">
-                    <div className="flex items-center space-x-3 mb-2">
-                      <div className={`w-10 h-10 bg-gradient-to-br ${similarJob.logoColor} rounded flex items-center justify-center text-white font-bold text-sm`}>
-                        {similarJob.logo}
-                      </div>
-                      <div>
-                        <h4 className="font-medium text-gray-900">{similarJob.title}</h4>
-                        <p className="text-sm text-gray-600">{similarJob.company}</p>
-                      </div>
-                    </div>
-                    <div className="flex justify-between items-center text-sm">
-                      <span className="text-primary-600 font-medium">{similarJob.salary}</span>
-                      <span className="bg-blue-100 text-blue-800 px-2 py-1 rounded text-xs">
-                        {similarJob.match}% match
-                      </span>
-                    </div>
-                    <button className="w-full mt-2 text-primary-500 hover:text-primary-600 text-sm font-medium">
-                      Lihat Detail →
-                    </button>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            {/* Quick Apply */}
-            <div className="bg-primary-50 border border-primary-200 rounded-2xl p-6">
-              <h3 className="font-bold text-lg mb-2 text-primary-800">Lamar Cepat</h3>
-              <p className="text-primary-700 text-sm mb-4">
-                Gunakan profil Anda untuk melamar dengan satu klik
-              </p>
-              <button 
-                onClick={handleApply}
-                disabled={isApplying}
-                className="w-full bg-primary-500 text-white py-3 rounded-lg hover:bg-primary-600 transition font-medium disabled:bg-primary-300 flex items-center justify-center gap-2"
-              >
-                {isApplying ? (
-                  <>
-                    <i className="fas fa-spinner fa-spin"></i>
-                    Memproses...
-                  </>
-                ) : (
-                  <>
-                    <i className="fas fa-bolt"></i>
-                    Lamar Sekarang
-                  </>
-                )}
-              </button>
-            </div>
-          </div>
-        </div>
-      </main>
-    </div>
+        </main>
+      </div>
+      <EditJobPopup
+        isVisible={showEditJobPopup}
+        onClose={() => setShowEditJobPopup(false)}
+        jobDetail={job}
+        onEdit={handleEditProfile}
+      />
+      <AddJobDisPopup
+        isVisible={showAddJobDisPopup}
+        onClose={() => setShowAddJobDisPopup(false)}
+        onCreate={handleAddDisability}
+      />
+      <AddJobSkiPopup
+        isVisible={showAddJobSkiPopup}
+        onClose={() => setShowAddJobSkiPopup(false)}
+        onCreate={handleAddSKill}
+      />
+      <ActionStatusJobPopup
+        isVisible={showActStaPopup}
+        onClose={() => setShowActStaPopup(false)}
+        onUpdate={handleActionStatus}
+        jobDetail={job}
+      />
+      <RescheduleJobPopup
+        isVisible={showRescPopup}
+        onClose={() => setShowRescPopup(false)}
+        onUpdate={handleReschedule}
+        jobDetail={job}
+      />
+    </>
   );
 };
 

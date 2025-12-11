@@ -4,7 +4,7 @@ import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useSearch } from '../contexts/SearchContext';
 import JobCard from '../components/JobCard';
 
-const LowonganPage = () => {
+const JobPage = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { hasSearched, markAsSearched } = useSearch();
@@ -484,4 +484,4 @@ const LowonganPage = () => {
   );
 };
 
-export default LowonganPage;
+export default JobPage;

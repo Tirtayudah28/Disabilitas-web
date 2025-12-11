@@ -29,9 +29,10 @@ const EmployerRegistrationPage = () => {
   const [showDropdown, setShowDropdown] = useState(false);
 
   const [industries, setIndustries] = useState([]);
-  const [filteredIndustries, setFilteredIndustries] = useState([]);
-  const [showIndustriesDd, setShowIndustriesDd] = useState(false);
-  const [industryQuery, setIndustryQuery] = useState("");
+  const [search, setSearch] = useState("");
+  const [debouncedSearch, setDebouncedSearch] = useState("");
+  const [showIndSuggestions, setShowIndSuggestions] = useState(false);
+  const [blockDisApi, setBlockDisApi] = useState(false);
 
   const { token, userData } = useAuth();
   const navigate = useNavigate();
@@ -43,7 +44,8 @@ const EmployerRegistrationPage = () => {
     }
   }, [token, userData]);
 
-  // Get country lists
+  //fatir: get countries
+  //DO NOT CHANGE
   useEffect(() => {
     const fetchCountries = async () => {
       try {
@@ -54,35 +56,47 @@ const EmployerRegistrationPage = () => {
         setCountries(list);
       } catch (error) {
         console.error("Error fetching countries:", error);
-        setCountries(["Indonesia", "Malaysia", "Singapore", "Thailand", "Vietnam"]);
+        setCountries([
+          "Indonesia",
+          "Malaysia",
+          "Singapore",
+          "Thailand",
+          "Vietnam",
+        ]);
       }
     };
 
     fetchCountries();
   }, []);
 
-  // Get industries lists
-  useEffect(() => {
-    const fetchIndustries = async () => {
-      try {
-        const res = await axios.get("/api/data/industries");
-        const list = res.data?.data ?? res.data;
-        setIndustries(list);
-      } catch (error) {
-        console.error("Error fetching industries:", error);
-        // Fallback industries
-        setIndustries([
-          { id: 1, name: "Teknologi Informasi", description: "Perusahaan IT dan Software" },
-          { id: 2, name: "Keuangan", description: "Bank dan Lembaga Keuangan" },
-          { id: 3, name: "Manufaktur", description: "Industri Manufaktur" },
-          { id: 4, name: "Retail", description: "Perusahaan Retail" },
-          { id: 5, name: "Kesehatan", description: "Rumah Sakit dan Klinik" }
-        ]);
+  //fetch industries search-based
+  const fetchIndustries = async (q) => {
+    try {
+      if (!q || q.trim() === "") {
+        setIndustries([]);
+        return;
       }
-    };
 
-    fetchIndustries();
-  }, []);
+      const res = await axios.get(
+        `/api/data/industries?search=${encodeURIComponent(q)}`
+      );
+      const data = res.data.data;
+      setIndustries(Array.isArray(data) ? data : []);
+      setShowIndSuggestions(true);
+    } catch (error) {
+      console.error("Error fetching companies:", error);
+      setIndustries([]);
+      setShowIndSuggestions(false);
+    }
+  };
+  useEffect(() => {
+    if (blockDisApi) return;
+    const delay = setTimeout(() => setDebouncedSearch(search), 500);
+    return () => clearTimeout(delay);
+  }, [search]);
+  useEffect(() => {
+    fetchIndustries(debouncedSearch);
+  }, [debouncedSearch]);
 
   const handleInputChange = (field, value) => {
     setFormData((prev) => ({
@@ -90,6 +104,34 @@ const EmployerRegistrationPage = () => {
       [field]: value,
     }));
     if (error) setError("");
+  };
+
+  //input industry
+  const handleIndustryInput = (e) => {
+    const v = e.target.value;
+    setBlockDisApi(false);
+    setFormData((prev) => ({
+      ...prev,
+      industryId: "",
+      industryName: v,
+    }));
+    setSearch(v);
+  };
+  //industry suggestion
+  const handleSelectSuggestion = (d) => {
+    const id = d.id ?? null;
+    const name = d.name ?? "";
+
+    setFormData((prev) => ({
+      ...prev,
+      industryId: id,
+      industryName: name,
+    }));
+
+    setBlockDisApi(true);
+    setSearch(name);
+    setShowIndSuggestions(false);
+    setIndustries([]);
   };
 
   const handleNext = () => {
@@ -114,6 +156,8 @@ const EmployerRegistrationPage = () => {
     setError("");
   };
 
+  //fatir: fix handle submit
+  //DO NOT CHANGE
   const handleSubmit = async (e) => {
     e.preventDefault();
     localStorage.removeItem("useremail");
@@ -128,16 +172,21 @@ const EmployerRegistrationPage = () => {
       !formData.username ||
       !formData.email ||
       !formData.password ||
-      !formData.confirmPassword ||
-      !formData.agreeToTerms
+      !formData.confirmPassword
     ) {
-      setError("Field yang dibutuhkan masih belum lengkap");
+      setError("Required fields are still incomplete");
       setIsLoading(false);
       return;
     }
 
     if (formData.password !== formData.confirmPassword) {
-      setError("Password dan Konfirmasi Password tidak cocok");
+      setError("Password and Confirm Password unmatched");
+      setIsLoading(false);
+      return;
+    }
+
+    if (!formData.agreeToTerms) {
+      setError("Please agree to terms and services");
       setIsLoading(false);
       return;
     }
@@ -154,16 +203,13 @@ const EmployerRegistrationPage = () => {
         password: formData.password,
         websiteLink: formData.websiteLink,
       };
-      
-      // Simulasi API call untuk frontend only
-      console.log("Registration data:", payload);
-      await new Promise(resolve => setTimeout(resolve, 2000));
-      
+      const res = await axios.post("/api/auth/cm-register", payload);
+
       localStorage.setItem("useremail", formData.email);
-      setError("");
+      window.open(res.data.emailTemp, "_blank"); //development, sementara
       navigate("/verification");
     } catch (err) {
-      setError(err.response?.data?.message || "Terjadi kesalahan saat registrasi");
+      setError(err.response?.data?.message);
     } finally {
       setIsLoading(false);
     }
@@ -199,7 +245,7 @@ const EmployerRegistrationPage = () => {
               InklusiKerja
             </span>
           </Link>
-          
+
           <div>
             <h1 className="text-4xl font-bold text-gray-900 mb-2">
               Bergabung sebagai Employer
@@ -277,17 +323,29 @@ const EmployerRegistrationPage = () => {
           {/* Progress Steps Indicator */}
           <div className="flex items-center justify-center gap-2 mb-8">
             <div className="flex items-center">
-              <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold ${
-                step >= 1 ? 'bg-blue-500 text-white' : 'bg-gray-300 text-gray-600'
-              }`}>
+              <div
+                className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold ${
+                  step >= 1
+                    ? "bg-blue-500 text-white"
+                    : "bg-gray-300 text-gray-600"
+                }`}
+              >
                 1
               </div>
-              <div className={`w-12 h-1 ${step >= 1 ? 'bg-blue-500' : 'bg-gray-300'}`}></div>
+              <div
+                className={`w-12 h-1 ${
+                  step >= 1 ? "bg-blue-500" : "bg-gray-300"
+                }`}
+              ></div>
             </div>
             <div className="flex items-center">
-              <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold ${
-                step >= 2 ? 'bg-blue-500 text-white' : 'bg-gray-300 text-gray-600'
-              }`}>
+              <div
+                className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold ${
+                  step >= 2
+                    ? "bg-blue-500 text-white"
+                    : "bg-gray-300 text-gray-600"
+                }`}
+              >
                 2
               </div>
             </div>
@@ -408,7 +466,9 @@ const EmployerRegistrationPage = () => {
                         type="text"
                         required
                         value={formData.city}
-                        onChange={(e) => handleInputChange("city", e.target.value)}
+                        onChange={(e) =>
+                          handleInputChange("city", e.target.value)
+                        }
                         className="w-full pl-12 pr-4 py-3.5 bg-white border-2 border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all shadow-sm"
                         placeholder="Jakarta"
                       />
@@ -425,84 +485,46 @@ const EmployerRegistrationPage = () => {
                     </label>
                     <div className="relative group">
                       <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                        <i className="fas fa-industry text-gray-400 group-focus-within:text-blue-500 transition-colors"></i>
+                        <i className="fas fa-globe text-gray-400 group-focus-within:text-blue-500 transition-colors"></i>
                       </div>
                       <input
-                        id="industry"
                         type="text"
-                        required
-                        value={industryQuery}
-                        onChange={(e) => {
-                          const value = e.target.value;
-                          setIndustryQuery(value);
-
-                          setFormData((prev) => ({
-                            ...prev,
-                            industryId: "",
-                            industryName: value,
-                          }));
-
-                          if (value.trim() === "") {
-                            setFilteredIndustries([]);
-                            setShowIndustriesDd(false);
-                            return;
-                          }
-
-                          const filter = industries.filter((ind) =>
-                            ind.name.toLowerCase().includes(value.toLowerCase())
-                          );
-
-                          setFilteredIndustries(filter);
-                          setShowIndustriesDd(true);
-                        }}
-                        onBlur={() => {
-                          setTimeout(() => {
-                            setShowIndustriesDd(false);
-                            if (!formData.industryId) {
-                              setFormData((prev) => ({
-                                ...prev,
-                                industryName: industryQuery.trim(),
-                              }));
-                            }
-                          }, 150);
-                        }}
-                        onFocus={() => {
-                          if (filteredIndustries.length > 0)
-                            setShowIndustriesDd(true);
-                        }}
+                        name="industryName"
+                        value={formData.industryName}
+                        onChange={handleIndustryInput}
+                        placeholder="Cari atau ketik nama industri..."
                         className="w-full pl-12 pr-4 py-3.5 bg-white border-2 border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all shadow-sm"
-                        placeholder="Pilih atau ketik industri"
                         autoComplete="off"
+                        onFocus={() => {
+                          if (industries.length > 0)
+                            setShowIndSuggestions(true);
+                        }}
                       />
-                    </div>
 
-                    {showIndustriesDd && filteredIndustries.length > 0 && (
-                      <ul className="absolute z-20 w-full bg-white border-2 border-blue-300 rounded-xl mt-2 max-h-60 overflow-auto shadow-xl">
-                        {filteredIndustries.map((ind) => (
-                          <li
-                            key={ind.id}
-                            className="px-4 py-3 hover:bg-blue-50 cursor-pointer transition-colors border-b border-gray-100 last:border-b-0"
-                            onMouseDown={(e) => {
-                              e.preventDefault();
-                              setFormData((prev) => ({
-                                ...prev,
-                                industryId: ind.id,
-                                industryName: ind.name,
-                              }));
-                              setIndustryQuery(ind.name);
-                              setShowIndustriesDd(false);
-                            }}
-                          >
-                            <div className="font-medium">{ind.name}</div>
-                            {ind.description && (
-                              <div className="text-xs text-gray-400">
-                                {ind.description}
-                              </div>
-                            )}
-                          </li>
-                        ))}
-                      </ul>
-                    )}
+                      {/* suggestions */}
+                      {showIndSuggestions && industries.length > 0 && (
+                        <ul className="absolute z-50 bg-white border border-gray-200 rounded mt-1 w-full max-h-44 overflow-y-auto shadow-lg">
+                          {industries.map((d) => {
+                            const id = d.id ?? "";
+                            const name = d.name ?? "";
+                            return (
+                              <li
+                                key={id || name}
+                                onClick={() => handleSelectSuggestion(d)}
+                                className="px-3 py-2 cursor-pointer hover:bg-gray-100 flex justify-between items-center capitalize"
+                              >
+                                <div>
+                                  <div className="font-medium">{name}</div>
+                                </div>
+                                <div className="text-xs text-gray-600">
+                                  Pilih
+                                </div>
+                              </li>
+                            );
+                          })}
+                        </ul>
+                      )}
+                    </div>
                   </div>
 
                   {/* Website */}
@@ -535,7 +557,7 @@ const EmployerRegistrationPage = () => {
                 <div className="flex gap-3">
                   <button
                     type="button"
-                    onClick={() => navigate('/')}
+                    onClick={() => navigate("/")}
                     className="flex-1 border-2 border-gray-300 text-gray-700 py-3.5 rounded-xl hover:bg-gray-50 transition-all font-semibold"
                   >
                     <i className="fas fa-arrow-left mr-2"></i>
@@ -618,7 +640,9 @@ const EmployerRegistrationPage = () => {
                         type="email"
                         required
                         value={formData.email}
-                        onChange={(e) => handleInputChange("email", e.target.value)}
+                        onChange={(e) =>
+                          handleInputChange("email", e.target.value)
+                        }
                         className="w-full pl-12 pr-4 py-3.5 bg-white border-2 border-gray-300 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all shadow-sm"
                         placeholder="hr@perusahaan.com"
                         disabled={isLoading}
@@ -659,7 +683,8 @@ const EmployerRegistrationPage = () => {
                         htmlFor="confirmPassword"
                         className="block text-sm font-semibold text-gray-700 mb-2"
                       >
-                        Konfirmasi Password <span className="text-red-500">*</span>
+                        Konfirmasi Password{" "}
+                        <span className="text-red-500">*</span>
                       </label>
                       <div className="relative group">
                         <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
@@ -693,7 +718,10 @@ const EmployerRegistrationPage = () => {
                       className="h-5 w-5 text-green-500 focus:ring-green-500 border-gray-300 rounded mt-0.5"
                       disabled={isLoading}
                     />
-                    <label htmlFor="agreeToTerms" className="text-sm text-gray-700">
+                    <label
+                      htmlFor="agreeToTerms"
+                      className="text-sm text-gray-700"
+                    >
                       Saya menyetujui{" "}
                       <Link
                         to="/terms"
@@ -745,22 +773,6 @@ const EmployerRegistrationPage = () => {
               </div>
             )}
           </form>
-        </div>
-
-        {/* Demo Info */}
-        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 text-center">
-          <p className="text-blue-700 text-sm font-medium">
-            <i className="fas fa-info-circle mr-1"></i>
-            Untuk Demo Registrasi
-          </p>
-          <div className="text-blue-600 text-xs mt-2 space-y-1">
-            <p>
-              <strong>Langkah 1:</strong> Isi data perusahaan lengkap
-            </p>
-            <p>
-              <strong>Langkah 2:</strong> Buat akun dengan email dan password
-            </p>
-          </div>
         </div>
 
         {/* Accessibility Quick Options */}
@@ -820,8 +832,8 @@ const EmployerRegistrationPage = () => {
 
         {/* Screen Reader Announcement */}
         <div className="sr-only" aria-live="polite" aria-atomic="true">
-          Halaman registrasi employer untuk platform InklusiKerja. 
-          Isi form pendaftaran perusahaan dalam 2 langkah.
+          Halaman registrasi employer untuk platform InklusiKerja. Isi form
+          pendaftaran perusahaan dalam 2 langkah.
         </div>
       </div>
     </div>

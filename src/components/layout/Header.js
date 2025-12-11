@@ -3,6 +3,7 @@ import React, { useState, useEffect } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "../../contexts/AuthContext";
 import defaultPfp from "../../assets/default-pfp.png";
+import defaultCm from "../../assets/default-company.png"
 import axios from "axios";
 
 const Header = () => {
@@ -13,7 +14,28 @@ const Header = () => {
   const location = useLocation();
   const navigate = useNavigate();
 
-  const { userData, logout } = useAuth();
+  const { token, userData, logout } = useAuth();
+
+  const [profileData, setProfileData] = useState({});
+
+  //fatir: get user by id
+  const getUserById = async () => {
+    try {
+      const res = await axios.get(`/api/user/${userData.id}`);
+
+      if (res.data.data.role === "job-seeker") {
+        navigate(`/`);
+      }
+      setProfileData(res.data.data);
+    } catch (error) {
+      console.error("Error fetching user:", error);
+      navigate("/");
+    }
+  };
+
+  useEffect(() => {
+    getUserById();
+  }, []);
 
   // Close menus when route changes
   useEffect(() => {
@@ -75,19 +97,13 @@ const Header = () => {
     console.log("Language changed to:", lang);
   };
 
-
   const isLowonganActive = () => {
-    return (
-      location.pathname === "/jobs" ||
-      location.pathname === "/"
-    );
+    return location.pathname === "/jobs";
   };
 
   // PERBAIKAN 4: Logic untuk menentukan apakah menu profile aktif
   const isProfileActive = () => {
-    return (
-      location.pathname === "/profile"
-    );
+    return location.pathname === "/profile";
   };
 
   const getMenuClass = (isActive) => {
@@ -120,7 +136,7 @@ const Header = () => {
         <nav className="hidden lg:flex space-x-1" aria-label="Navigasi utama">
           {/* Menu Cari Lowongan */}
           <Link
-            to={"/"}
+            to={"/jobs"}
             className={getMenuClass(isLowonganMenuActive)}
             aria-current={isLowonganMenuActive ? "page" : undefined}
           >
@@ -160,12 +176,10 @@ const Header = () => {
           aria-label="Navigasi employer"
         >
           <Link
-            to="/employer/job-posting"
-            className={getMenuClass(
-              location.pathname === "/employer/job-posting"
-            )}
+            to="/employer/jobs"
+            className={getMenuClass(location.pathname === "/employer/jobs")}
             aria-current={
-              location.pathname === "/employer/job-posting" ? "page" : undefined
+              location.pathname === "/employer/jobs" ? "page" : undefined
             }
           >
             <i className="fas fa-briefcase" aria-hidden="true"></i>
@@ -212,7 +226,7 @@ const Header = () => {
         >
           <Link
             to={"/jobs"}
-            className={getMenuClass(isLowonganMenuActive)}                                          
+            className={getMenuClass(isLowonganMenuActive)}
             aria-current={isLowonganMenuActive ? "page" : undefined}
           >
             <i className="fas fa-search" aria-hidden="true"></i>
@@ -241,7 +255,7 @@ const Header = () => {
       return (
         <>
           <Link
-            to={'/'}
+            to={"/jobs"}
             className={getMobileMenuClass(isLowonganMenuActive)}
             aria-current={isLowonganMenuActive ? "page" : undefined}
           >
@@ -250,7 +264,7 @@ const Header = () => {
           </Link>
           {/* PERBAIKAN: gunakan getProfileLink() untuk mobile */}
           <Link
-            to={'/profile'}
+            to={"/profile"}
             className={getMobileMenuClass(isProfileActive())}
             aria-current={isProfileActive() ? "page" : undefined}
           >
@@ -278,12 +292,12 @@ const Header = () => {
       return (
         <>
           <Link
-            to="/employer/job-posting"
+            to="/employer/jobs"
             className={getMobileMenuClass(
-              location.pathname === "/employer/job-posting"
+              location.pathname === "/employer/jobs"
             )}
             aria-current={
-              location.pathname === "/employer/job-posting" ? "page" : undefined
+              location.pathname === "/employer/jobs" ? "page" : undefined
             }
           >
             <i
@@ -331,7 +345,7 @@ const Header = () => {
       return (
         <>
           <Link
-            to={'/jobs'}
+            to={"/jobs"}
             className={getMobileMenuClass(isLowonganMenuActive)}
             aria-current={isLowonganMenuActive ? "page" : undefined}
           >
@@ -501,9 +515,9 @@ const Header = () => {
             aria-expanded={isProfileMenuOpen}
           >
             <img
-              src={defaultPfp}
+              src={profileData?.profilePicture || (isEmployer ? defaultCm : defaultPfp)}
               alt="profile picture"
-              className="rounded-full aspect-square w-10"
+              className="rounded-full aspect-square object-cover w-10"
             />
             <div className="hidden md:block text-left">
               <div className="text-sm font-medium text-gray-900">
@@ -537,7 +551,7 @@ const Header = () => {
               {isEmployer ? (
                 <>
                   <Link
-                    to="/employer/dashboard"
+                    to="/employer"
                     className="px-4 py-2 text-sm text-gray-700 hover:bg-primary-50 transition flex items-center gap-2"
                     role="menuitem"
                   >
@@ -596,14 +610,14 @@ const Header = () => {
 
   return (
     <header
-      className="bg-white/90 backdrop-blur-md shadow-lg sticky top-0 z-40"
+      className="bg-white/90 backdrop-blur-md shadow sticky top-0 z-40"
       role="banner"
     >
       <div className="container mx-auto px-4 py-3">
         <div className="flex justify-between items-center">
           {/* Logo */}
           <Link
-            to="/"
+            to={token ? "/jobs" : "/"}
             className="flex items-center space-x-3 hover-lift p-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2"
             aria-label="InklusiKerja - Kembali ke beranda"
           >

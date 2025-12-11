@@ -1,20 +1,29 @@
 // src/pages/LowonganLandingPage.js - VERSI DIPERBAIKI
-import React, { useState, useEffect } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
-import { useSearch } from '../contexts/SearchContext';
+import React, { useState, useEffect } from "react";
+import { useNavigate, Link } from "react-router-dom";
+import { useSearch } from "../contexts/SearchContext";
+import { useAuth } from "../contexts/AuthContext";
 
-const LowonganLandingPage = () => {
+const JobLandingPage = () => {
+  const {token} = useAuth()
   const navigate = useNavigate();
   const { markAsSearched } = useSearch();
 
-  const [searchTerm, setSearchTerm] = useState('');
+  const [searchTerm, setSearchTerm] = useState("");
   const [showAdvancedFilters, setShowAdvancedFilters] = useState(false);
   const [selectedFilters, setSelectedFilters] = useState({
-    disabilityTypes: ['tuna-netra', 'tuna-rungu', 'semua-jenis'],
-    salaryRange: '5-10',
-    companySize: ['startup', 'menengah'],
-    postedDate: '24jam'
+    disabilityTypes: ["tuna-netra", "tuna-rungu", "semua-jenis"],
+    salaryRange: "5-10",
+    companySize: ["startup", "menengah"],
+    postedDate: "24jam",
   });
+
+  //fatir: auto-redirect if already logged-in
+  useEffect(() => {
+    if (token) {
+      navigate("/jobs");
+    }
+  }, [token, navigate]);
 
   // Cek status login user
   const [isLoggedIn, setIsLoggedIn] = useState(false);
@@ -22,9 +31,9 @@ const LowonganLandingPage = () => {
   useEffect(() => {
     // Cek apakah user sudah login
     const checkAuthStatus = () => {
-      const token = localStorage.getItem('authToken');
-      const user = localStorage.getItem('user');
-      
+      const token = localStorage.getItem("authToken");
+      const user = localStorage.getItem("user");
+
       if (token && user) {
         setIsLoggedIn(true);
       }
@@ -40,7 +49,7 @@ const LowonganLandingPage = () => {
       logo: "G",
       industry: "Teknologi",
       jobs: 42,
-      color: "from-blue-500 to-blue-600"
+      color: "from-blue-500 to-blue-600",
     },
     {
       id: 2,
@@ -48,7 +57,7 @@ const LowonganLandingPage = () => {
       logo: "GJ",
       industry: "Teknologi",
       jobs: 38,
-      color: "from-green-500 to-green-600"
+      color: "from-green-500 to-green-600",
     },
     {
       id: 3,
@@ -56,7 +65,7 @@ const LowonganLandingPage = () => {
       logo: "T",
       industry: "E-commerce",
       jobs: 31,
-      color: "from-green-400 to-green-500"
+      color: "from-green-400 to-green-500",
     },
     {
       id: 4,
@@ -64,7 +73,7 @@ const LowonganLandingPage = () => {
       logo: "TR",
       industry: "Travel",
       jobs: 25,
-      color: "from-red-500 to-red-600"
+      color: "from-red-500 to-red-600",
     },
     {
       id: 5,
@@ -72,43 +81,43 @@ const LowonganLandingPage = () => {
       logo: "S",
       industry: "E-commerce",
       jobs: 36,
-      color: "from-orange-500 to-orange-600"
-    }
+      color: "from-orange-500 to-orange-600",
+    },
   ];
 
-   const handleSearch = () => {
+  const handleSearch = () => {
     // USER BELUM LOGIN TAPI BISA LANGSUNG KE LOWONGAN PAGE DENGAN SEARCH
     markAsSearched(searchTerm);
     const params = new URLSearchParams();
-    if (searchTerm) params.append('q', searchTerm);
+    if (searchTerm) params.append("q", searchTerm);
     navigate(`/jobs?${params.toString()}`);
   };
 
-    const handleQuickSearch = (keyword) => {
+  const handleQuickSearch = (keyword) => {
     // USER BELUM LOGIN TAPI BISA LANGSUNG KE LOWONGAN PAGE DENGAN SEARCH
     markAsSearched(keyword);
     navigate(`/jobs?q=${encodeURIComponent(keyword)}`);
   };
 
   const toggleFilter = (filterType, value) => {
-    setSelectedFilters(prev => {
-      if (filterType === 'disabilityTypes' || filterType === 'companySize') {
+    setSelectedFilters((prev) => {
+      if (filterType === "disabilityTypes" || filterType === "companySize") {
         const currentValues = prev[filterType];
         if (currentValues.includes(value)) {
           return {
             ...prev,
-            [filterType]: currentValues.filter(v => v !== value)
+            [filterType]: currentValues.filter((v) => v !== value),
           };
         } else {
           return {
             ...prev,
-            [filterType]: [...currentValues, value]
+            [filterType]: [...currentValues, value],
           };
         }
       } else {
         return {
           ...prev,
-          [filterType]: value
+          [filterType]: value,
         };
       }
     });
@@ -119,20 +128,20 @@ const LowonganLandingPage = () => {
     // Simulasi login dengan Google
     const mockUser = {
       id: 1,
-      name: 'John Doe',
-      email: 'john@example.com',
-      token: 'google-auth-token-123'
+      name: "John Doe",
+      email: "john@example.com",
+      token: "google-auth-token-123",
     };
-    
+
     // Simpan data user ke localStorage
-    localStorage.setItem('authToken', mockUser.token);
-    localStorage.setItem('user', JSON.stringify(mockUser));
-    
+    localStorage.setItem("authToken", mockUser.token);
+    localStorage.setItem("user", JSON.stringify(mockUser));
+
     // Set status login
     setIsLoggedIn(true);
-    
+
     // Redirect ke halaman lowongan (tanpa search parameters)
-    navigate('/lowongan');
+    navigate("/lowongan");
   };
 
   return (
@@ -146,14 +155,17 @@ const LowonganLandingPage = () => {
               <div className="w-12 h-12 bg-gradient-to-br from-blue-600 to-blue-700 rounded-xl flex items-center justify-center shadow-lg">
                 <i className="fas fa-briefcase text-white text-lg"></i>
               </div>
-              <span className="text-2xl font-bold text-gray-900">CareerConnect</span>
+              <span className="text-2xl font-bold text-gray-900">
+                CareerConnect
+              </span>
             </div>
             <h1 className="text-4xl md:text-5xl font-bold text-gray-900 mb-4">
               Find Your Next
               <span className="text-blue-600"> Career Move</span>
             </h1>
             <p className="text-lg text-gray-600 max-w-2xl mx-auto">
-              Discover opportunities that match your skills and accessibility needs
+              Discover opportunities that match your skills and accessibility
+              needs
             </p>
           </div>
 
@@ -163,26 +175,28 @@ const LowonganLandingPage = () => {
             <div className="flex flex-col md:flex-row gap-4 mb-6">
               <div className="flex-1 relative">
                 <i className="fas fa-search absolute left-3 top-3 text-gray-400"></i>
-                <input 
-                  type="text" 
+                <input
+                  type="text"
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
-                  placeholder="Posisi, perusahaan, atau kata kunci..." 
+                  onKeyPress={(e) => e.key === "Enter" && handleSearch()}
+                  placeholder="Posisi, perusahaan, atau kata kunci..."
                   className="w-full pl-10 pr-4 py-3 border-2 border-gray-300 rounded-lg focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-colors"
                 />
               </div>
               <div className="flex gap-2">
-                <button 
+                <button
                   onClick={handleSearch}
                   className="bg-blue-500 text-white px-6 py-3 rounded-lg hover:bg-blue-600 transition font-medium flex items-center gap-2"
                 >
                   <i className="fas fa-search"></i> Cari
                 </button>
-                <button 
+                <button
                   onClick={() => setShowAdvancedFilters(!showAdvancedFilters)}
                   className={`border-2 px-4 py-3 rounded-lg hover:bg-gray-50 transition ${
-                    showAdvancedFilters ? 'bg-blue-500 text-white border-blue-500' : 'border-gray-300'
+                    showAdvancedFilters
+                      ? "bg-blue-500 text-white border-blue-500"
+                      : "border-gray-300"
                   }`}
                 >
                   <i className="fas fa-sliders-h"></i>
@@ -194,7 +208,9 @@ const LowonganLandingPage = () => {
             {showAdvancedFilters && (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                 <div>
-                  <label className="block text-sm font-medium mb-2">Lokasi</label>
+                  <label className="block text-sm font-medium mb-2">
+                    Lokasi
+                  </label>
                   <select className="w-full p-3 border-2 border-gray-300 rounded-lg focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-colors">
                     <option value="">Semua Lokasi</option>
                     <option value="remote">Remote</option>
@@ -204,9 +220,11 @@ const LowonganLandingPage = () => {
                     <option value="surabaya">Surabaya</option>
                   </select>
                 </div>
-                
+
                 <div>
-                  <label className="block text-sm font-medium mb-2">Jenis Pekerjaan</label>
+                  <label className="block text-sm font-medium mb-2">
+                    Jenis Pekerjaan
+                  </label>
                   <select className="w-full p-3 border-2 border-gray-300 rounded-lg focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-colors">
                     <option value="">Semua Jenis</option>
                     <option value="full-time">Full Time</option>
@@ -215,39 +233,53 @@ const LowonganLandingPage = () => {
                     <option value="freelance">Freelance</option>
                   </select>
                 </div>
-                
+
                 <div>
-                  <label className="block text-sm font-medium mb-2">Keahlian</label>
-                  <input 
-                    type="text" 
-                    placeholder="Contoh: UI Design, Programming" 
+                  <label className="block text-sm font-medium mb-2">
+                    Keahlian
+                  </label>
+                  <input
+                    type="text"
+                    placeholder="Contoh: UI Design, Programming"
                     className="w-full p-3 border-2 border-gray-300 rounded-lg focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-colors"
                   />
                 </div>
-                
+
                 <div>
-                  <label className="block text-sm font-medium mb-2">Akomodasi</label>
+                  <label className="block text-sm font-medium mb-2">
+                    Akomodasi
+                  </label>
                   <select className="w-full p-3 border-2 border-gray-300 rounded-lg focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-colors">
                     <option value="">Semua Akomodasi</option>
                     <option value="screen-reader">Screen Reader Support</option>
                     <option value="wheelchair">Akses Kursi Roda</option>
-                    <option value="interpreter">Interpreter Bahasa Isyarat</option>
+                    <option value="interpreter">
+                      Interpreter Bahasa Isyarat
+                    </option>
                     <option value="flex-time">Jam Fleksibel</option>
                     <option value="remote-option">Opsi Remote</option>
                   </select>
                 </div>
               </div>
-            )}  
+            )}
 
             {/* Quick Filter Chips */}
             <div className="mt-4 flex flex-wrap gap-2">
               {[
-                { label: "Disabilitas Fisik", icon: "wheelchair", color: "green" },
+                {
+                  label: "Disabilitas Fisik",
+                  icon: "wheelchair",
+                  color: "green",
+                },
                 { label: "Disabilitas Visual", icon: "eye", color: "blue" },
-                { label: "Disabilitas Pendengaran", icon: "deaf", color: "purple" },
-                { label: "Baru Diposting", icon: "clock", color: "orange" }
+                {
+                  label: "Disabilitas Pendengaran",
+                  icon: "deaf",
+                  color: "purple",
+                },
+                { label: "Baru Diposting", icon: "clock", color: "orange" },
               ].map((filter, index) => (
-                <span 
+                <span
                   key={index}
                   className={`bg-${filter.color}-100 text-${filter.color}-800 px-3 py-1 rounded-full text-sm cursor-pointer hover:bg-${filter.color}-200 transition`}
                 >
@@ -262,7 +294,13 @@ const LowonganLandingPage = () => {
           <div className="text-center">
             <p className="text-gray-600 mb-4">Popular searches:</p>
             <div className="flex flex-wrap justify-center gap-3">
-              {['React Developer', 'UI/UX Designer', 'Data Scientist', 'Product Manager', 'Backend Engineer'].map((tag) => (
+              {[
+                "React Developer",
+                "UI/UX Designer",
+                "Data Scientist",
+                "Product Manager",
+                "Backend Engineer",
+              ].map((tag) => (
                 <button
                   key={tag}
                   onClick={() => handleQuickSearch(tag)}
@@ -302,22 +340,35 @@ const LowonganLandingPage = () => {
                   Temukan pekerjaan yang tepat untuk Anda di InklusiKerja
                 </h2>
                 <p className="text-blue-100 mb-6">
-                  Masuk ke profil Anda untuk mendapatkan pekerjaan yang lebih cocok
+                  Masuk ke profil Anda untuk mendapatkan pekerjaan yang lebih
+                  cocok
                 </p>
 
                 {/* Login Options */}
                 <div className="max-w-md mx-auto lg:mx-0">
                   {/* Google Login */}
-                  <button 
+                  <button
                     onClick={handleGoogleLogin}
                     className="w-full bg-white text-gray-800 px-6 py-3 rounded-lg font-medium hover:bg-gray-50 transition-all shadow-md flex items-center justify-center gap-3 mb-4"
                   >
                     <div className="w-5 h-5">
                       <svg viewBox="0 0 24 24">
-                        <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
-                        <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
-                        <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
-                        <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
+                        <path
+                          fill="#4285F4"
+                          d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
+                        />
+                        <path
+                          fill="#34A853"
+                          d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
+                        />
+                        <path
+                          fill="#FBBC05"
+                          d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"
+                        />
+                        <path
+                          fill="#EA4335"
+                          d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
+                        />
                       </svg>
                     </div>
                     Lanjutkan dengan Google
@@ -325,11 +376,13 @@ const LowonganLandingPage = () => {
 
                   {/* Separator */}
                   <div className="text-center my-4">
-                    <span className="text-blue-200 text-sm bg-blue-700 px-3 py-1 rounded-full">atau</span>
+                    <span className="text-blue-200 text-sm bg-blue-700 px-3 py-1 rounded-full">
+                      atau
+                    </span>
                   </div>
 
                   {/* Email Login */}
-                  <Link 
+                  <Link
                     to="/login"
                     className="w-full bg-cyan-500 hover:bg-cyan-400 text-white px-6 py-3 rounded-lg font-medium transition-all shadow-md flex items-center justify-center gap-3"
                   >
@@ -341,8 +394,8 @@ const LowonganLandingPage = () => {
                 {/* Registration Link */}
                 <div className="text-center lg:text-left mt-6">
                   <span className="text-blue-200">Belum punya akun? </span>
-                  <Link 
-                    to="/register" 
+                  <Link
+                    to="/register"
                     className="text-cyan-300 hover:text-cyan-200 font-semibold underline"
                   >
                     Daftar
@@ -362,24 +415,28 @@ const LowonganLandingPage = () => {
               {
                 icon: "fas fa-universal-access",
                 title: "Accessibility First",
-                description: "Platform designed with accessibility at its core"
+                description: "Platform designed with accessibility at its core",
               },
               {
                 icon: "fas fa-bullseye",
                 title: "Smart Matching",
-                description: "AI-powered job recommendations based on your profile"
+                description:
+                  "AI-powered job recommendations based on your profile",
               },
               {
                 icon: "fas fa-shield-alt",
                 title: "Inclusive Culture",
-                description: "Companies verified for inclusive workplace practices"
-              }
+                description:
+                  "Companies verified for inclusive workplace practices",
+              },
             ].map((feature, index) => (
               <div key={index} className="text-center">
                 <div className="w-16 h-16 bg-blue-100 rounded-2xl flex items-center justify-center text-blue-600 text-xl mx-auto mb-4">
                   <i className={feature.icon}></i>
                 </div>
-                <h3 className="font-semibold text-gray-900 mb-2">{feature.title}</h3>
+                <h3 className="font-semibold text-gray-900 mb-2">
+                  {feature.title}
+                </h3>
                 <p className="text-gray-600 text-sm">{feature.description}</p>
               </div>
             ))}
@@ -396,19 +453,57 @@ const LowonganLandingPage = () => {
                 Cari Berdasarkan Kategori
               </h2>
               <p className="text-gray-600">
-                Temukan lowongan berdasarkan bidang dan keahlian yang Anda minati
+                Temukan lowongan berdasarkan bidang dan keahlian yang Anda
+                minati
               </p>
             </div>
 
             <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
               {[
-                { title: "Teknologi", keywords: ["Programmer", "UI/UX Designer", "Data Analyst", "IT Support"] },
-                { title: "Desain", keywords: ["Graphic Designer", "UI/UX", "Product Designer", "Visual Designer"] },
-                { title: "Pemasaran", keywords: ["Digital Marketing", "Content Writer", "Social Media", "SEO Specialist"] },
-                { title: "Bisnis", keywords: ["Project Manager", "Business Analyst", "HR Specialist", "Operations"] }
+                {
+                  title: "Teknologi",
+                  keywords: [
+                    "Programmer",
+                    "UI/UX Designer",
+                    "Data Analyst",
+                    "IT Support",
+                  ],
+                },
+                {
+                  title: "Desain",
+                  keywords: [
+                    "Graphic Designer",
+                    "UI/UX",
+                    "Product Designer",
+                    "Visual Designer",
+                  ],
+                },
+                {
+                  title: "Pemasaran",
+                  keywords: [
+                    "Digital Marketing",
+                    "Content Writer",
+                    "Social Media",
+                    "SEO Specialist",
+                  ],
+                },
+                {
+                  title: "Bisnis",
+                  keywords: [
+                    "Project Manager",
+                    "Business Analyst",
+                    "HR Specialist",
+                    "Operations",
+                  ],
+                },
               ].map((category, index) => (
-                <div key={index} className="bg-white rounded-2xl p-6 shadow-sm hover:shadow-md transition-shadow">
-                  <h3 className="font-semibold text-gray-900 mb-4 text-center">{category.title}</h3>
+                <div
+                  key={index}
+                  className="bg-white rounded-2xl p-6 shadow-sm hover:shadow-md transition-shadow"
+                >
+                  <h3 className="font-semibold text-gray-900 mb-4 text-center">
+                    {category.title}
+                  </h3>
                   <div className="space-y-2">
                     {category.keywords.map((keyword, keyIndex) => (
                       <button
@@ -428,8 +523,14 @@ const LowonganLandingPage = () => {
             <div className="text-center mt-12">
               <div className="inline-flex flex-wrap gap-4 justify-center">
                 {[
-                  "Remote Work", "Full Time", "Part Time", "Fresh Graduate", 
-                  "Experienced", "Managerial", "Entry Level", "Freelance"
+                  "Remote Work",
+                  "Full Time",
+                  "Part Time",
+                  "Fresh Graduate",
+                  "Experienced",
+                  "Managerial",
+                  "Entry Level",
+                  "Freelance",
                 ].map((link, index) => (
                   <button
                     key={index}
@@ -448,4 +549,4 @@ const LowonganLandingPage = () => {
   );
 };
 
-export default LowonganLandingPage;
+export default JobLandingPage;

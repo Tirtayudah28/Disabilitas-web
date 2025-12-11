@@ -21,8 +21,8 @@ import ProtectedRoute from "./components/auth/ProtectedRoute";
 import "./styles/globals.css";
 
 // Import semua pages
-import LowonganLandingPage from "./pages/LowonganLandingPage";
-import LowonganPage from "./pages/LowonganPage";
+import JobLandingPage from "./pages/JobLandingPage";
+import JobPage from "./pages/JobPage";
 import CompaniesPage from "./pages/CompaniesPage";
 import LoginPage from "./pages/auth/LoginPage";
 import RegistrationPage from "./pages/auth/RegistrationPage";
@@ -30,20 +30,21 @@ import EmployerRegistrationPage from "./pages/auth/EmployerRegistrationPage";
 import VerificationPage from "./pages/auth/VerificationPage";
 import ForgotPasswordPage from "./pages/auth/ForgotPasswordPage";
 import JobDetailPage from "./pages/JobDetailPage";
-import ApplicationHistory from "./pages/application/ApplicationHistory";
+import ApplicationHistory from "./pages/candidate/ApplicationHistory";
 import EmployerDashboard from "./pages/employer/EmployerDashboard";
-import JobPostingPage from "./pages/employer/JobPostingPage";
-import ApplicationManagementPage from "./pages/employer/ApplicationManagementPage";
 import CompanyProfilePage from "./pages/employer/CompanyProfilePage";
 import CandidateSearchPage from "./pages/employer/CandidateSearchPage";
-import InterviewSchedulingPage from "./pages/employer/InterviewSchedulingPage";
 
 // IMPORT HALAMAN PROFILE
 import ProfileLandingPage from "./pages/ProfileLandingPage";
-import ProfilePage from "./pages/ProfilePage";
+import ProfilePage from "./pages/candidate/ProfilePage";
 import { AuthProvider } from "./contexts/AuthContext";
 import axios from "axios";
 import CompleteGooglePage from "./pages/auth/CompleteGooglePage";
+import EmployerOverviewPage from "./pages/employer/EmployerOverviewPage";
+import EmployerJobPage from "./pages/employer/EmployerJobPage";
+import EmployerApplicantPage from "./pages/employer/EmployerApplicantPage";
+import PostJobPage from "./pages/employer/PostJobPage";
 
 // Voice Navigation Provider Component - SIMPLIFIED
 const VoiceNavigationInitializer = ({ children }) => {
@@ -293,7 +294,7 @@ const AppContent = () => {
     location.pathname === "/register" ||
     location.pathname === "/employer-register" ||
     location.pathname === "/verification" ||
-    location.pathname === "/complete-google"
+    location.pathname === "/complete-google";
 
   const renderNavbar = () => {
     if (hideNavbar) return null;
@@ -327,15 +328,15 @@ const AppContent = () => {
           <Route path="/complete-google" element={<CompleteGooglePage />} />
 
           {/* public routes */}
-          <Route path="/" element={<LowonganLandingPage />} />
+          <Route path="/" element={<JobLandingPage />} />
           <Route path="/companies" element={<CompaniesPage />} />
           <Route path="/profile" element={<ProfileLandingPage />} />
-          <Route path="/jobs" element={<LowonganPage />} />
-          <Route path="/jobs/:id" element={<JobDetailPage />} />
+          <Route path="/jobs" element={<JobPage />} />
+          <Route path="/job/:jobId" element={<JobDetailPage />} />
 
           {/* profile routes */}
           <Route path="/js/:userId" element={<ProfilePage />} />
-          <Route path="/cm/:userId" element={null} /> {/* buatkan halamannya (for company) */}
+          <Route path="/cm/:userId" element={<CompanyProfilePage />} />
 
           {/* job-seeker protected route */}
           <Route element={<ProtectedRoute requiredRole="job-seeker" />}>
@@ -347,25 +348,17 @@ const AppContent = () => {
 
           {/* company protected routes */}
           <Route element={<ProtectedRoute requiredRole="company" />}>
-            <Route path="/employer/dashboard" element={<EmployerDashboard />} />
 
-            <Route path="/employer/job-posting" element={<JobPostingPage />} />
-
-            <Route
-              path="/employer/applications"
-              element={<ApplicationManagementPage />}
-            />
-
-            <Route path="/employer/profile" element={<CompanyProfilePage />} />
+            <Route path="/employer" element={<EmployerDashboard />}>
+              <Route index element={<EmployerOverviewPage />} />
+              <Route path="jobs" element={<EmployerJobPage />} />
+              <Route path="jobs/post" element={<PostJobPage />} />
+              <Route path="applications" element={<EmployerApplicantPage />} />
+            </Route>
 
             <Route
               path="/employer/candidates"
               element={<CandidateSearchPage />}
-            />
-
-            <Route
-              path="/employer/interviews"
-              element={<InterviewSchedulingPage />}
             />
           </Route>
 
@@ -374,7 +367,7 @@ const AppContent = () => {
       </main>
 
       <Footer />
-      <AccessibilityWidget />
+      {/* <AccessibilityWidget /> */}
     </div>
   );
 };
@@ -382,7 +375,7 @@ const AppContent = () => {
 // Main App Component
 function App() {
   //fatir: DEFAULT AXIOS SETTINGS
-  axios.defaults.baseURL = "https://inkr-api.vercel.app";
+  axios.defaults.baseURL = "https://inkr-api.vercel.app/";
   axios.defaults.withCredentials = true;
   return (
     <Provider store={store}>

@@ -22,14 +22,7 @@ export const AuthProvider = ({ children }) => {
           role: decoded.role,
         });
         setToken(res.data.accessToken);
-        console.log({
-          id: decoded.id,
-          name: decoded.name,
-          email: decoded.email,
-          role: decoded.role,
-        });
       }
-      console.log(res.data)
     } catch (err) {
       console.error("Token fetch error:", err);
       setToken(null);
@@ -44,10 +37,21 @@ export const AuthProvider = ({ children }) => {
     setUserData(null);
   };
 
+  // initial get token
   useEffect(() => {
     if (token) return;
     getToken();
   }, [token]);
+
+  useEffect(() => {
+    if (!token || tokenLoading) return;
+
+    const interval = setInterval(() => {
+      getToken();
+    }, 14 * 60 * 1000);
+
+    return () => clearInterval(interval);
+  }, [token, tokenLoading]);
 
   return (
     <AuthContext.Provider

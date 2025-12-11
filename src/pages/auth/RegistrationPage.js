@@ -1,12 +1,9 @@
-//fatir: UPDATE LOGIN/REGISTER
-
 // src/pages/auth/RegistrationPage.js - VERSI PROFESIONAL DAN CLEAN
 import React, { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { useDispatch, useSelector } from "react-redux";
-import { login } from "../../store/authSlice";
 import axios from "axios";
 import { useAuth } from "../../contexts/AuthContext";
+import { enqueueSnackbar } from "notistack";
 
 const RegistrationPage = () => {
   const [formData, setFormData] = useState({
@@ -26,11 +23,9 @@ const RegistrationPage = () => {
   const [showEmailForm, setShowEmailForm] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
-  const [activeTab, setActiveTab] = useState("candidate"); // candidate or employer
 
   const { token, userData } = useAuth();
 
-  const dispatch = useDispatch();
   const navigate = useNavigate();
 
   //fatir: auto-redirect if already logged-in
@@ -49,27 +44,11 @@ const RegistrationPage = () => {
   };
 
   const handleGoogleRegister = () => {
-    setIsLoading(true);
-    setError("");
-
-    // Simulasi registrasi dengan Google
-    const googleUserData = {
-      email: "user.disabilitas@gmail.com",
-      password: "google-auth",
-      userType: activeTab,
-      name: "User Disabilitas",
-      disabilityType: formData.disabilityType || "Disabilitas Lainnya",
-    };
-
-    dispatch(login(googleUserData)).then((result) => {
-      setIsLoading(false);
-      if (login.fulfilled.match(result)) {
-        navigate("/complete-google"); // Redirect ke complete profile
-      }
-    });
+    //to-do
   };
 
   //fatir: modifikasi email register
+  //DO NOT CHANGE
   const handleEmailRegister = async (e) => {
     e.preventDefault();
     localStorage.removeItem("useremail");
@@ -91,16 +70,14 @@ const RegistrationPage = () => {
     }
 
     try {
-      const res = await axios.post("/api/auth/js-register", {
-        ...formData,
-        userType: activeTab,
-      });
+      const res = await axios.post("/api/auth/js-register", formData);
 
       console.log(res.data);
       localStorage.setItem("useremail", formData.email);
       window.open(res.data.emailTemp, "_blank"); //development, sementara
       navigate("/verification");
     } catch (err) {
+      enqueueSnackbar(err.response?.data?.message || "Terjadi kesalahan saat mendaftar", {variant: "warning"})
       setError(err.response?.data?.message);
     } finally {
       setIsLoading(false);
@@ -108,6 +85,7 @@ const RegistrationPage = () => {
   };
 
   //fatir: get country lists
+  //DO NOT CHANGE
   useEffect(() => {
     const fetchCountries = async () => {
       try {
@@ -154,7 +132,6 @@ const RegistrationPage = () => {
               InklusiKerja
             </span>
           </Link>
-          
           <div>
             <h1 className="text-4xl font-bold text-gray-900 mb-2">
               Bergabung dengan Kami
@@ -170,32 +147,21 @@ const RegistrationPage = () => {
           {/* Pencari Kerja Card */}
           <button
             onClick={() => {
-              setActiveTab("candidate");
               setShowEmailForm(false);
               setError("");
             }}
-            className={`p-6 rounded-xl border-2 transition-all text-left ${
-              activeTab === "candidate"
-                ? "border-blue-500 bg-blue-50 shadow-md"
-                : "border-gray-200 bg-white hover:border-gray-300 hover:shadow-sm"
-            }`}
+            className={`p-6 rounded-xl border-2 transition-all text-left border-blue-500 bg-blue-50 shadow-md`}
           >
             <div className="flex items-center gap-3">
-              <div className={`p-3 rounded-lg ${
-                activeTab === "candidate" ? "bg-blue-500" : "bg-gray-200"
-              }`}>
-                <i className={`fas fa-user-tie text-xl ${
-                  activeTab === "candidate" ? "text-white" : "text-gray-600"
-                }`}></i>
+              <div className={`p-3 rounded-lg bg-blue-500`}>
+                <i className={`fas fa-user-tie text-xl text-white`}></i>
               </div>
               <div className="flex-1">
                 <h3 className="text-base font-semibold text-gray-900">
                   Daftar sebagai Pencari Kerja
                 </h3>
               </div>
-              {activeTab === "candidate" && (
-                <i className="fas fa-check-circle text-blue-500 text-xl"></i>
-              )}
+              <i className="fas fa-check-circle text-blue-500 text-xl"></i>
             </div>
           </button>
 
@@ -236,24 +202,10 @@ const RegistrationPage = () => {
           {/* Badge Indicator */}
           <div className="flex justify-center">
             <div
-              className={`inline-flex items-center px-5 py-2.5 rounded-full font-medium shadow-sm ${
-                activeTab === "candidate"
-                  ? "bg-blue-50 text-blue-700 border border-blue-200"
-                  : "bg-green-50 text-green-700 border border-green-200"
-              }`}
+              className={`inline-flex items-center px-5 py-2.5 rounded-full font-medium shadow-sm bg-blue-50 text-blue-700 border border-blue-200`}
             >
-              <i
-                className={`${
-                  activeTab === "candidate"
-                    ? "fas fa-wheelchair"
-                    : "fas fa-briefcase"
-                } mr-2`}
-              ></i>
-              <span>
-                {activeTab === "candidate"
-                  ? "Daftar sebagai Pencari Kerja"
-                  : "Daftar sebagai Perusahaan"}
-              </span>
+              <i className={`fas fa-wheelchair mr-2`}></i>
+              <span>Daftar sebagai Pencari Kerja</span>
             </div>
           </div>
 
@@ -303,11 +255,7 @@ const RegistrationPage = () => {
             <div className="text-center">
               <button
                 onClick={() => setShowEmailForm(true)}
-                className={`w-full py-4 px-6 rounded-xl font-semibold transition-all duration-200 flex items-center justify-center gap-3 shadow-lg ${
-                  activeTab === "candidate"
-                    ? "bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700"
-                    : "bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700"
-                } text-white`}
+                className={`w-full py-4 px-6 rounded-xl font-semibold transition-all duration-200 flex items-center justify-center gap-3 shadow-lg bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white`}
               >
                 <i className="fas fa-envelope text-lg"></i>
                 <span>Daftar dengan Email</span>
@@ -340,7 +288,7 @@ const RegistrationPage = () => {
                     Informasi Akun
                   </h3>
                 </div>
-                
+
                 {/* Username */}
                 <div>
                   <label
@@ -629,11 +577,7 @@ const RegistrationPage = () => {
               <button
                 type="submit"
                 disabled={isLoading}
-                className={`w-full py-4 px-6 rounded-xl font-semibold transition-all duration-200 flex items-center justify-center gap-3 shadow-lg disabled:opacity-50 disabled:cursor-not-allowed ${
-                  activeTab === "candidate"
-                    ? "bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700"
-                    : "bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700"
-                } text-white`}
+                className={`w-full py-4 px-6 rounded-xl font-semibold transition-all duration-200 flex items-center justify-center gap-3 shadow-lg disabled:opacity-50 disabled:cursor-not-allowed bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white`}
               >
                 {isLoading ? (
                   <>
@@ -662,66 +606,47 @@ const RegistrationPage = () => {
           )}
         </div>
 
-        {/* Demo Info */}
-          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 text-center">
-            <p className="text-blue-700 text-sm font-medium">
-              <i className="fas fa-info-circle mr-1"></i>
-              Untuk Demo Registrasi
-            </p>
-            <div className="text-blue-600 text-xs mt-2 space-y-1">
-              <p>
-                <strong>Google:</strong> Klik tombol Google untuk daftar cepat
-              </p>
-              <p>
-                <strong>Email:</strong> Isi form lalu klik "Kirim kode verifikasi"
-              </p>
-              <p>
-                <strong>Redirect:</strong> Akan langsung ke halaman profil
-              </p>
-            </div>
+        {/* Accessibility Quick Options */}
+        <div className="bg-blue-50 rounded-lg p-4">
+          <h4 className="text-sm font-medium text-blue-900 mb-3 flex items-center justify-center">
+            <i className="fas fa-universal-access mr-2"></i>
+            Opsi Aksesibilitas
+          </h4>
+          <div className="flex flex-wrap gap-2 justify-center">
+            <button
+              className="text-sm bg-white text-blue-700 px-4 py-2 rounded-lg border border-blue-200 hover:bg-blue-100 transition flex items-center gap-2"
+              onClick={increaseFontSize}
+              aria-label="Perbesar ukuran teks"
+            >
+              <i className="fas fa-text-height"></i>
+              <span>A+</span>
+            </button>
+            <button
+              className="text-sm bg-white text-blue-700 px-4 py-2 rounded-lg border border-blue-200 hover:bg-blue-100 transition flex items-center gap-2"
+              onClick={decreaseFontSize}
+              aria-label="Perkecil ukuran teks"
+            >
+              <i className="fas fa-text-height"></i>
+              <span>A-</span>
+            </button>
+            <button
+              className="text-sm bg-white text-blue-700 px-4 py-2 rounded-lg border border-blue-200 hover:bg-blue-100 transition flex items-center gap-2"
+              onClick={resetFontSize}
+              aria-label="Reset ukuran teks ke normal"
+            >
+              <i className="fas fa-undo-alt"></i>
+              <span>Reset</span>
+            </button>
+            <button
+              className="text-sm bg-white text-blue-700 px-4 py-2 rounded-lg border border-blue-200 hover:bg-blue-100 transition flex items-center gap-2"
+              onClick={toggleHighContrast}
+              aria-label="Toggle mode kontras tinggi"
+            >
+              <i className="fas fa-adjust"></i>
+              <span>Kontras</span>
+            </button>
           </div>
-
-          {/* Accessibility Quick Options */}
-          <div className="bg-blue-50 rounded-lg p-4">
-            <h4 className="text-sm font-medium text-blue-900 mb-3 flex items-center justify-center">
-              <i className="fas fa-universal-access mr-2"></i>
-              Opsi Aksesibilitas
-            </h4>
-            <div className="flex flex-wrap gap-2 justify-center">
-              <button
-                className="text-sm bg-white text-blue-700 px-4 py-2 rounded-lg border border-blue-200 hover:bg-blue-100 transition flex items-center gap-2"
-                onClick={increaseFontSize}
-                aria-label="Perbesar ukuran teks"
-              >
-                <i className="fas fa-text-height"></i>
-                <span>A+</span>
-              </button>
-              <button
-                className="text-sm bg-white text-blue-700 px-4 py-2 rounded-lg border border-blue-200 hover:bg-blue-100 transition flex items-center gap-2"
-                onClick={decreaseFontSize}
-                aria-label="Perkecil ukuran teks"
-              >
-                <i className="fas fa-text-height"></i>
-                <span>A-</span>
-              </button>
-              <button
-                className="text-sm bg-white text-blue-700 px-4 py-2 rounded-lg border border-blue-200 hover:bg-blue-100 transition flex items-center gap-2"
-                onClick={resetFontSize}
-                aria-label="Reset ukuran teks ke normal"
-              >
-                <i className="fas fa-undo-alt"></i>
-                <span>Reset</span>
-              </button>
-              <button
-                className="text-sm bg-white text-blue-700 px-4 py-2 rounded-lg border border-blue-200 hover:bg-blue-100 transition flex items-center gap-2"
-                onClick={toggleHighContrast}
-                aria-label="Toggle mode kontras tinggi"
-              >
-                <i className="fas fa-adjust"></i>
-                <span>Kontras</span>
-              </button>
-            </div>
-          </div>
+        </div>
 
         {/* Login Link */}
         <div className="text-center">
