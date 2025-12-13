@@ -368,7 +368,7 @@ const AppContent = () => {
       </main>
 
       <Footer />
-      <AccessibilityWidget />
+      {/* <AccessibilityWidget /> */}
     </div>
   );
 };
@@ -376,7 +376,7 @@ const AppContent = () => {
 // Main App Component
 function App() {
   //fatir: DEFAULT AXIOS SETTINGS
-  axios.defaults.baseURL = "https://inkr-api.vercel.app/";
+  axios.defaults.baseURL = "https://inkr-api.vercel.app";
   axios.defaults.withCredentials = true;
   return (
     <Provider store={store}>
