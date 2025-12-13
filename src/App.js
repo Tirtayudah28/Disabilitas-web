@@ -15,7 +15,6 @@ import { SearchProvider } from "./contexts/SearchContext";
 import Header from "./components/layout/Header";
 import Footer from "./components/layout/Footer";
 import AccessibilityWidget from "./components/layout/AccessibilityWidget";
-import SkipLink from "./components/common/SkipLink";
 import AppLoading from "./components/layout/AppLoading";
 import ProtectedRoute from "./components/auth/ProtectedRoute";
 import "./styles/globals.css";
@@ -45,6 +44,7 @@ import EmployerOverviewPage from "./pages/employer/EmployerOverviewPage";
 import EmployerJobPage from "./pages/employer/EmployerJobPage";
 import EmployerApplicantPage from "./pages/employer/EmployerApplicantPage";
 import PostJobPage from "./pages/employer/PostJobPage";
+import ScrollToTop from "./scrollToTop";
 
 // Voice Navigation Provider Component - SIMPLIFIED
 const VoiceNavigationInitializer = ({ children }) => {
@@ -308,13 +308,14 @@ const AppContent = () => {
 
   return (
     <div className="App bg-gradient-to-br from-primary-50 to-secondary-50 text-dark font-sans min-h-screen">
-      <SkipLink />
+      {/* <SkipLink /> */}
       {renderNavbar()}
 
       {/* Hanya satu debug panel
       {showDebug && <SimpleDebugPanel />} */}
 
       <main id="main-content" className="min-h-screen">
+        <ScrollToTop />
         <Routes>
           {/* auth routes */}
           <Route path="/login" element={<LoginPage />} />
@@ -341,7 +342,7 @@ const AppContent = () => {
           {/* job-seeker protected route */}
           <Route element={<ProtectedRoute requiredRole="job-seeker" />}>
             <Route
-              path="/js/:userId/applications"
+              path="/js/applications"
               element={<ApplicationHistory />}
             />
           </Route>
@@ -367,7 +368,7 @@ const AppContent = () => {
       </main>
 
       <Footer />
-      {/* <AccessibilityWidget /> */}
+      <AccessibilityWidget />
     </div>
   );
 };
@@ -375,7 +376,7 @@ const AppContent = () => {
 // Main App Component
 function App() {
   //fatir: DEFAULT AXIOS SETTINGS
-  axios.defaults.baseURL = "https://inkr-api.vercel.app/";
+  axios.defaults.baseURL = "http://localhost:8080/";
   axios.defaults.withCredentials = true;
   return (
     <Provider store={store}>

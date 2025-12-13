@@ -124,7 +124,6 @@ const ProfilePage = () => {
         navigate(`/js/${userId}`);
       }
       setProfileData(res.data.data);
-      console.log(res.data);
     } catch (error) {
       console.error("Error fetching user:", error);
       navigate("/");
@@ -220,6 +219,7 @@ const ProfilePage = () => {
       setLoading(false);
     }
   };
+
 
   return (
     <>
@@ -339,7 +339,7 @@ const ProfilePage = () => {
                           </button>
                         </a>
                       )}
-                      <Link to={"#"}>
+                      <Link to={`/jobs?q=${profileData?.company?.companyName}`}>
                         <button className="text-sm text-blue-700 border border-blue-700 cursor-pointer hover:bg-gray-100 rounded-full px-5 py-2">
                           <i class="fa-solid fa-eye"></i> Lihat Pekerjaan
                         </button>
@@ -383,7 +383,7 @@ const ProfilePage = () => {
           <div className="flex flex-col bg-white shadow-lg overflow-hidden p-7 mb-4">
             <h1 className="text-2xl font-bold text-gray-900">Tentang</h1>
             {profileData?.company?.companyDescription && (
-              <p className="mt-3 text-gray-600 leading-relaxed">
+              <p className="mt-3 text-gray-600 leading-loose whitespace-pre-line">
                 {profileData?.company?.companyDescription}
               </p>
             )}

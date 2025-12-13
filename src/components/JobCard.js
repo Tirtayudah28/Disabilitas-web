@@ -1,95 +1,111 @@
 // src/components/JobCard.js
-import React from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import React from "react";
+import defaultCm from "../assets/default-company.png";
+import { useNavigate } from "react-router-dom";
+import { formatCurrency } from "../utils/formatCurrency";
+import dayjs from "dayjs";
+import relativeTime from "dayjs/plugin/relativeTime";
+import "dayjs/locale/id";
 
-const JobCard = ({ job, isBookmarked, onBookmark, onApply }) => {
+dayjs.locale("id");
+dayjs.extend(relativeTime);
+
+const JobCard = ({ job }) => {
   const navigate = useNavigate();
-  
-  const getMatchBadgeClass = (match) => {
-    if (match >= 90) return "bg-green-100 text-green-800 px-2 py-1 rounded-full text-xs font-medium";
-    return "bg-blue-100 text-blue-800 px-2 py-1 rounded-full text-xs font-medium";
-  };
+
+  const skillsPreview = job.JobSkills?.slice(0, 2) || [];
+  const extraSkills = job.JobSkills?.length > 2 ? job.JobSkills.length - 2 : 0;
+
+  const disabilityPreview = job.JobDisabilities?.slice(0, 2) || [];
+  const extraDisability =
+    job.JobDisabilities?.length > 2 ? job.JobDisabilities.length - 2 : 0;
 
   return (
-    <div className="job-card bg-white rounded-2xl shadow-lg p-6 border border-gray-200 hover:border-blue-500 hover:shadow-xl transition-all">
-      <div className="flex justify-between items-start mb-4">
-        <div className="flex items-start space-x-4">
-          <div className={`w-16 h-16 bg-gradient-to-br ${job.logoColor} rounded-lg flex items-center justify-center text-white font-bold text-xl`}>
-            {job.logo}
-          </div>
-          <div>
-            <div className="flex items-center gap-2 mb-1">
-              <h3 className="text-xl font-bold">{job.title}</h3>
-              <span className={getMatchBadgeClass(job.match)}>
-                {job.match >= 90 && <i className="fas fa-bolt mr-1"></i>}
-                {job.match}% Match
-              </span>
-            </div>
-            <p className="text-blue-600 font-medium">{job.company} • {job.location}</p>
-            <div className="flex items-center gap-4 mt-2 text-sm text-gray-600">
-              <span><i className="fas fa-clock mr-1"></i>{job.type}</span>
-              <span><i className="fas fa-money-bill-wave mr-1"></i>{job.salary}</span>
-              <span><i className="fas fa-calendar mr-1"></i>{job.posted}</span>
-            </div>
-          </div>
+    <div
+      className="bg-white border border-gray-200 rounded p-5 shadow hover:shadow-md transition cursor-pointer"
+      onClick={() => navigate(`/job/${job?.id}`)}
+    >
+      {/* Job Title + Company */}
+      <div className="mb-3 flex gap-3">
+        <img
+          src={job.Company?.User?.profilePicture || defaultCm}
+          alt="Profile Picture"
+          className="h-16 w-16 aspect-square object-cover"
+        />
+        <div>
+          <h3 className="text-xl font-semibold text-blue-700">{job.title}</h3>
+          <p className="text-sm text-gray-600">
+            {job.Company?.companyName} •{" "}
+            <span className="capitalize">
+              {`${job.employmentType} (${job.locationType})`}
+            </span>
+          </p>
+          {job?.address && (
+            <p className="text-sm text-gray-600">{job.address}</p>
+          )}
         </div>
-        <button 
-          onClick={() => onBookmark(job.id)}
-          className={`${isBookmarked ? 'text-blue-500' : 'text-gray-400'} hover:text-blue-600`}
-        >
-          <i className={`${isBookmarked ? 'fas' : 'far'} fa-bookmark text-xl`}></i>
-        </button>
       </div>
 
-      <p className="text-gray-700 mb-4">{job.description}</p>
+      {/* Basic Info */}
+      <div className="flex flex-wrap gap-3 text-sm mb-3">
+        <span className="px-4 py-1 rounded-full border border-blue-400 text-blue-800">
+          <i class="fa-solid fa-calendar mr-2"></i>
+          {dayjs(job?.startDate).fromNow()}
+        </span>
 
-      {/* Skills Tags */}
-      <div className="flex flex-wrap gap-2 mb-4">
-        {job.skills.map((skill, index) => (
-          <span key={index} className="bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-sm">
-            {skill}
+        {job?.minSalary && (
+          <span className="px-4 py-1 rounded-full border text-sm border-blue-400 text-blue-800 ">
+            <i class="fa-solid fa-money-bill-wave mr-2"></i>
+            Rp{formatCurrency(job?.minSalary)}{" "}
+            {job?.maxSalary && `- Rp${formatCurrency(job?.maxSalary)}`}
           </span>
-        ))}
+        )}
       </div>
 
-      {/* Accommodation Tags */}
-      <div className="flex flex-wrap gap-2 mb-4">
-        {job.accommodations.map((accommodation, index) => (
-          <span key={index} className="bg-green-100 text-green-800 px-3 py-1 rounded-full text-sm">
-            <i className="fas fa-check mr-1"></i>
-            {accommodation}
-          </span>
-        ))}
-      </div>
+      {/* Short Description */}
+      <p className="text-gray-700 text-sm line-clamp-2 mb-4">
+        {job.description}
+      </p>
 
-      {/* Disability Support */}
-      <div className="bg-green-50 p-3 rounded-lg mb-4">
-        <div className="flex items-center gap-2 text-green-800 font-medium mb-1">
-          <i className="fas fa-check-circle"></i>
-          <span>Didukung untuk: {job.disabilitySupport.join(', ')}</span>
+      {/* Skills */}
+      {skillsPreview.length > 0 && (
+        <div className="flex flex-wrap gap-2 mb-4 mt-4">
+          {skillsPreview.map((skill) => (
+            <span
+              key={skill.id}
+              className="bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-sm font-medium capitalize"
+            >
+              {skill.skillName}
+            </span>
+          ))}
+
+          {extraSkills > 0 && (
+            <span className="bg-gray-100 text-gray-700 px-3 py-1 rounded-full text-sm">
+              +{extraSkills} lainnya
+            </span>
+          )}
         </div>
-        <p className="text-green-700 text-sm">
-          Perusahaan ini memiliki pengalaman bekerja dengan penyandang disabilitas dan menyediakan lingkungan kerja yang inklusif.
-        </p>
-      </div>
+      )}
 
-      <div className="flex justify-between items-center">
-        <div className="flex gap-2">
-          <button 
-            onClick={() => onApply(job)}
-            className="bg-blue-500 text-white px-6 py-2 rounded-lg hover:bg-blue-600 transition font-medium"
-          >
-            Lamar Sekarang
-          </button>
-          <Link 
-            to={`/lowongan/${job.id}`}
-            className="border border-blue-500 text-blue-500 px-4 py-2 rounded-lg hover:bg-blue-50 transition font-medium inline-block"
-          >
-            Lihat Detail
-          </Link>
+      {/* Disabilities */}
+      {disabilityPreview.length > 0 && (
+        <div className="flex flex-wrap gap-2 mb-4">
+          {disabilityPreview.map((disability) => (
+            <span
+              key={disability.id}
+              className="bg-green-100 text-green-800 px-3 py-1 rounded-full font-medium text-sm capitalize"
+            >
+              {disability.disabilityName} / {disability.type}
+            </span>
+          ))}
+
+          {extraDisability > 0 && (
+            <span className="bg-gray-100 text-gray-700 px-3 py-1 rounded-full text-sm">
+              +{extraDisability} lainnya
+            </span>
+          )}
         </div>
-        <span className="text-sm text-gray-500">{job.applicants} pelamar</span>
-      </div>
+      )}
     </div>
   );
 };

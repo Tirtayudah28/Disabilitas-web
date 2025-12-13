@@ -11,14 +11,16 @@ import EditJobPopup from "../components/popups/EditJobPopup";
 import { formatCurrency } from "../utils/formatCurrency";
 import ActionStatusJobPopup from "../components/popups/ActionStatusJobPopup";
 import RescheduleJobPopup from "../components/popups/RescheduleJobPopup";
+import LoginSuggestionPopup from "../components/popups/LoginSuggestionPopup";
+import ApplyJobPopup from "../components/popups/ApplyJobPopup";
 
 const JobDetailPage = () => {
   const [loading, setLoading] = useState(false);
   const { userData, token } = useAuth();
   const { jobId } = useParams();
   const navigate = useNavigate();
+  const [profileData, setProfileData] = useState({});
   const [isApplying, setIsApplying] = useState(false);
-  const [isBookmarked, setIsBookmarked] = useState(false);
 
   const [job, setJob] = useState({});
   const [jobSkills, setJobSkills] = useState([]);
@@ -29,30 +31,74 @@ const JobDetailPage = () => {
   const [showEditJobPopup, setShowEditJobPopup] = useState(false);
   const [showActStaPopup, setShowActStaPopup] = useState(false);
   const [showRescPopup, setShowRescPopup] = useState(false);
+  const [showApplyJobPopup, setShowApplyJobPopup] = useState(false);
+  const [showLoginSugPopup, setShowLoginSugPopup] = useState(false);
 
   const isOwner = job?.Company?.User?.id === userData?.id;
 
-  const handleApply = () => {
-    // Navigasi ke halaman application form
-    navigate(`/application/${job.id}`, { state: { job } });
+  const openApplicationForm = () => {
+    if (!userData || !token) {
+      setShowLoginSugPopup(true);
+      return;
+    }
+    if(userData && job?.applied){
+      navigate(`/js/applications`);
+    }
+    setShowApplyJobPopup(true);
+  };
+  const handleApplyJob = async (form) => {
+    setIsApplying(true);
+    try {
+      const res = await axios.post(`/api/job/${jobId}/apply`, form, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
+      enqueueSnackbar(res.data.message || "Berhasil mengirim lamaran", {
+        variant: "success",
+      });
+      getJobById()
+    } catch (error) {
+      enqueueSnackbar(
+        error?.response?.data?.message || "Gagal mengirim lamaran",
+        { variant: "warning" }
+      );
+    } finally {
+      setIsApplying(false);
+    }
   };
 
+  //get userById
+  const getUserById = async () => {
+    if (!userData) return;
+    try {
+      const res = await axios.get(`/api/user/${userData.id}`);
+      setProfileData(res.data.data);
+    } catch (error) {
+      console.error("Error fetching user:", error);
+      navigate("/");
+    }
+  };
   //get job
   const getJobById = async () => {
     try {
-      const res = await axios.get(`/api/job/${jobId}`);
+      const res = await axios.get(`/api/job/${jobId}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      const jobData = res.data.data;
 
-      setJob(res.data.data);
+      setJob(jobData);
 
-      if (
-        res.data.data.status !== "open" &&
-        job?.Company?.User?.id === userData?.id
-      ) {
+      const status = String(jobData.status || "").toLowerCase();
+      const ownerId = jobData?.Company?.User?.id;
+      const currentUserId = userData?.id;
+
+      const isOwner = ownerId === currentUserId;
+
+      if (!isOwner && status !== "open") {
         navigate("/");
       }
     } catch (error) {
       console.error("Error fetching job:", error);
-      navigate("/");
     }
   };
 
@@ -62,8 +108,7 @@ const JobDetailPage = () => {
       const res = await axios.get(`/api/job/${jobId}/skills`);
       setJobSkills(res.data.data);
     } catch (error) {
-      console.error("Error fetching user:", error);
-      navigate("/");
+      console.error("Error fetching skills:", error);
     }
   };
   //fatir: get job disability
@@ -72,8 +117,7 @@ const JobDetailPage = () => {
       const res = await axios.get(`/api/job/${jobId}/disabilities`);
       setJobDisabilties(res.data.data);
     } catch (error) {
-      console.error("Error fetching user:", error);
-      navigate("/");
+      console.error("Error fetching disabilities:", error);
     }
   };
 
@@ -91,6 +135,9 @@ const JobDetailPage = () => {
 
     fetchAll();
   }, [jobId]);
+  useEffect(() => {
+    getUserById();
+  }, [userData]);
 
   //edit job
   const handleEditProfile = async (form) => {
@@ -444,14 +491,23 @@ const JobDetailPage = () => {
                         Lowongan
                       </button>
                     </div>
-                  ) : !isOwner && userData.role === "job-seeker" ? (
+                  ) : !isOwner && userData?.role !== "company" ? (
                     <div className="flex flex-col gap-3">
                       <button
-                        onClick={handleApply}
+                        onClick={openApplicationForm}
                         disabled={isApplying}
-                        className="w-full bg-primary-500 text-white py-3 rounded-lg hover:bg-primary-600 transition font-medium disabled:bg-primary-300 flex items-center justify-center gap-2 mt-10"
+                        className={`w-full  text-white py-3 px-5 rounded-lg  transition font-medium disabled:bg-primary-300 flex items-center justify-center gap-2 mt-10 ${
+                          job?.applied
+                            ? "bg-green-600 hover:bg-green-700"
+                            : "bg-blue-600 hover:bg-blue-700"
+                        }`}
                       >
-                        {isApplying ? (
+                        {job?.applied ? (
+                          <>
+                            <i className="fas fa-check"></i>
+                            Anda sudah melamar
+                          </>
+                        ) : isApplying ? (
                           <>
                             <i className="fas fa-spinner fa-spin"></i>
                             Mengirim Lamaran...
@@ -468,9 +524,6 @@ const JobDetailPage = () => {
                           <i className="fas fa-bolt mr-1"></i>
                           {job.match}% Match
                         </div>
-                        <p className="text-sm text-gray-600">
-                          Sangat sesuai dengan profil Anda
-                        </p>
                       </div>
                     </div>
                   ) : null}
@@ -695,33 +748,6 @@ const JobDetailPage = () => {
                   ))}
                 </div>
               </div>
-
-              {/* Quick Apply */}
-              <div className="bg-primary-50 border border-primary-200 rounded p-6">
-                <h3 className="font-bold text-lg mb-2 text-primary-800">
-                  Lamar Cepat
-                </h3>
-                <p className="text-primary-700 text-sm mb-4">
-                  Gunakan profil Anda untuk melamar dengan satu klik
-                </p>
-                <button
-                  onClick={handleApply}
-                  disabled={isApplying}
-                  className="w-full bg-primary-500 text-white py-3 rounded-lg hover:bg-primary-600 transition font-medium disabled:bg-primary-300 flex items-center justify-center gap-2"
-                >
-                  {isApplying ? (
-                    <>
-                      <i className="fas fa-spinner fa-spin"></i>
-                      Memproses...
-                    </>
-                  ) : (
-                    <>
-                      <i className="fas fa-bolt"></i>
-                      Lamar Sekarang
-                    </>
-                  )}
-                </button>
-              </div>
             </div>
           </div>
         </main>
@@ -753,6 +779,17 @@ const JobDetailPage = () => {
         onClose={() => setShowRescPopup(false)}
         onUpdate={handleReschedule}
         jobDetail={job}
+      />
+      <ApplyJobPopup
+        isVisible={showApplyJobPopup}
+        onClose={() => setShowApplyJobPopup(false)}
+        jobDetail={job}
+        userData={profileData}
+        onCreate={handleApplyJob}
+      />
+      <LoginSuggestionPopup
+        isVisible={showLoginSugPopup}
+        onClose={() => setShowLoginSugPopup(false)}
       />
     </>
   );
