@@ -21,11 +21,8 @@ const Header = () => {
   //fatir: get user by id
   const getUserById = async () => {
     try {
-      const res = await axios.get(`/api/user/${userData.id}`);
+      const res = await axios.get(`/api/user/${userData?.id}`);
 
-      if (res.data.data.role === "job-seeker") {
-        navigate(`/`);
-      }
       setProfileData(res.data.data);
     } catch (error) {
       console.error("Error fetching user:", error);
@@ -34,8 +31,9 @@ const Header = () => {
   };
 
   useEffect(() => {
+    if (!userData) return;
     getUserById();
-  }, []);
+  }, [userData]);
 
   // Close menus when route changes
   useEffect(() => {
@@ -581,7 +579,7 @@ const Header = () => {
                     Profile Saya
                   </Link>
                   <Link
-                    to={`/js/${userData?.id}/applications`}
+                    to={`/js/applications`}
                     className="px-4 py-2 text-sm text-gray-700 hover:bg-primary-50 transition flex items-center gap-2"
                     role="menuitem"
                   >

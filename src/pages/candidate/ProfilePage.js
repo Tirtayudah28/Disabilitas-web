@@ -533,10 +533,12 @@ const ProfilePage = () => {
           <div className="bg-white rounded shadow-lg overflow-hidden mb-4 relative">
             {userData?.id === profileData?.id && (
               <div className="absolute top-3 right-3 flex gap-5">
-                <button className="px-5 py-2 rounded bg-white">
-                  Riwayat Lamaran{" "}
-                  <i className="fas fa-history w-4" aria-hidden="true"></i>
-                </button>
+                <Link to="/js/applications">
+                  <button className="px-5 py-2 rounded bg-white">
+                    Riwayat Lamaran{" "}
+                    <i className="fas fa-history w-4" aria-hidden="true"></i>
+                  </button>
+                </Link>
                 <button
                   className="px-5 py-2 rounded bg-white"
                   onClick={() => setShowEditProfPopup(!showEditProfPopup)}

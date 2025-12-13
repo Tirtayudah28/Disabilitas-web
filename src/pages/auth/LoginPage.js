@@ -96,7 +96,7 @@ const LoginPage = () => {
 
   // Accessibility functions
   const increaseFontSize = () => {
-    document.documentElement.style.fontSize = "18px";
+    document.documentElement.style.fontSize = "16px";
   };
 
   const decreaseFontSize = () => {
@@ -104,7 +104,7 @@ const LoginPage = () => {
   };
 
   const resetFontSize = () => {
-    document.documentElement.style.fontSize = "16px";
+    document.documentElement.style.fontSize = "14px";
   };
 
   const toggleHighContrast = () => {
@@ -278,23 +278,6 @@ const LoginPage = () => {
               </button>
             </form>
           )}
-        </div>
-
-        {/* Demo Info */}
-        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 text-center">
-          <p className="text-blue-700 text-sm font-medium">
-            <i className="fas fa-info-circle mr-1"></i>
-            Untuk Demo Login
-          </p>
-          <div className="text-blue-600 text-xs mt-2 space-y-1">
-            <p>
-              <strong>Google:</strong> Klik tombol Google untuk login cepat
-            </p>
-            <p>
-              <strong>Email:</strong> Masukkan email lalu klik "Kirim kode
-              masuk"
-            </p>
-          </div>
         </div>
 
         {/* Accessibility Quick Options */}

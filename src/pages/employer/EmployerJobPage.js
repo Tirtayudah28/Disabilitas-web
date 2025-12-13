@@ -6,7 +6,7 @@ import defaultCm from "../../assets/default-company.png";
 
 const EmployerJobPage = () => {
   const { token } = useAuth();
-  const navigate = useNavigate()
+  const navigate = useNavigate();
   const [jobs, setJobs] = useState([]);
   const [company, setCompany] = useState(null);
   const [meta, setMeta] = useState({
@@ -137,9 +137,7 @@ const EmployerJobPage = () => {
             <div className="flex gap-5">
               <div className="flex flex-col items-center">
                 <p className="text-xl font-bold">{meta.total}</p>
-                <span className="text-xs font-quicksand">
-                  Total Entries
-                </span>
+                <span className="text-xs font-quicksand">Total Entries</span>
               </div>
               <div className="flex flex-col items-center">
                 <i class="fa-solid fa-memory text-xl"></i>
@@ -253,9 +251,11 @@ const EmployerJobPage = () => {
                       <h4 className="font-bold text-blue-600 text-xl">
                         {job.title}
                       </h4>
-                      <p className="text-gray-600 text-sm capitalize">
+                      <p className="text-gray-600 text-sm">
                         {company.companyName} •{" "}
-                        {`${job.employmentType} (${job.locationType})`}
+                        <span className="capitalize">
+                          {`${job.employmentType} (${job.locationType})`}
+                        </span>
                       </p>
                     </div>
                   </div>
