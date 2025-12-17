@@ -3,8 +3,9 @@ import React, { useState, useEffect } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "../../contexts/AuthContext";
 import defaultPfp from "../../assets/default-pfp.png";
-import defaultCm from "../../assets/default-company.png"
+import defaultCm from "../../assets/default-company.png";
 import axios from "axios";
+import { enqueueSnackbar } from "notistack";
 
 const Header = () => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -69,23 +70,22 @@ const Header = () => {
     setIsProfileMenuOpen(false);
   };
 
-  //fatir: modif handleLogout
+  // handle logout
   const handleLogout = async () => {
-    //ganti dengan konfirmasi yang lebih baik
-    // const confirmation = confirm("Yakin ingin logout?")
+    const confirmation = window.confirm("Yakin ingin logout?");
 
-    try {
-      const res = await axios.delete("/api/auth/logout");
+    if (confirmation) {
+      try {
+        const res = await axios.delete("/api/auth/logout");
 
-      logout();
-      //ganti dengan pemberitahuan yg lebih baik
-      alert(res.data.message || "Logout berhasil");
-      navigate("/");
-    } catch (err) {
-      //ganti dengan pemberitahuan yg lebih baik
-      alert(err.response?.data?.message);
-    } finally {
-      // blank
+        logout();
+        enqueueSnackbar(res.data.message || "Logout berhasil", {
+          variant: "info",
+        });
+        navigate("/");
+      } catch (err) {
+        enqueueSnackbar(err.response?.data?.message);
+      }
     }
   };
 
@@ -124,7 +124,7 @@ const Header = () => {
   const isEmployer = userData?.role === "company";
   const isCandidate = userData?.role === "job-seeker";
 
-  // PERBAIKAN 5: Render desktop menu dengan logic profile yang benar
+  //DESKTOP
   const renderDesktopMenu = () => {
     // Not logged in - Public menu
     if (!userData) {
@@ -134,22 +134,21 @@ const Header = () => {
         <nav className="hidden lg:flex space-x-1" aria-label="Navigasi utama">
           {/* Menu Cari Lowongan */}
           <Link
-            to={"/jobs"}
-            className={getMenuClass(isLowonganMenuActive)}
-            aria-current={isLowonganMenuActive ? "page" : undefined}
-          >
-            <i className="fas fa-search" aria-hidden="true"></i>
-            <span>Pekerjaan</span>
-          </Link>
-
-          {/* Menu Profile - PERBAIKAN: gunakan getProfileLink() */}
-          <Link
             to={"/profile"}
             className={getMenuClass(isProfileActive())}
             aria-current={isProfileActive() ? "page" : undefined}
           >
-            <i className="fas fa-users" aria-hidden="true"></i>
-            <span>Profile</span>
+            <i class="fa-solid fa-person-circle-check" aria-hidden="true"></i>
+            <span>Profil Pengguna</span>
+          </Link>
+
+          <Link
+            to={"/jobs"}
+            className={getMenuClass(isLowonganMenuActive)}
+            aria-current={isLowonganMenuActive ? "page" : undefined}
+          >
+            <i className="fas fa-briefcase" aria-hidden="true"></i>
+            <span>Pekerjaan</span>
           </Link>
 
           <Link
@@ -162,48 +161,52 @@ const Header = () => {
             <i className="fas fa-building" aria-hidden="true"></i>
             <span>Perusahaan</span>
           </Link>
+          <Link
+            to="/candidates"
+            className={getMenuClass(location.pathname === "/candidates")}
+            aria-current={
+              location.pathname === "/candidates" ? "page" : undefined
+            }
+          >
+            <i className="fas fa-users w-5 text-center" aria-hidden="true"></i>{" "}
+            <span>Kandidat</span>
+          </Link>
         </nav>
       );
     }
+    // Logged-In User Menu
+    if (isCandidate || isEmployer) {
+      const isLowonganMenuActive = isLowonganActive();
 
-    // Employer menu
-    if (isEmployer) {
       return (
         <nav
           className="hidden lg:flex space-x-1"
-          aria-label="Navigasi employer"
+          aria-label="Navigasi kandidat"
         >
           <Link
-            to="/employer/jobs"
-            className={getMenuClass(location.pathname === "/employer/jobs")}
-            aria-current={
-              location.pathname === "/employer/jobs" ? "page" : undefined
-            }
+            to={"/jobs"}
+            className={getMenuClass(isLowonganMenuActive)}
+            aria-current={isLowonganMenuActive ? "page" : undefined}
           >
             <i className="fas fa-briefcase" aria-hidden="true"></i>
-            <span>Lowongan Saya</span>
+            <span>Pekerjaan</span>
           </Link>
           <Link
-            to="/employer/applications"
-            className={getMenuClass(
-              location.pathname === "/employer/applications"
-            )}
+            to="/companies"
+            className={getMenuClass(location.pathname === "/companies")}
             aria-current={
-              location.pathname === "/employer/applications"
-                ? "page"
-                : undefined
+              location.pathname === "/companies" ? "page" : undefined
             }
           >
-            <i className="fas fa-file-alt" aria-hidden="true"></i>
-            <span>Lamaran</span>
+            <i className="fas fa-building" aria-hidden="true"></i>
+            <span>Perusahaan</span>
           </Link>
+
           <Link
-            to="/employer/candidates"
-            className={getMenuClass(
-              location.pathname === "/employer/candidates"
-            )}
+            to="/candidates"
+            className={getMenuClass(location.pathname === "/candidates")}
             aria-current={
-              location.pathname === "/employer/candidates" ? "page" : undefined
+              location.pathname === "/candidates" ? "page" : undefined
             }
           >
             <i className="fas fa-users" aria-hidden="true"></i>
@@ -212,40 +215,9 @@ const Header = () => {
         </nav>
       );
     }
-
-    // Candidate Menu
-    if (isCandidate) {
-      const isLowonganMenuActive = isLowonganActive();
-
-      return (
-        <nav
-          className="hidden lg:flex space-x-1"
-          aria-label="Navigasi pencari kerja"
-        >
-          <Link
-            to={"/jobs"}
-            className={getMenuClass(isLowonganMenuActive)}
-            aria-current={isLowonganMenuActive ? "page" : undefined}
-          >
-            <i className="fas fa-search" aria-hidden="true"></i>
-            <span>Pekerjaan</span>
-          </Link>
-          <Link
-            to="/companies"
-            className={getMenuClass(location.pathname === "/companies")}
-            aria-current={
-              location.pathname === "/companies" ? "page" : undefined
-            }
-          >
-            <i className="fas fa-building" aria-hidden="true"></i>
-            <span>Perusahaan</span>
-          </Link>
-        </nav>
-      );
-    }
   };
 
-  // PERBAIKAN 6: Render mobile menu dengan logic profile yang benar
+  //MOBILE
   const renderMobileMenu = () => {
     if (!userData) {
       const isLowonganMenuActive = isLowonganActive();
@@ -257,7 +229,10 @@ const Header = () => {
             className={getMobileMenuClass(isLowonganMenuActive)}
             aria-current={isLowonganMenuActive ? "page" : undefined}
           >
-            <i className="fas fa-search w-5 text-center" aria-hidden="true"></i>{" "}
+            <i
+              className="fas fa-briefcase w-5 text-center"
+              aria-hidden="true"
+            ></i>{" "}
             Pekerjaan
           </Link>
           {/* PERBAIKAN: gunakan getProfileLink() untuk mobile */}
@@ -282,52 +257,11 @@ const Header = () => {
             ></i>{" "}
             Perusahaan
           </Link>
-        </>
-      );
-    }
-
-    if (isEmployer) {
-      return (
-        <>
           <Link
-            to="/employer/jobs"
-            className={getMobileMenuClass(
-              location.pathname === "/employer/jobs"
-            )}
+            to="/candidates"
+            className={getMobileMenuClass(location.pathname === "/candidates")}
             aria-current={
-              location.pathname === "/employer/jobs" ? "page" : undefined
-            }
-          >
-            <i
-              className="fas fa-briefcase w-5 text-center"
-              aria-hidden="true"
-            ></i>{" "}
-            Lowongan Saya
-          </Link>
-          <Link
-            to="/employer/applications"
-            className={getMobileMenuClass(
-              location.pathname === "/employer/applications"
-            )}
-            aria-current={
-              location.pathname === "/employer/applications"
-                ? "page"
-                : undefined
-            }
-          >
-            <i
-              className="fas fa-file-alt w-5 text-center"
-              aria-hidden="true"
-            ></i>{" "}
-            Lamaran
-          </Link>
-          <Link
-            to="/employer/candidates"
-            className={getMobileMenuClass(
-              location.pathname === "/employer/candidates"
-            )}
-            aria-current={
-              location.pathname === "/employer/candidates" ? "page" : undefined
+              location.pathname === "/candidates" ? "page" : undefined
             }
           >
             <i className="fas fa-users w-5 text-center" aria-hidden="true"></i>{" "}
@@ -337,7 +271,7 @@ const Header = () => {
       );
     }
 
-    if (isCandidate) {
+    if (isCandidate || isEmployer) {
       const isLowonganMenuActive = isLowonganActive();
 
       return (
@@ -347,7 +281,10 @@ const Header = () => {
             className={getMobileMenuClass(isLowonganMenuActive)}
             aria-current={isLowonganMenuActive ? "page" : undefined}
           >
-            <i className="fas fa-search w-5 text-center" aria-hidden="true"></i>{" "}
+            <i
+              className="fas fa-briefcase w-5 text-center"
+              aria-hidden="true"
+            ></i>{" "}
             Pekerjaan
           </Link>
           <Link
@@ -360,12 +297,22 @@ const Header = () => {
             <i className="fas fa-building" aria-hidden="true"></i>
             <span>Perusahaan</span>
           </Link>
+          <Link
+            to="/candidates"
+            className={getMobileMenuClass(location.pathname === "/candidates")}
+            aria-current={
+              location.pathname === "/candidates" ? "page" : undefined
+            }
+          >
+            <i className="fas fa-users w-5 text-center" aria-hidden="true"></i>{" "}
+            Kandidat
+          </Link>
         </>
       );
     }
   };
 
-  // PERBAIKAN 7: Update profile dropdown untuk candidate
+  //DROPDOWN PROFILE
   const renderUserActions = () => {
     if (!userData) {
       return (
@@ -447,7 +394,6 @@ const Header = () => {
       );
     }
 
-    // User is logged in - show profile dropdown
     return (
       <div className="flex items-center space-x-3">
         {/* Language Selector for logged in users */}
@@ -513,7 +459,10 @@ const Header = () => {
             aria-expanded={isProfileMenuOpen}
           >
             <img
-              src={profileData?.profilePicture || (isEmployer ? defaultCm : defaultPfp)}
+              src={
+                profileData?.profilePicture ||
+                (isEmployer ? defaultCm : defaultPfp)
+              }
               alt="profile picture"
               className="rounded-full aspect-square object-cover w-10"
             />
@@ -522,7 +471,7 @@ const Header = () => {
                 {userData?.name}
               </div>
               <div className="text-xs text-gray-500">
-                {isEmployer ? "Employer" : "Pencari Kerja"}
+                {isEmployer ? "Perusahaan" : "Kandidat"}
               </div>
             </div>
             <i
@@ -549,6 +498,14 @@ const Header = () => {
               {isEmployer ? (
                 <>
                   <Link
+                    to={`/cm/${userData?.id}`}
+                    className="px-4 py-2 text-sm text-gray-700 hover:bg-primary-50 transition flex items-center gap-2"
+                    role="menuitem"
+                  >
+                    <i className="fas fa-building w-4" aria-hidden="true"></i>
+                    Profile Perusahaan
+                  </Link>
+                  <Link
                     to="/employer"
                     className="px-4 py-2 text-sm text-gray-700 hover:bg-primary-50 transition flex items-center gap-2"
                     role="menuitem"
@@ -558,14 +515,6 @@ const Header = () => {
                       aria-hidden="true"
                     ></i>
                     Dashboard
-                  </Link>
-                  <Link
-                    to={`/cm/${userData?.id}`}
-                    className="px-4 py-2 text-sm text-gray-700 hover:bg-primary-50 transition flex items-center gap-2"
-                    role="menuitem"
-                  >
-                    <i className="fas fa-building w-4" aria-hidden="true"></i>
-                    Profile Perusahaan
                   </Link>
                 </>
               ) : (
@@ -611,32 +560,34 @@ const Header = () => {
       className="bg-white/90 backdrop-blur-md shadow sticky top-0 z-40"
       role="banner"
     >
-      <div className="container mx-auto px-4 py-3">
-        <div className="flex justify-between items-center">
-          {/* Logo */}
-          <Link
-            to={token ? "/jobs" : "/"}
-            className="flex items-center space-x-3 hover-lift p-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2"
-            aria-label="InklusiKerja - Kembali ke beranda"
-          >
-            <div
-              className="bg-gradient-to-r from-primary-500 to-accent-500 w-12 h-12 rounded-full flex items-center justify-center shadow-md"
-              aria-hidden="true"
+      <div className="container mx-auto px-28 py-3">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-10">
+            {/* Logo */}
+            <Link
+              to={token ? "/jobs" : "/"}
+              className="flex items-center space-x-3 hover:bg-gray-100 transition p-2 rounded-lg"
+              aria-label="InklusiKerja - Kembali ke beranda"
             >
-              <i className="fas fa-hands-helping text-white text-xl"></i>
-            </div>
-            <div>
-              <span className="text-2xl font-bold text-primary-700">
-                InklusiKerja
-              </span>
-              <p className="text-xs text-gray-600">
-                Platform Inklusif untuk Disabilitas
-              </p>
-            </div>
-          </Link>
+              <div
+                className="bg-gradient-to-r from-primary-500 to-accent-500 w-12 h-12 rounded-full flex items-center justify-center shadow-md"
+                aria-hidden="true"
+              >
+                <i className="fas fa-hands-helping text-white text-xl"></i>
+              </div>
+              <div>
+                <span className="text-2xl font-bold text-primary-700">
+                  InklusiKerja
+                </span>
+                <p className="text-xs text-gray-600">
+                  Platform Inklusif untuk Disabilitas
+                </p>
+              </div>
+            </Link>
 
-          {/* Desktop Navigation */}
-          {renderDesktopMenu()}
+            {/* Desktop Navigation */}
+            {renderDesktopMenu()}
+          </div>
 
           {/* User Actions */}
           <div className="flex items-center space-x-3">

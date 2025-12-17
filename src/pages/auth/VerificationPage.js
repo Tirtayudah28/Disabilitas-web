@@ -95,7 +95,7 @@ const VerificationPage = () => {
   const isCodeComplete = verificationCode.every((digit) => digit !== "");
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-primary-50 to-secondary-50 flex items-center justify-center py-8">
+    <div className="min-h-screen flex items-center justify-center py-8">
       <div className="max-w-md w-full space-y-8">
         {/* Header */}
         <div className="text-center">

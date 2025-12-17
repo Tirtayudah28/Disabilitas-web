@@ -88,7 +88,7 @@ const ForgotPasswordPage = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-primary-50 to-secondary-50 flex items-center justify-center py-8">
+    <div className="min-h-screen flex items-center justify-center py-8">
       <div className="max-w-md w-full space-y-8">
         {/* Header */}
         <div className="text-center">
@@ -96,25 +96,34 @@ const ForgotPasswordPage = () => {
             <div className="bg-gradient-to-r from-primary-500 to-accent-500 w-10 h-10 rounded-full flex items-center justify-center">
               <i className="fas fa-hands-helping text-white"></i>
             </div>
-            <span className="text-xl font-bold text-primary-700">InklusiKerja</span>
+            <span className="text-xl font-bold text-primary-700">
+              InklusiKerja
+            </span>
           </Link>
           <h2 className="text-3xl font-bold text-gray-900">Reset Password</h2>
           <p className="mt-2 text-gray-600">
-            {step === 1 && 'Masukkan email untuk mendapatkan kode verifikasi'}
-            {step === 2 && 'Masukkan kode verifikasi yang dikirim ke email Anda'}
-            {step === 3 && 'Buat password baru untuk akun Anda'}
+            {step === 1 && "Masukkan email untuk mendapatkan kode verifikasi"}
+            {step === 2 &&
+              "Masukkan kode verifikasi yang dikirim ke email Anda"}
+            {step === 3 && "Buat password baru untuk akun Anda"}
           </p>
         </div>
 
         {/* Progress Bar */}
         <div className="bg-white rounded-lg p-4 shadow-sm">
           <div className="flex justify-between text-sm text-gray-600 mb-2">
-            <span className={step >= 1 ? 'text-primary-600 font-medium' : ''}>Email</span>
-            <span className={step >= 2 ? 'text-primary-600 font-medium' : ''}>Verifikasi</span>
-            <span className={step >= 3 ? 'text-primary-600 font-medium' : ''}>Password Baru</span>
+            <span className={step >= 1 ? "text-primary-600 font-medium" : ""}>
+              Email
+            </span>
+            <span className={step >= 2 ? "text-primary-600 font-medium" : ""}>
+              Verifikasi
+            </span>
+            <span className={step >= 3 ? "text-primary-600 font-medium" : ""}>
+              Password Baru
+            </span>
           </div>
           <div className="w-full bg-gray-200 rounded-full h-2">
-            <div 
+            <div
               className="bg-primary-500 h-2 rounded-full transition-all duration-300"
               style={{ width: `${(step / 3) * 100}%` }}
             ></div>
@@ -126,7 +135,10 @@ const ForgotPasswordPage = () => {
           <div className="bg-white rounded-2xl shadow-lg p-6">
             <form onSubmit={handleSendCode} className="space-y-4">
               <div>
-                <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
+                <label
+                  htmlFor="email"
+                  className="block text-sm font-medium text-gray-700 mb-1"
+                >
                   Email *
                 </label>
                 <input
@@ -134,7 +146,7 @@ const ForgotPasswordPage = () => {
                   type="email"
                   required
                   value={formData.email}
-                  onChange={(e) => handleInputChange('email', e.target.value)}
+                  onChange={(e) => handleInputChange("email", e.target.value)}
                   className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
                   placeholder="email@example.com"
                 />
@@ -151,13 +163,16 @@ const ForgotPasswordPage = () => {
                     Mengirim Kode...
                   </>
                 ) : (
-                  'Kirim Kode Verifikasi'
+                  "Kirim Kode Verifikasi"
                 )}
               </button>
             </form>
 
             <div className="mt-4 text-center">
-              <Link to="/login" className="text-primary-500 hover:text-primary-600 font-medium text-sm">
+              <Link
+                to="/login"
+                className="text-primary-500 hover:text-primary-600 font-medium text-sm"
+              >
                 ← Kembali ke halaman login
               </Link>
             </div>
@@ -168,9 +183,7 @@ const ForgotPasswordPage = () => {
         {step === 2 && (
           <div className="bg-white rounded-2xl shadow-lg p-6">
             <div className="text-center mb-4">
-              <p className="text-gray-600">
-                Kode verifikasi telah dikirim ke
-              </p>
+              <p className="text-gray-600">Kode verifikasi telah dikirim ke</p>
               <p className="font-medium text-primary-600">{formData.email}</p>
             </div>
 
@@ -183,7 +196,9 @@ const ForgotPasswordPage = () => {
                   type="text"
                   required
                   value={formData.verificationCode}
-                  onChange={(e) => handleInputChange('verificationCode', e.target.value)}
+                  onChange={(e) =>
+                    handleInputChange("verificationCode", e.target.value)
+                  }
                   className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 text-center text-lg font-mono"
                   placeholder="123456"
                   maxLength="6"
@@ -201,14 +216,14 @@ const ForgotPasswordPage = () => {
                     Memverifikasi...
                   </>
                 ) : (
-                  'Verifikasi Kode'
+                  "Verifikasi Kode"
                 )}
               </button>
             </form>
 
             <div className="mt-4 text-center">
               <p className="text-gray-600 text-sm">
-                Tidak menerima kode?{' '}
+                Tidak menerima kode?{" "}
                 {canResend ? (
                   <button
                     type="button"
@@ -232,7 +247,10 @@ const ForgotPasswordPage = () => {
           <div className="bg-white rounded-2xl shadow-lg p-6">
             <form onSubmit={handleResetPassword} className="space-y-4">
               <div>
-                <label htmlFor="newPassword" className="block text-sm font-medium text-gray-700 mb-1">
+                <label
+                  htmlFor="newPassword"
+                  className="block text-sm font-medium text-gray-700 mb-1"
+                >
                   Password Baru *
                 </label>
                 <input
@@ -240,18 +258,24 @@ const ForgotPasswordPage = () => {
                   type="password"
                   required
                   value={formData.newPassword}
-                  onChange={(e) => handleInputChange('newPassword', e.target.value)}
+                  onChange={(e) =>
+                    handleInputChange("newPassword", e.target.value)
+                  }
                   className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
                   placeholder="Minimal 8 karakter"
                   minLength="8"
                 />
                 <p className="text-xs text-gray-500 mt-1">
-                  Gunakan kombinasi huruf, angka, dan simbol untuk keamanan lebih baik
+                  Gunakan kombinasi huruf, angka, dan simbol untuk keamanan
+                  lebih baik
                 </p>
               </div>
 
               <div>
-                <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-700 mb-1">
+                <label
+                  htmlFor="confirmPassword"
+                  className="block text-sm font-medium text-gray-700 mb-1"
+                >
                   Konfirmasi Password Baru *
                 </label>
                 <input
@@ -259,20 +283,28 @@ const ForgotPasswordPage = () => {
                   type="password"
                   required
                   value={formData.confirmPassword}
-                  onChange={(e) => handleInputChange('confirmPassword', e.target.value)}
+                  onChange={(e) =>
+                    handleInputChange("confirmPassword", e.target.value)
+                  }
                   className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
                   placeholder="Ketik ulang password baru"
                 />
-                {formData.newPassword && formData.confirmPassword && formData.newPassword !== formData.confirmPassword && (
-                  <p className="text-red-500 text-xs mt-1">
-                    Password tidak cocok
-                  </p>
-                )}
+                {formData.newPassword &&
+                  formData.confirmPassword &&
+                  formData.newPassword !== formData.confirmPassword && (
+                    <p className="text-red-500 text-xs mt-1">
+                      Password tidak cocok
+                    </p>
+                  )}
               </div>
 
               <button
                 type="submit"
-                disabled={isLoading || formData.newPassword !== formData.confirmPassword || formData.newPassword.length < 8}
+                disabled={
+                  isLoading ||
+                  formData.newPassword !== formData.confirmPassword ||
+                  formData.newPassword.length < 8
+                }
                 className="w-full bg-primary-500 text-white py-3 rounded-lg hover:bg-primary-600 transition font-medium disabled:bg-primary-300 disabled:cursor-not-allowed flex items-center justify-center"
               >
                 {isLoading ? (
@@ -281,7 +313,7 @@ const ForgotPasswordPage = () => {
                     Reset Password...
                   </>
                 ) : (
-                  'Reset Password'
+                  "Reset Password"
                 )}
               </button>
             </form>
@@ -292,7 +324,7 @@ const ForgotPasswordPage = () => {
         <div className="bg-blue-50 rounded-lg p-4 text-center">
           <p className="text-blue-700 text-sm">
             <i className="fas fa-info-circle mr-1"></i>
-            Butuh bantuan aksesibilitas?{' '}
+            Butuh bantuan aksesibilitas?{" "}
             <button className="text-blue-600 hover:text-blue-800 font-medium">
               Hubungi support
             </button>

@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "../../contexts/AuthContext";
 import defaultPfp from "../../assets/default-pfp.png";
 import axios from "axios";
@@ -18,8 +18,11 @@ const STATUS_COLOR = {
 
 const EmployerApplicantPage = () => {
   const { token } = useAuth();
+  const location = useLocation();
+  const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
   const searchDebounceRef = useRef(null);
+  const initialFetchRef = useRef(false);
 
   const [applications, setApplications] = useState([]);
   const [meta, setMeta] = useState({
@@ -75,7 +78,24 @@ const EmployerApplicantPage = () => {
     }
   };
 
+  //q param read
   useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    const q = params.get("q");
+    if (q) {
+      setSearchInput(q);
+      setFilters((prev) => ({ ...prev, search: q }));
+    }
+  }, [location.search]);
+  useEffect(() => {
+    if (!initialFetchRef.current) {
+      initialFetchRef.current = true;
+      const params = new URLSearchParams(location.search);
+      const q = params.get("q");
+      if (q) {
+        return;
+      }
+    }
     fetchApplication(1);
   }, [filters.status, filters.sort, filters.limit, filters.search, token]);
 
@@ -84,6 +104,10 @@ const EmployerApplicantPage = () => {
     if (searchDebounceRef.current) clearTimeout(searchDebounceRef.current);
     searchDebounceRef.current = setTimeout(() => {
       setFilters((prev) => ({ ...prev, search: searchInput }));
+
+      if (location.search) {
+        navigate(location.pathname, { replace: true });
+      }
     }, 450);
 
     return () => {
@@ -147,6 +171,45 @@ const EmployerApplicantPage = () => {
       ...prev,
       [id]: !prev[id],
     }));
+  };
+
+  /*
+    SKELETON LOADER
+  */
+  const ApplicationCardLoader = () => {
+    return (
+      <div className="border border-gray-300 shadow rounded p-4 animate-pulse">
+        {/* Header */}
+        <div className="flex justify-between items-start mb-3">
+          <div className="flex-1 flex gap-4">
+            {/* Avatar */}
+            <div className="h-14 w-14 rounded-full bg-gray-200" />
+
+            {/* User info */}
+            <div className="flex flex-col gap-2 flex-1">
+              <div className="h-5 w-48 bg-gray-200 rounded" />
+              <div className="h-3 w-32 bg-gray-200 rounded" />
+              <div className="h-4 w-64 bg-gray-200 rounded" />
+            </div>
+          </div>
+
+          {/* Date + Status */}
+          <div className="flex flex-col items-end gap-2">
+            <div className="h-4 w-36 bg-gray-200 rounded" />
+            <div className="h-6 w-24 bg-gray-200 rounded-full" />
+          </div>
+        </div>
+
+        {/* Toggle message placeholder */}
+        <div className="h-4 w-40 bg-gray-200 rounded mt-2" />
+
+        {/* Footer buttons */}
+        <div className="flex justify-end mt-4 gap-2">
+          <div className="h-9 w-28 bg-gray-200 rounded-lg" />
+          <div className="h-9 w-44 bg-gray-200 rounded-lg" />
+        </div>
+      </div>
+    );
   };
 
   return (
@@ -226,10 +289,15 @@ const EmployerApplicantPage = () => {
 
           {/* application grid */}
           <div className="grid grid-cols-1 gap-4 mt-5">
-            {loading && <div className="text-center py-10">Loading...</div>}
+            {loading &&
+              Array.from({ length: 5 }).map((_, i) => (
+                <ApplicationCardLoader key={i} />
+              ))}
 
             {!loading && applications.length === 0 && (
-              <div className="text-center py-10">Tidak ada lamaran.</div>
+              <div className="text-center py-8 text-gray-600">
+                Tidak ada apa-apa disini
+              </div>
             )}
 
             {applications.map((application) => (

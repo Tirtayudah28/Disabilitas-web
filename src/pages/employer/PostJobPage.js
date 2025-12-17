@@ -349,7 +349,7 @@ const PostJobPage = () => {
           style={{ gridAutoRows: "minmax(0, 1fr)" }}
         >
           {/* informasi umum */}
-          <div className="bg-white rounded-2xl shadow-lg py-6 px-4 col-span-3 row-span-2 flex flex-col">
+          <div className="bg-white rounded-md shadow-lg py-6 px-4 col-span-3 row-span-2 flex flex-col">
             <h2 className="font-semibold text-gray-900 text-lg">
               Informasi Umum
             </h2>
@@ -501,7 +501,7 @@ const PostJobPage = () => {
           </div>
 
           {/* disabilitas */}
-          <div className="bg-white rounded-2xl shadow-lg py-6 px-4 col-span-2 flex flex-col">
+          <div className="bg-white rounded-md shadow-lg py-6 px-4 col-span-2 flex flex-col">
             <h2 className="font-semibold text-gray-900 text-lg">Disabilitas terkait</h2>
             <div className="flex flex-col gap-2 mt-6">
               <div className="flex gap-3 items-center">
@@ -615,7 +615,7 @@ const PostJobPage = () => {
           </div>
 
           {/* skill */}
-          <div className="bg-white rounded-2xl shadow-lg py-6 px-4 col-span-2 flex flex-col">
+          <div className="bg-white rounded-md shadow-lg py-6 px-4 col-span-2 flex flex-col">
             <h2 className="font-semibold text-gray-900 text-lg">Keahlian terkait</h2>
             <div className="flex gap-3 mt-6 items-center">
               <div className="relative flex-1">
@@ -697,7 +697,7 @@ const PostJobPage = () => {
           </div>
         </div>
 
-        <div className="bg-white rounded-2xl shadow-lg py-6 px-4 flex gap-6 justify-evenly items-center">
+        <div className="bg-white rounded-md shadow-lg py-6 px-4 flex gap-6 justify-evenly items-center">
           <p className="max-w-[40rem] text-gray-800">
             NOTE: Pastikan semua data bersifat fakta dan sesuai keadaan.
             Lowongan anda akan terlihat secara publik ketika Open di platform

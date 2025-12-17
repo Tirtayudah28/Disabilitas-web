@@ -65,6 +65,7 @@ const RegistrationPage = () => {
       !formData.gender
     ) {
       setError("Field yang dibutuhkan masih belum lengkap");
+      enqueueSnackbar("Field yang dibutuhkan masih belum lengkap", {variant: "warning"})
       setIsLoading(false);
       return;
     }
@@ -102,25 +103,8 @@ const RegistrationPage = () => {
     fetchCountries();
   }, []);
 
-  // Accessibility functions
-  const increaseFontSize = () => {
-    document.documentElement.style.fontSize = "18px";
-  };
-
-  const decreaseFontSize = () => {
-    document.documentElement.style.fontSize = "14px";
-  };
-
-  const resetFontSize = () => {
-    document.documentElement.style.fontSize = "16px";
-  };
-
-  const toggleHighContrast = () => {
-    document.body.classList.toggle("high-contrast");
-  };
-
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-green-50 flex items-center justify-center py-12 px-4">
+    <div className="min-h-screen flex items-center justify-center py-12 px-4">
       <div className="max-w-2xl w-full space-y-8">
         {/* Header - Clean & Professional */}
         <div className="text-center space-y-4">
@@ -313,7 +297,8 @@ const RegistrationPage = () => {
                         handleInputChange("username", cleaned);
                       }}
                       className="w-full pl-12 pr-4 py-3.5 bg-white border-2 border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-100 transition-all shadow-sm"
-                      placeholder="username_anda"
+                      placeholder="username"
+                      autoComplete="off"
                       disabled={isLoading}
                     />
                   </div>
@@ -345,6 +330,7 @@ const RegistrationPage = () => {
                       }
                       className="w-full pl-12 pr-4 py-3.5 bg-white border-2 border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-100 transition-all shadow-sm"
                       placeholder="email@example.com"
+                      autoComplete="off"
                       disabled={isLoading}
                     />
                   </div>
@@ -372,6 +358,7 @@ const RegistrationPage = () => {
                       }
                       className="w-full pl-12 pr-4 py-3.5 bg-white border-2 border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-100 transition-all shadow-sm"
                       placeholder="Minimal 8 karakter"
+                      autoComplete="off"
                       disabled={isLoading}
                     />
                   </div>
@@ -411,6 +398,7 @@ const RegistrationPage = () => {
                       }
                       className="w-full pl-12 pr-4 py-3.5 bg-white border-2 border-gray-300 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-green-500 disabled:bg-gray-100 transition-all shadow-sm"
                       placeholder="John Doe"
+                      autoComplete="off"
                       disabled={isLoading}
                     />
                   </div>
@@ -431,6 +419,7 @@ const RegistrationPage = () => {
                           handleInputChange("gender", e.target.value)
                         }
                         disabled={isLoading}
+                        autoComplete="off"
                         className="peer sr-only"
                       />
                       <div className="flex flex-col items-center justify-center p-4 bg-white border-2 border-gray-300 rounded-xl cursor-pointer peer-checked:border-blue-500 peer-checked:bg-blue-50 hover:border-blue-300 transition-all shadow-sm">
@@ -473,6 +462,7 @@ const RegistrationPage = () => {
                           handleInputChange("gender", e.target.value)
                         }
                         disabled={isLoading}
+                        autoComplete="off"
                         className="peer sr-only"
                       />
                       <div className="flex flex-col items-center justify-center p-4 bg-white border-2 border-gray-300 rounded-xl cursor-pointer peer-checked:border-gray-500 peer-checked:bg-gray-50 hover:border-gray-400 transition-all shadow-sm">
@@ -503,6 +493,7 @@ const RegistrationPage = () => {
                       id="country"
                       type="text"
                       required
+                      autoComplete="off"
                       value={formData.country}
                       onChange={(e) => {
                         const value = e.target.value;
@@ -561,6 +552,7 @@ const RegistrationPage = () => {
                       id="city"
                       type="text"
                       required
+                      autoComplete="off"
                       value={formData.city}
                       onChange={(e) =>
                         handleInputChange("city", e.target.value)
@@ -604,48 +596,6 @@ const RegistrationPage = () => {
               </button>
             </form>
           )}
-        </div>
-
-        {/* Accessibility Quick Options */}
-        <div className="bg-blue-50 rounded-lg p-4">
-          <h4 className="text-sm font-medium text-blue-900 mb-3 flex items-center justify-center">
-            <i className="fas fa-universal-access mr-2"></i>
-            Opsi Aksesibilitas
-          </h4>
-          <div className="flex flex-wrap gap-2 justify-center">
-            <button
-              className="text-sm bg-white text-blue-700 px-4 py-2 rounded-lg border border-blue-200 hover:bg-blue-100 transition flex items-center gap-2"
-              onClick={increaseFontSize}
-              aria-label="Perbesar ukuran teks"
-            >
-              <i className="fas fa-text-height"></i>
-              <span>A+</span>
-            </button>
-            <button
-              className="text-sm bg-white text-blue-700 px-4 py-2 rounded-lg border border-blue-200 hover:bg-blue-100 transition flex items-center gap-2"
-              onClick={decreaseFontSize}
-              aria-label="Perkecil ukuran teks"
-            >
-              <i className="fas fa-text-height"></i>
-              <span>A-</span>
-            </button>
-            <button
-              className="text-sm bg-white text-blue-700 px-4 py-2 rounded-lg border border-blue-200 hover:bg-blue-100 transition flex items-center gap-2"
-              onClick={resetFontSize}
-              aria-label="Reset ukuran teks ke normal"
-            >
-              <i className="fas fa-undo-alt"></i>
-              <span>Reset</span>
-            </button>
-            <button
-              className="text-sm bg-white text-blue-700 px-4 py-2 rounded-lg border border-blue-200 hover:bg-blue-100 transition flex items-center gap-2"
-              onClick={toggleHighContrast}
-              aria-label="Toggle mode kontras tinggi"
-            >
-              <i className="fas fa-adjust"></i>
-              <span>Kontras</span>
-            </button>
-          </div>
         </div>
 
         {/* Login Link */}

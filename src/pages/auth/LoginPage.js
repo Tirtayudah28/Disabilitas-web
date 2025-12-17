@@ -8,6 +8,7 @@ import { login } from "../../store/authSlice";
 import axios from "axios";
 import { jwtDecode } from "jwt-decode";
 import { useAuth } from "../../contexts/AuthContext";
+import { enqueueSnackbar } from "notistack";
 
 const LoginPage = () => {
   const { token, setToken, userData, setUserData } = useAuth();
@@ -48,6 +49,7 @@ const LoginPage = () => {
     if (!formData.email || !formData.password) {
       setIsLoading(false);
       setError("Required fields are still incomplete");
+      enqueueSnackbar("Required fields are still incomplete", {variant: 'warning'})
       return;
     }
 
@@ -67,10 +69,9 @@ const LoginPage = () => {
         role: decoded.role,
       });
 
-      //ganti dengan pemberitahuan yg lebih baik
-      alert(res.data.message || "Login berhasil");
+      enqueueSnackbar(res.data.message || "Login berhasil", {variant: "success"})
     } catch (err) {
-      setError(err.response?.data?.message)
+      enqueueSnackbar(err.response?.data?.message || "Terjadi kesalahan", {variant: "warning"})
     } finally {
       setIsLoading(false);
     }
@@ -94,25 +95,8 @@ const LoginPage = () => {
     });
   };
 
-  // Accessibility functions
-  const increaseFontSize = () => {
-    document.documentElement.style.fontSize = "16px";
-  };
-
-  const decreaseFontSize = () => {
-    document.documentElement.style.fontSize = "14px";
-  };
-
-  const resetFontSize = () => {
-    document.documentElement.style.fontSize = "14px";
-  };
-
-  const toggleHighContrast = () => {
-    document.body.classList.toggle("high-contrast");
-  };
-
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-green-50 flex items-center justify-center py-8 px-4">
+    <div className="min-h-screen flex items-center justify-center py-8 px-4">
       <div className="max-w-md w-full space-y-6">
         {/* Header */}
         <div className="text-center">
@@ -226,6 +210,7 @@ const LoginPage = () => {
                   onChange={(e) => handleInputChange("email", e.target.value)}
                   className="w-full p-4 border-2 border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-100 disabled:cursor-not-allowed transition-colors text-lg"
                   placeholder="email@example.com"
+                  autoComplete="off"
                   disabled={isLoading}
                 />
               </div>
@@ -247,6 +232,7 @@ const LoginPage = () => {
                   }
                   className="w-full p-4 border-2 border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-100 disabled:cursor-not-allowed transition-colors text-lg"
                   placeholder="Password anda"
+                  autoComplete="off"
                   disabled={isLoading}
                 />
               </div>
@@ -278,48 +264,6 @@ const LoginPage = () => {
               </button>
             </form>
           )}
-        </div>
-
-        {/* Accessibility Quick Options */}
-        <div className="bg-blue-50 rounded-lg p-4">
-          <h4 className="text-sm font-medium text-blue-900 mb-3 flex items-center justify-center">
-            <i className="fas fa-universal-access mr-2"></i>
-            Opsi Aksesibilitas
-          </h4>
-          <div className="flex flex-wrap gap-2 justify-center">
-            <button
-              className="text-sm bg-white text-blue-700 px-4 py-2 rounded-lg border border-blue-200 hover:bg-blue-100 transition flex items-center gap-2"
-              onClick={increaseFontSize}
-              aria-label="Perbesar ukuran teks"
-            >
-              <i className="fas fa-text-height"></i>
-              <span>A+</span>
-            </button>
-            <button
-              className="text-sm bg-white text-blue-700 px-4 py-2 rounded-lg border border-blue-200 hover:bg-blue-100 transition flex items-center gap-2"
-              onClick={decreaseFontSize}
-              aria-label="Perkecil ukuran teks"
-            >
-              <i className="fas fa-text-height"></i>
-              <span>A-</span>
-            </button>
-            <button
-              className="text-sm bg-white text-blue-700 px-4 py-2 rounded-lg border border-blue-200 hover:bg-blue-100 transition flex items-center gap-2"
-              onClick={resetFontSize}
-              aria-label="Reset ukuran teks ke normal"
-            >
-              <i className="fas fa-undo-alt"></i>
-              <span>Reset</span>
-            </button>
-            <button
-              className="text-sm bg-white text-blue-700 px-4 py-2 rounded-lg border border-blue-200 hover:bg-blue-100 transition flex items-center gap-2"
-              onClick={toggleHighContrast}
-              aria-label="Toggle mode kontras tinggi"
-            >
-              <i className="fas fa-adjust"></i>
-              <span>Kontras</span>
-            </button>
-          </div>
         </div>
 
         {/* Registration Link */}
