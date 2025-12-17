@@ -1,302 +1,334 @@
-import React from 'react'
-import { Link } from 'react-router-dom';
+import React, { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
+import { useAuth } from "../../contexts/AuthContext";
+import axios from "axios";
+import defaultPfp from "../../assets/default-pfp.png";
+
+const STATUS_COLOR = {
+  applied: { colorClass: "bg-blue-100 text-blue-800", badgeColor: "blue" },
+  reviewed: {
+    colorClass: "bg-yellow-100 text-yellow-800",
+    badgeColor: "yellow",
+  },
+  accepted: { colorClass: "bg-green-100 text-green-800", badgeColor: "green" },
+  rejected: { colorClass: "bg-red-100 text-red-800", badgeColor: "red" },
+};
 
 const EmployerOverviewPage = () => {
-  // Dashboard stats
-  const stats = {
-    totalJobs: 12,
-    activeJobs: 8,
-    totalApplications: 247,
-    newApplications: 23,
-    interviewRate: 15,
-    hireRate: 8,
-    profileViews: 1560,
-    totalCandidates: 89,
+  const { token } = useAuth();
+  const [loading, setLoading] = useState(false);
+  const [jobStats, setJobStats] = useState({
+    jobCount: 0,
+    thisMonthJobCount: 0,
+    newestOpenJobs: [],
+    mostPopularJob: null,
+  });
+  const [appStats, setAppStats] = useState({
+    applicationCount: 0,
+    thisMonthApplicationCount: 0,
+    newestApplications: [],
+  });
+
+  // helper: format date
+  const fmt = (iso) => {
+    if (!iso) return "-";
+    try {
+      return new Date(iso).toLocaleString("id-ID", {
+        year: "numeric",
+        month: "short",
+        day: "numeric",
+        hour: "2-digit",
+        minute: "2-digit",
+      });
+    } catch {
+      return iso;
+    }
   };
-  const recentApplications = [
-    {
-      id: 1,
-      candidate: "Ahmad Surya",
-      position: "UI/UX Designer",
-      appliedDate: "2024-01-15",
-      status: "new",
-      statusLabel: "Baru",
-      match: 95,
-      disability: "Tuna Netra",
-      skills: ["Figma", "User Research", "Accessibility"],
-    },
-    {
-      id: 2,
-      candidate: "Sari Dewi",
-      position: "Frontend Developer",
-      appliedDate: "2024-01-14",
-      status: "reviewed",
-      statusLabel: "Ditinjau",
-      match: 88,
-      disability: "Tuna Rungu",
-      skills: ["React", "JavaScript", "TypeScript"],
-    },
-    {
-      id: 3,
-      candidate: "Budi Santoso",
-      position: "Content Writer",
-      appliedDate: "2024-01-13",
-      status: "interview",
-      statusLabel: "Interview",
-      match: 82,
-      disability: "Tuna Daksa",
-      skills: ["Content Writing", "SEO", "Copywriting"],
-    },
-  ];
 
-   const allJobs = [
-     {
-       id: 1,
-       title: "UI/UX Designer",
-       type: "Full Time",
-       location: "Jakarta • Remote",
-       department: "Product & Design",
-       postedDate: "2024-01-10",
-       applications: 45,
-       views: 230,
-       status: "active",
-       matchRate: 85,
-     },
-     {
-       id: 2,
-       title: "Frontend Developer",
-       type: "Full Time",
-       location: "Bandung • Hybrid",
-       department: "Engineering",
-       postedDate: "2024-01-08",
-       applications: 32,
-       views: 189,
-       status: "active",
-       matchRate: 78,
-     },
-     {
-       id: 3,
-       title: "Content Writer",
-       type: "Part Time",
-       location: "Remote",
-       department: "Marketing",
-       postedDate: "2024-01-05",
-       applications: 28,
-       views: 156,
-       status: "active",
-       matchRate: 82,
-     },
-     {
-       id: 4,
-       title: "Data Analyst",
-       type: "Full Time",
-       location: "Jakarta • On-site",
-       department: "Data Science",
-       postedDate: "2024-01-03",
-       applications: 18,
-       views: 95,
-       status: "paused",
-       matchRate: 75,
-     },
-     {
-       id: 5,
-       title: "Project Manager",
-       type: "Full Time",
-       location: "Remote",
-       department: "Project Management",
-       postedDate: "2023-12-28",
-       applications: 34,
-       views: 210,
-       status: "closed",
-       matchRate: 88,
-     },
-     {
-       id: 6,
-       title: "Accessibility Specialist",
-       type: "Contract",
-       location: "Remote",
-       department: "Product & Design",
-       postedDate: "2024-01-12",
-       applications: 15,
-       views: 89,
-       status: "active",
-       matchRate: 92,
-     },
-     {
-       id: 7,
-       title: "Backend Developer",
-       type: "Full Time",
-       location: "Jakarta • Hybrid",
-       department: "Engineering",
-       postedDate: "2024-01-09",
-       applications: 22,
-       views: 145,
-       status: "active",
-       matchRate: 80,
-     },
-   ];
+  const getStatusBadgeClass = (status) => {
+    return (
+      (STATUS_COLOR[status] && STATUS_COLOR[status].colorClass) ||
+      "bg-gray-100 text-gray-800"
+    );
+  };
+  const getJobStatusBadgeClass = (status) => {
+    switch ((status || "").toLowerCase()) {
+      case "pending":
+        return "bg-blue-100 text-blue-800";
+      case "open":
+        return "bg-green-100 text-green-800";
+      case "closed":
+        return "bg-gray-100 text-gray-800";
+      case "cancelled":
+        return "bg-red-100 text-red-800";
+      default:
+        return "bg-blue-100 text-blue-800";
+    }
+  };
 
-  const handleJobAction = () => {
-    return
-  }
-  const getStatusBadgeClass = () => {
-    return
-  }
+  // get company overview
+  const getCompanyOverview = async () => {
+    if (!token) return;
+    setLoading(true);
+    try {
+      const res = await axios.get(`/api/data/company-overview`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
+      if (res.data && res.data.success) {
+        const j = res.data.data.job || {};
+        const a = res.data.data.application || {};
+        setJobStats({
+          jobCount: j.jobCount || 0,
+          thisMonthJobCount: j.thisMonthJobCount || 0,
+          newestOpenJobs: j.newestOpenJobs || [],
+          mostPopularJob: j.mostPopularJob || null,
+        });
+        setAppStats({
+          applicationCount: a.applicationCount || 0,
+          thisMonthApplicationCount: a.thisMonthApplicationCount || 0,
+          newestApplications: a.newestApplications || [],
+        });
+      } else {
+        console.error("unexpected response", res.data);
+      }
+    } catch (error) {
+      console.error("Error fetching stats:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    if (!token) return;
+    getCompanyOverview();
+  }, [token]);
+
+  // UI skeleton components
+  const StatsSkeleton = () => (
+    <div className="space-y-2 animate-pulse">
+      <div className="bg-white rounded-md shadow-md p-6">
+        <div className="h-6 bg-gray-200 rounded w-1/3 mb-4"></div>
+        <div className="h-8 bg-gray-200 rounded w-1/2"></div>
+      </div>
+    </div>
+  );
+
+  const ListItemSkeleton = ({ lines = 2 }) => (
+    <div className="border animate-pulse border-gray-200 rounded-lg p-4">
+      <div className="flex justify-between items-start mb-2">
+        <div className="space-y-2 w-3/4">
+          <div className="h-4 bg-gray-200 rounded w-2/3"></div>
+          {lines > 1 && (
+            <div className="h-3 bg-gray-200 rounded w-1/3 mt-2"></div>
+          )}
+        </div>
+        <div className="h-6 bg-gray-200 rounded w-12"></div>
+      </div>
+      <div className="h-3 bg-gray-200 rounded w-1/4 mt-2"></div>
+    </div>
+  );
+
+  // derive lists used in UI
+  const recentApplications = appStats.newestApplications || [];
+  const activeJobs = jobStats.newestOpenJobs || [];
+  const mostPopularJob = jobStats.mostPopularJob || null;
+
   return (
-    <div>
-      <div className="space-y-2">
+    <>
+      <div className="space-y-4">
+        <h1 className="font-bold text-gray-900 text-2xl flex items-center gap-2">
+          <i className={`fas fa-chart-bar`} /> Overview
+        </h1>
         {/* Stats Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-2">
-          <div className="bg-white rounded-2xl shadow-lg p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-gray-600">Total Lowongan</p>
-                <p className="text-2xl font-bold text-gray-900">
-                  {stats.totalJobs}
-                </p>
+        <div className="grid grid-cols-3 gap-4">
+          {loading ? (
+            <>
+              <StatsSkeleton />
+              <StatsSkeleton />
+              <StatsSkeleton />
+            </>
+          ) : (
+            <>
+              <div className="bg-white rounded-md shadow-md p-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-xs text-gray-600">Total Lowongan</p>
+                    <p className="text-2xl mt-0.5 font-bold text-gray-900">
+                      {jobStats.jobCount ?? 0}
+                    </p>
+                    <p
+                      className={`text-sm mt-2 ${
+                        jobStats.thisMonthJobCount > 0
+                          ? "text-blue-600"
+                          : "text-gray-600"
+                      }`}
+                    >
+                      {jobStats.thisMonthJobCount > 0
+                        ? `+${jobStats.thisMonthJobCount}`
+                        : jobStats.thisMonthJobCount ?? 0}{" "}
+                      bulan ini
+                    </p>
+                  </div>
+                  <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
+                    <i className="fas fa-briefcase text-blue-600 text-xl"></i>
+                  </div>
+                </div>
               </div>
-              <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
-                <i className="fas fa-briefcase text-blue-600 text-xl"></i>
-              </div>
-            </div>
-            <div className="mt-2">
-              <span className="text-green-600 text-sm font-medium">
-                +2 dari bulan lalu
-              </span>
-            </div>
-          </div>
 
-          <div className="bg-white rounded-2xl shadow-lg p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-gray-600">Total Lamaran</p>
-                <p className="text-2xl font-bold text-gray-900">
-                  {stats.totalApplications}
-                </p>
+              <div className="bg-white rounded-md shadow-md p-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-xs text-gray-600">Total Lamaran</p>
+                    <p className="text-2xl mt-0.5 font-bold text-gray-900">
+                      {appStats.applicationCount ?? 0}
+                    </p>
+                    <p
+                      className={`text-sm mt-2 ${
+                        appStats.thisMonthApplicationCount > 0
+                          ? "text-blue-600"
+                          : "text-gray-600"
+                      }`}
+                    >
+                      {appStats.thisMonthApplicationCount > 0
+                        ? `+${appStats.thisMonthApplicationCount}`
+                        : appStats.thisMonthApplicationCount ?? 0}{" "}
+                      bulan ini
+                    </p>
+                  </div>
+                  <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
+                    <i className="fas fa-file-alt text-green-600 text-xl"></i>
+                  </div>
+                </div>
               </div>
-              <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
-                <i className="fas fa-file-alt text-green-600 text-xl"></i>
-              </div>
-            </div>
-            <div className="mt-2">
-              <span className="text-green-600 text-sm font-medium">
-                +23 baru
-              </span>
-            </div>
-          </div>
 
-          <div className="bg-white rounded-2xl shadow-lg p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-gray-600">Interview Rate</p>
-                <p className="text-2xl font-bold text-gray-900">
-                  {stats.interviewRate}%
-                </p>
+              <div className="bg-white rounded-md shadow-md p-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-xs text-gray-600">#1 Lowongan Populer</p>
+                    {mostPopularJob ? (
+                      <>
+                        <p className="text-xl mt-0.5 font-semibold text-blue-600">
+                          {mostPopularJob.title}
+                        </p>
+                        <p className="text-sm mt-2 text-gray-500">
+                          {mostPopularJob.applicationCount} pelamar
+                        </p>
+                      </>
+                    ) : (
+                      <p className="text-sm text-gray-500">Belum ada data</p>
+                    )}
+                  </div>
+                  <div className="w-12 h-12 bg-red-100 rounded-lg flex items-center justify-center">
+                    <i class="fa-solid fa-fire text-red-600 text-xl"></i>
+                  </div>
+                </div>
               </div>
-              <div className="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center">
-                <i className="fas fa-user-check text-purple-600 text-xl"></i>
-              </div>
-            </div>
-            <div className="mt-2">
-              <span className="text-green-600 text-sm font-medium">
-                +5% improvement
-              </span>
-            </div>
-          </div>
-
-          <div className="bg-white rounded-2xl shadow-lg p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-gray-600">Profile Views</p>
-                <p className="text-2xl font-bold text-gray-900">
-                  {stats.profileViews}
-                </p>
-              </div>
-              <div className="w-12 h-12 bg-orange-100 rounded-lg flex items-center justify-center">
-                <i className="fas fa-eye text-orange-600 text-xl"></i>
-              </div>
-            </div>
-            <div className="mt-2">
-              <span className="text-green-600 text-sm font-medium">
-                +156 minggu ini
-              </span>
-            </div>
-          </div>
+            </>
+          )}
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {/* Recent Applications */}
-          <div className="bg-white rounded-2xl shadow-lg p-6">
+          <div className="bg-white rounded-md shadow-md p-6">
             <div className="flex justify-between items-center mb-4">
               <h3 className="text-lg font-bold text-gray-900">
                 Lamaran Terbaru
               </h3>
               <Link
                 to="/employer/applications"
-                className="text-primary-500 hover:text-primary-600 text-sm font-medium"
+                className="text-blue-600 hover:text-blue-700 text-sm font-medium"
               >
+                <i class="fa-solid fa-arrow-up-right-from-square mr-1"></i>{" "}
                 Lihat Semua
               </Link>
             </div>
+
             <div className="space-y-4">
-              {recentApplications.map((application) => (
-                <div
-                  key={application.id}
-                  className="border border-gray-200 rounded-lg p-4 hover:shadow-md transition"
-                >
-                  <div className="flex justify-between items-start mb-2">
-                    <div>
-                      <h4 className="font-medium text-gray-900">
-                        {application.candidate}
-                      </h4>
-                      <p className="text-sm text-gray-600">
-                        {application.position}
-                      </p>
+              {loading ? (
+                <>
+                  <ListItemSkeleton />
+                  <ListItemSkeleton />
+                  <ListItemSkeleton />
+                  <ListItemSkeleton />
+                </>
+              ) : recentApplications.length === 0 ? (
+                <div className="text-sm text-gray-500">Belum ada lamaran</div>
+              ) : (
+                recentApplications.map((application) => (
+                  <div
+                    key={application.id}
+                    className="border border-gray-200 rounded-lg p-4 hover:shadow-md transition"
+                  >
+                    <div className="flex justify-between items-start mb-2">
+                      <div className="flex gap-3">
+                        <img
+                          src={application.userProfilePicture || defaultPfp}
+                          alt="Profile Picture"
+                          className="h-14 w-14 aspect-square object-cover rounded-full"
+                        />
+                        <div>
+                          <h4 className="font-medium text-blue-700">
+                            @{application.username}
+                          </h4>
+                          <p className="text-sm text-gray-600">
+                            melamar ke{" "}
+                            <span className="text-blue-600">
+                              {application.jobTitle || "—"}
+                            </span>
+                          </p>
+                        </div>
+                      </div>
+                      <span
+                        className={`px-2 py-1 rounded-full text-xs font-medium uppercase ${getStatusBadgeClass(
+                          application.status
+                        )}`}
+                      >
+                        {application.status}
+                      </span>
                     </div>
-                    <span
-                      className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusBadgeClass(
-                        application.status
-                      )}`}
-                    >
-                      {application.statusLabel}
-                    </span>
+
+                    <div className="flex items-center justify-between text-sm">
+                      <span className="text-gray-500">
+                        <i class="fa-regular fa-calendar mr-2"></i>
+                        {fmt(application.appliedAt)}
+                      </span>
+                    </div>
                   </div>
-                  <div className="flex items-center justify-between text-sm">
-                    <span className="text-gray-500">
-                      {application.appliedDate}
-                    </span>
-                    <span className="bg-blue-100 text-blue-800 px-2 py-1 rounded text-xs">
-                      {application.match}% match
-                    </span>
-                  </div>
-                  <div className="mt-2">
-                    <span className="text-xs text-gray-500">
-                      Disabilitas: {application.disability}
-                    </span>
-                  </div>
-                </div>
-              ))}
+                ))
+              )}
             </div>
           </div>
 
           {/* Active Jobs */}
-          <div className="bg-white rounded-2xl shadow-lg p-6">
+          <div className="bg-white rounded-md shadow-md p-6">
             <div className="flex justify-between items-center mb-4">
               <h3 className="text-lg font-bold text-gray-900">
                 Lowongan Aktif
               </h3>
               <Link
                 to="/employer/jobs"
-                className="text-primary-500 hover:text-primary-600 text-sm font-medium"
+                className="text-blue-600 hover:text-blue-700 text-sm font-medium"
               >
+                <i class="fa-solid fa-arrow-up-right-from-square mr-1"></i>
                 Kelola
               </Link>
             </div>
+
             <div className="space-y-4">
-              {allJobs
-                .filter((job) => job.status === "active")
-                .slice(0, 3)
-                .map((job) => (
+              {loading ? (
+                <>
+                  <ListItemSkeleton />
+                  <ListItemSkeleton />
+                  <ListItemSkeleton />
+                  <ListItemSkeleton />
+                </>
+              ) : activeJobs.length === 0 ? (
+                <div className="text-sm text-gray-500">
+                  Belum ada lowongan aktif
+                </div>
+              ) : (
+                activeJobs.slice(0, 3).map((job) => (
                   <div
                     key={job.id}
                     className="border border-gray-200 rounded-lg p-4 hover:shadow-md transition"
@@ -306,52 +338,43 @@ const EmployerOverviewPage = () => {
                         <h4 className="font-medium text-gray-900">
                           {job.title}
                         </h4>
-                        <p className="text-sm text-gray-600">{job.location}</p>
+                        <p className="text-sm text-gray-600">
+                          {job.address || "Lokasi tidak tersedia"}
+                        </p>
                       </div>
                       <span
-                        className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusBadgeClass(
+                        className={`px-2 py-1 rounded-full text-xs font-medium uppercase ${getJobStatusBadgeClass(
                           job.status
                         )}`}
                       >
                         {job.status}
                       </span>
                     </div>
+
                     <div className="flex items-center justify-between text-sm">
                       <span className="text-gray-500">
-                        Diposting: {job.postedDate}
+                        Opened in:{" "}
+                        {new Date(job.startDate).toLocaleString("id-ID", {
+                          year: "numeric",
+                          month: "short",
+                          day: "numeric",
+                        })}
                       </span>
                       <span className="text-primary-600 font-medium">
-                        {job.applications} pelamar
+                        {mostPopularJob && mostPopularJob.id === job.id
+                          ? `${mostPopularJob.applicationCount} pelamar`
+                          : null}
                       </span>
                     </div>
-                    <div className="mt-2 flex gap-2">
-                      <Link
-                        to={`/employer/jobs/${job.id}`}
-                        className="text-primary-500 hover:text-primary-600 text-xs"
-                      >
-                        <i className="fas fa-eye mr-1"></i>Lihat
-                      </Link>
-                      <button
-                        onClick={() => handleJobAction(job.id, "edit")}
-                        className="text-green-500 hover:text-green-600 text-xs"
-                      >
-                        <i className="fas fa-edit mr-1"></i>Edit
-                      </button>
-                      <button
-                        onClick={() => handleJobAction(job.id, "pause")}
-                        className="text-red-500 hover:text-red-600 text-xs"
-                      >
-                        <i className="fas fa-pause mr-1"></i>Pause
-                      </button>
-                    </div>
                   </div>
-                ))}
+                ))
+              )}
             </div>
           </div>
         </div>
       </div>
-    </div>
+    </>
   );
-}
+};
 
-export default EmployerOverviewPage
+export default EmployerOverviewPage;

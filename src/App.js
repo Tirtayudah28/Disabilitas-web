@@ -32,7 +32,7 @@ import JobDetailPage from "./pages/JobDetailPage";
 import ApplicationHistory from "./pages/candidate/ApplicationHistory";
 import EmployerDashboard from "./pages/employer/EmployerDashboard";
 import CompanyProfilePage from "./pages/employer/CompanyProfilePage";
-import CandidateSearchPage from "./pages/employer/CandidateSearchPage";
+import CandidatePage from "./pages/CandidatePage";
 
 // IMPORT HALAMAN PROFILE
 import ProfileLandingPage from "./pages/ProfileLandingPage";
@@ -99,166 +99,6 @@ const VoiceNavigationInitializer = ({ children }) => {
   return children;
 };
 
-// Simple Debug Component - DIPISAHKAN
-const SimpleDebugPanel = () => {
-  const [debugInfo, setDebugInfo] = useState({
-    isListening: false,
-    transcript: "",
-    isProcessing: false,
-    lastCommand: "",
-  });
-
-  const speakText = (text) => {
-    if ("speechSynthesis" in window) {
-      const utterance = new SpeechSynthesisUtterance(text);
-      utterance.lang = "id-ID";
-      utterance.rate = 0.9;
-      window.speechSynthesis.speak(utterance);
-    }
-  };
-
-  const handleTestVoice = () => {
-    speakText("Sistem suara bekerja dengan baik. Debug panel aktif.");
-  };
-
-  // Listen for voice events from AccessibilityWidget
-  useEffect(() => {
-    const handleVoiceEvent = (event) => {
-      if (event.detail && event.detail.type === "voiceUpdate") {
-        setDebugInfo((prev) => ({
-          ...prev,
-          ...event.detail.data,
-        }));
-      }
-    };
-
-    window.addEventListener("voiceDebugUpdate", handleVoiceEvent);
-    return () =>
-      window.removeEventListener("voiceDebugUpdate", handleVoiceEvent);
-  }, []);
-
-  return (
-    <div
-      style={{
-        position: "fixed",
-        top: "10px",
-        left: "10px",
-        background: "rgba(0,0,0,0.9)",
-        color: "white",
-        padding: "15px",
-        borderRadius: "8px",
-        zIndex: 10000,
-        fontSize: "12px",
-        maxWidth: "350px",
-        border: "2px solid #00ff88",
-        fontFamily: "Arial, sans-serif",
-      }}
-    >
-      <div
-        style={{
-          marginBottom: "10px",
-          fontWeight: "bold",
-          color: "#00ff88",
-          display: "flex",
-          alignItems: "center",
-          gap: "8px",
-        }}
-      >
-        <span>🎤 Simple Debug Panel</span>
-        <span
-          style={{
-            background: debugInfo.isListening ? "#00ff88" : "#ff4444",
-            color: "black",
-            padding: "2px 6px",
-            borderRadius: "10px",
-            fontSize: "10px",
-            fontWeight: "bold",
-          }}
-        >
-          {debugInfo.isListening ? "LIVE" : "IDLE"}
-        </span>
-      </div>
-
-      <div style={{ display: "grid", gap: "4px", marginBottom: "10px" }}>
-        <div>
-          Status:{" "}
-          <strong>
-            {debugInfo.isListening ? "🔴 Mendengarkan..." : "🟢 Siap"}
-          </strong>
-        </div>
-        <div>
-          Processing:{" "}
-          <strong>
-            {debugInfo.isProcessing ? "⏳ Memproses..." : "✅ Selesai"}
-          </strong>
-        </div>
-        <div>
-          Transcript: <strong>"{debugInfo.transcript || "-"}"</strong>
-        </div>
-        <div>
-          Last Command: <strong>"{debugInfo.lastCommand || "-"}"</strong>
-        </div>
-      </div>
-
-      <div style={{ display: "flex", gap: "8px", flexWrap: "wrap" }}>
-        <button
-          onClick={handleTestVoice}
-          style={{
-            padding: "6px 12px",
-            background: "#007bff",
-            color: "white",
-            border: "none",
-            borderRadius: "4px",
-            cursor: "pointer",
-            fontSize: "11px",
-            fontWeight: "bold",
-          }}
-        >
-          Test Suara
-        </button>
-
-        <button
-          onClick={() => speakText("Ini adalah test navigasi suara")}
-          style={{
-            padding: "6px 12px",
-            background: "#ff8800",
-            color: "white",
-            border: "none",
-            borderRadius: "4px",
-            cursor: "pointer",
-            fontSize: "11px",
-            fontWeight: "bold",
-          }}
-        >
-          Test Navigasi
-        </button>
-
-        <button
-          onClick={() => {
-            window.dispatchEvent(
-              new CustomEvent("voiceCommand", {
-                detail: { command: "bantuan" },
-              })
-            );
-          }}
-          style={{
-            padding: "6px 12px",
-            background: "#00ff88",
-            color: "black",
-            border: "none",
-            borderRadius: "4px",
-            cursor: "pointer",
-            fontSize: "11px",
-            fontWeight: "bold",
-          }}
-        >
-          Test Bantuan
-        </button>
-      </div>
-    </div>
-  );
-};
-
 // Main App Content
 const AppContent = () => {
   const [isLoading, setIsLoading] = useState(true);
@@ -307,7 +147,7 @@ const AppContent = () => {
   }
 
   return (
-    <div className="App bg-gradient-to-br from-primary-50 to-secondary-50 text-dark font-sans min-h-screen">
+    <div className="App bg-gradient-to-br from-blue-50/50 to-gray-50 text-dark font-sans min-h-screen">
       {/* <SkipLink /> */}
       {renderNavbar()}
 
@@ -330,8 +170,9 @@ const AppContent = () => {
 
           {/* public routes */}
           <Route path="/" element={<JobLandingPage />} />
-          <Route path="/companies" element={<CompaniesPage />} />
           <Route path="/profile" element={<ProfileLandingPage />} />
+          <Route path="/companies" element={<CompaniesPage />} />
+          <Route path="/candidates" element={<CandidatePage />} />
           <Route path="/jobs" element={<JobPage />} />
           <Route path="/job/:jobId" element={<JobDetailPage />} />
 
@@ -341,26 +182,17 @@ const AppContent = () => {
 
           {/* job-seeker protected route */}
           <Route element={<ProtectedRoute requiredRole="job-seeker" />}>
-            <Route
-              path="/js/applications"
-              element={<ApplicationHistory />}
-            />
+            <Route path="/js/applications" element={<ApplicationHistory />} />
           </Route>
 
           {/* company protected routes */}
           <Route element={<ProtectedRoute requiredRole="company" />}>
-
             <Route path="/employer" element={<EmployerDashboard />}>
               <Route index element={<EmployerOverviewPage />} />
               <Route path="jobs" element={<EmployerJobPage />} />
               <Route path="jobs/post" element={<PostJobPage />} />
               <Route path="applications" element={<EmployerApplicantPage />} />
             </Route>
-
-            <Route
-              path="/employer/candidates"
-              element={<CandidateSearchPage />}
-            />
           </Route>
 
           <Route path="*" element={<Navigate to="/" replace />} />

@@ -16,7 +16,6 @@ const EmployerJobPage = () => {
     totalPages: 0,
   });
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState(null);
 
   const [filters, setFilters] = useState({
     search: "",
@@ -29,22 +28,10 @@ const EmployerJobPage = () => {
   const [searchInput, setSearchInput] = useState("");
   const searchDebounceRef = useRef(null);
 
-  const stats = {
-    totalJobs: 12,
-    activeJobs: 8,
-    totalApplications: 247,
-    newApplications: 23,
-    interviewRate: 15,
-    hireRate: 8,
-    profileViews: 1560,
-    totalCandidates: 89,
-  };
-
   //get company's job
   const fetchJobs = async (page = 1) => {
     try {
       setLoading(true);
-      setError(null);
 
       const params = {
         page,
@@ -59,22 +46,17 @@ const EmployerJobPage = () => {
         params,
         headers: { Authorization: `Bearer ${token}` },
       });
-      console.log(res.data);
 
-      if (res?.data?.success) {
-        setJobs(res.data.data || []);
-        setMeta({
-          page: res.data.meta.page,
-          limit: res.data.meta.limit,
-          total: res.data.meta.total,
-          totalPages: res.data.meta.totalPages,
-        });
-        setCompany(res.data.company);
-      } else {
-        setError(res?.data?.message || "Gagal mengambil data");
-      }
+      setJobs(res.data.data || []);
+      setMeta({
+        page: res.data.meta.page,
+        limit: res.data.meta.limit,
+        total: res.data.meta.total,
+        totalPages: res.data.meta.totalPages,
+      });
+      setCompany(res.data.company);
     } catch (err) {
-      setError(err?.response?.data?.message || err.message || "Server error");
+      console.error(err?.response?.data?.message || err.message || "Server error");
     } finally {
       setLoading(false);
     }
@@ -121,6 +103,42 @@ const EmployerJobPage = () => {
       default:
         return "bg-blue-100 text-blue-800";
     }
+  };
+
+  /*
+    SKELETON LOADER
+  */
+  const JobCardSkeleton = () => {
+    return (
+      <div className="border border-gray-300 shadow rounded p-4 animate-pulse">
+        {/* Header */}
+        <div className="flex justify-between items-start mb-3">
+          <div className="flex-1 flex gap-4">
+            {/* Avatar */}
+            <div className="h-14 w-14 rounded bg-gray-200" />
+
+            {/* Title & company */}
+            <div className="flex flex-col gap-2 flex-1">
+              <div className="h-5 w-3/4 bg-gray-200 rounded" />
+              <div className="h-4 w-2/3 bg-gray-200 rounded" />
+            </div>
+          </div>
+
+          {/* Status badge */}
+          <div className="h-6 w-20 bg-gray-200 rounded-full" />
+        </div>
+
+        {/* Meta info */}
+        <div className="flex gap-8 text-sm">
+          {[1, 2, 3, 4].map((i) => (
+            <div key={i} className="flex flex-col gap-2">
+              <div className="h-3 w-16 bg-gray-200 rounded" />
+              <div className="h-4 w-20 bg-gray-200 rounded" />
+            </div>
+          ))}
+        </div>
+      </div>
+    );
   };
 
   return (
@@ -223,85 +241,89 @@ const EmployerJobPage = () => {
 
           {/* jobs grid */}
           <div className="grid grid-cols-1 gap-4 mt-5">
-            {loading && <div className="text-center py-10">Loading...</div>}
+            {loading &&
+              Array.from({ length: 5 }).map((_, i) => (
+                <JobCardSkeleton key={i} />
+              ))}
 
-            {!loading && error && (
-              <div className="text-center text-red-600 py-10">{error}</div>
-            )}
-
-            {!loading && jobs.length === 0 && !error && (
-              <div className="text-center py-10">Tidak ada lowongan.</div>
+            {!loading && jobs.length === 0 && (
+              <div className="text-center py-8 text-gray-600">
+                Tidak ada apa-apa disini
+              </div>
             )}
 
             {/* jobs grid */}
-            {jobs.map((job) => (
-              <div
-                key={job.id}
-                className="border border-gray-300 shadow rounded p-4 hover:shadow-md transition cursor-pointer"
-                onClick={() => navigate(`/job/${job.id}`)}
-              >
-                <div className="flex justify-between items-start mb-3">
-                  <div className="flex-1 flex gap-4">
-                    <img
-                      src={company?.User?.profilePicture || defaultCm}
-                      alt="Profile Picture"
-                      className="h-14 w-14 aspect-square object-cover"
-                    />
+            {!loading &&
+              jobs.map((job) => (
+                <div
+                  key={job.id}
+                  className="border border-gray-300 shadow rounded p-4 hover:shadow-md transition cursor-pointer"
+                  onClick={() => navigate(`/job/${job.id}`)}
+                >
+                  <div className="flex justify-between items-start mb-3">
+                    <div className="flex-1 flex gap-4">
+                      <img
+                        src={company?.User?.profilePicture || defaultCm}
+                        alt="Profile Picture"
+                        className="h-14 w-14 aspect-square object-cover"
+                      />
+                      <div>
+                        <h4 className="font-bold text-blue-600 text-xl">
+                          {job.title}
+                        </h4>
+                        <p className="text-gray-600 text-sm">
+                          {company.companyName} •{" "}
+                          <span className="capitalize">
+                            {`${job.employmentType} (${job.locationType})`}
+                          </span>
+                        </p>
+                      </div>
+                    </div>
+                    <span
+                      className={`px-3 py-1 rounded-full text-xs uppercase font-medium ${getStatusBadgeClass(
+                        job.status
+                      )}`}
+                    >
+                      {job.status}
+                    </span>
+                  </div>
+
+                  <div className="flex gap-8 text-sm mb-3">
                     <div>
-                      <h4 className="font-bold text-blue-600 text-xl">
-                        {job.title}
-                      </h4>
-                      <p className="text-gray-600 text-sm">
-                        {company.companyName} •{" "}
-                        <span className="capitalize">
-                          {`${job.employmentType} (${job.locationType})`}
-                        </span>
+                      <span className="text-gray-600 text-xs">Open Date</span>
+                      <p className="font-medium mt-1">
+                        {new Intl.DateTimeFormat("id-ID", {
+                          day: "numeric",
+                          month: "long",
+                          year: "numeric",
+                        }).format(new Date(job?.startDate))}
                       </p>
                     </div>
-                  </div>
-                  <span
-                    className={`px-3 py-1 rounded-full text-xs uppercase font-medium ${getStatusBadgeClass(
-                      job.status
-                    )}`}
-                  >
-                    {job.status}
-                  </span>
-                </div>
-
-                <div className="flex gap-8 text-sm mb-3">
-                  <div>
-                    <span className="text-gray-600 text-xs">Open Date</span>
-                    <p className="font-medium mt-1">
-                      {new Intl.DateTimeFormat("id-ID", {
-                        day: "numeric",
-                        month: "long",
-                        year: "numeric",
-                      }).format(new Date(job?.startDate))}
-                    </p>
-                  </div>
-                  <div>
-                    <span className="text-gray-600">Close Date</span>
-                    <p className="font-medium mt-1">
-                      {new Intl.DateTimeFormat("id-ID", {
-                        day: "numeric",
-                        month: "long",
-                        year: "numeric",
-                      }).format(new Date(job?.endDate))}
-                    </p>
-                  </div>
-                  <div>
-                    <span className="text-gray-600 text-xs">Applications</span>
-                    <p className="font-medium mt-1">
-                      {job.applicationsCount ?? job.applications ?? 0}
-                    </p>
-                  </div>
-                  <div>
-                    <span className="text-gray-600 text-xs">Views</span>
-                    <p className="font-medium mt-1">{job.views ?? "-"}</p>
+                    <div>
+                      <span className="text-gray-600">Close Date</span>
+                      <p className="font-medium mt-1">
+                        {new Intl.DateTimeFormat("id-ID", {
+                          day: "numeric",
+                          month: "long",
+                          year: "numeric",
+                        }).format(new Date(job?.endDate))}
+                      </p>
+                    </div>
+                    <div>
+                      <span className="text-gray-600 text-xs">
+                        Applications
+                      </span>
+                      <p className="font-medium mt-1">
+                        {job.applicationsCount ?? job.applications ?? 0}
+                      </p>
+                    </div>
+                    <div>
+                      <span className="text-gray-600 text-xs">Views</span>
+                      <p className="font-medium mt-1">{job.views ?? "-"}</p>
+                    </div>
                   </div>
                 </div>
-              </div>
-            ))}
+              ))}
           </div>
 
           {/* pagination */}

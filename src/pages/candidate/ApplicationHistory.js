@@ -40,6 +40,8 @@ const progressMap = {
 const ApplicationHistory = () => {
   const { token, userData } = useAuth();
   const navigate = useNavigate();
+
+  const [appLoading, setAppLoading] = useState(false);
   const [loading, setLoading] = useState(false);
 
   const [profileData, setProfileData] = useState({});
@@ -50,15 +52,13 @@ const ApplicationHistory = () => {
   const [statusInput, setStatusInput] = useState("all");
 
   const [applications, setApplications] = useState([]);
+  const [applicationStats, setApplicationStats] = useState({});
   const [meta, setMeta] = useState({
     page: 1,
     limit: DEFAULT_LIMIT,
     total: 0,
     totalPages: 0,
   });
-  const [openMessages, setOpenMessages] = useState({});
-
-  // central filters (sent to API)
   const [filters, setFilters] = useState({
     q: "",
     status: "",
@@ -67,9 +67,12 @@ const ApplicationHistory = () => {
     sort: "newest",
   });
 
+  const [openMessages, setOpenMessages] = useState({});
+
+  //get js applications
   const fetchApplications = async (page = 1) => {
     try {
-      setLoading(true);
+      setAppLoading(true);
 
       const params = {
         page,
@@ -96,10 +99,25 @@ const ApplicationHistory = () => {
         err?.response?.data?.message || err.message || "Server error"
       );
     } finally {
-      setLoading(false);
+      setAppLoading(false);
     }
   };
+  // get js app stats
+  const getJsAppStats = async () => {
+    try {
+      const res = await axios.get(`/api/data/js-application-stats`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
 
+      if (res.data && res.data.success) {
+        setApplicationStats(res.data.data);
+      } else {
+        console.error("unexpected response", res.data);
+      }
+    } catch (error) {
+      console.error("Error fetching stats:", error);
+    }
+  };
   //get user profile
   const getUserById = async () => {
     try {
@@ -119,11 +137,24 @@ const ApplicationHistory = () => {
   }, [filters]);
 
   useEffect(() => {
-    getUserById();
-  }, [userData]);
+    if (!userData || !token) return;
+    const fetchAll = async () => {
+      setLoading(true);
+      try {
+        await Promise.all([getUserById(), getJsAppStats()]);
+      } catch (err) {
+        console.error(err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchAll();
+  }, [userData, token]);
 
   // handlers
   const applySearch = () => {
+    if ((!searchInput && !filters.q) || searchInput === filters.q) return;
     setFilters((p) => ({ ...p, q: searchInput.trim(), page: 1 }));
   };
 
@@ -145,12 +176,10 @@ const ApplicationHistory = () => {
     setLimitInput(newLimit);
     setFilters((p) => ({ ...p, limit: newLimit, page: 1 }));
   };
-
   const changeSort = (newSort) => {
     setSortInput(newSort);
     setFilters((p) => ({ ...p, sort: newSort, page: 1 }));
   };
-
   const changeStatus = (newStatus) => {
     setStatusInput(newStatus);
     setFilters((p) => ({
@@ -206,8 +235,60 @@ const ApplicationHistory = () => {
     }
   };
 
+  //result percentage
+  const accepted = applicationStats.jsAcceptedApplicationCount || 0;
+  const rejected = applicationStats.jsRejectedApplicationCount || 0;
+  const totalDecision = accepted + rejected;
+  const acceptedPercent =
+    totalDecision > 0 ? Math.round((accepted / totalDecision) * 100) : 0;
+  const rejectedPercent = totalDecision > 0 ? 100 - acceptedPercent : 0;
+
+  /*
+    SKELETON LOADER
+  */
+  const ApplicationCardSkeleton = () => {
+    return (
+      <div className="bg-white rounded-md shadow-lg p-6 animate-pulse">
+        {/* Header */}
+        <div className="flex flex-col lg:flex-row lg:items-start justify-between gap-4">
+          <div className="flex w-full items-start gap-4">
+            {/* Company Logo */}
+            <div className="w-16 h-16 bg-gray-200 rounded" />
+
+            {/* Job Info */}
+            <div className="flex-1 space-y-2">
+              <div className="h-6 w-2/3 bg-gray-200 rounded" />
+              <div className="h-4 w-1/2 bg-gray-200 rounded" />
+              <div className="h-4 w-1/3 bg-gray-200 rounded" />
+            </div>
+
+            {/* Status Badge */}
+            <div className="h-6 w-24 bg-gray-200 rounded-full" />
+          </div>
+        </div>
+
+        {/* Toggle message */}
+        <div className="mt-3 h-4 w-40 bg-gray-200 rounded" />
+
+        {/* Progress & Action */}
+        <div className="flex gap-4 mt-6 items-center">
+          <div className="flex-1">
+            <div className="flex justify-between mb-1">
+              <div className="h-4 w-32 bg-gray-200 rounded" />
+              <div className="h-4 w-10 bg-gray-200 rounded" />
+            </div>
+            <div className="w-full h-2 bg-gray-200 rounded-full" />
+          </div>
+
+          {/* Action Button */}
+          <div className="h-9 w-32 bg-gray-200 rounded-md" />
+        </div>
+      </div>
+    );
+  };
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-primary-50 to-secondary-50">
+    <div className="min-h-screen">
       <main
         id="main-content"
         className="container mx-auto lg:px-32 xl:px-36 px-4 py-8"
@@ -234,32 +315,89 @@ const ApplicationHistory = () => {
         </div>
 
         {/* Stats Overview */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
-          <div className="bg-white rounded-xl shadow-md p-4 text-center">
-            <div className="text-2xl font-bold text-primary-600">
-              {meta.total ?? applications.length}
+        <div className="grid grid-cols-3 gap-4 mb-8">
+          <div className="bg-white rounded-md shadow-md p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-xs text-gray-600">Total Lamaran</p>
+                <p className="text-2xl mt-0.5 font-bold text-gray-900">
+                  {applicationStats.jsTotalApplicationCount || 0}
+                </p>
+                <p
+                  className={`text-sm mt-2 ${
+                    applicationStats.thisMonthApplicationCount > 0
+                      ? "text-blue-600"
+                      : "text-gray-600"
+                  }`}
+                >
+                  {applicationStats.thisMonthApplicationCount > 0
+                    ? `+${applicationStats.thisMonthApplicationCount}`
+                    : applicationStats.thisMonthApplicationCount ?? 0}{" "}
+                  bulan ini
+                </p>
+              </div>
+              <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
+                <i className="fas fa-file-alt text-blue-600 text-xl"></i>
+              </div>
             </div>
-            <div className="text-sm text-gray-600">Total Lamaran</div>
           </div>
-          <div className="bg-white rounded-xl shadow-md p-4 text-center">
-            <div className="text-2xl font-bold text-yellow-600">
-              {
-                applications.filter((app) =>
-                  ["applied", "reviewed", "interview"].includes(app.status)
-                ).length
-              }
+
+          <div className="bg-white rounded-md shadow-md p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-xs text-gray-600">Status Reviewed</p>
+                <p className="text-2xl mt-0.5 font-bold text-gray-900">
+                  {applicationStats.jsReviewedApplicationCount || 0}
+                </p>
+                <p
+                  className="text-sm mt-2 text-blue-500 hover:underline"
+                  role="button"
+                  onClick={() => changeStatus("reviewed")}
+                >
+                  Terapkan filter
+                </p>
+              </div>
+              <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
+                <i className="fas fa-eye text-blue-600 text-xl"></i>
+              </div>
             </div>
-            <div className="text-sm text-gray-600">Dalam Proses</div>
           </div>
-          <div className="bg-white rounded-xl shadow-md p-4 text-center">
-            <div className="text-2xl font-bold text-green-600">
-              {applications.filter((app) => app.status === "accepted").length}
+
+          <div className="bg-white rounded-xl shadow-md p-4">
+            <div className="text-sm text-gray-600 text-center mb-2">
+              Result Percentage
             </div>
-            <div className="text-sm text-gray-600">Diterima</div>
-          </div>
-          <div className="bg-white rounded-xl shadow-md p-4 text-center">
-            <div className="text-2xl font-bold text-blue-600">89%</div>
-            <div className="text-sm text-gray-600">Response Rate</div>
+            {/* Percentage */}
+            <div className="mt-2 flex justify-between">
+              <div className="flex flex-col">
+                <span className="text-xs text-gray-600">
+                  {accepted} diterima
+                </span>
+                <span className="text-lg font-bold text-green-600">
+                  {acceptedPercent}%
+                </span>
+              </div>
+              <div className="flex flex-col items-end">
+                <span className="text-xs text-gray-600">
+                  {rejected} ditolak
+                </span>
+                <span className="text-lg font-bold text-red-600">
+                  {rejectedPercent}%
+                </span>
+              </div>
+            </div>
+
+            {/* Progress Bar */}
+            <div className="w-full h-3 bg-gray-200 rounded-full overflow-hidden flex">
+              <div
+                className="bg-green-500 transition-all duration-500"
+                style={{ width: `${acceptedPercent}%` }}
+              />
+              <div
+                className="bg-red-500 transition-all duration-500"
+                style={{ width: `${rejectedPercent}%` }}
+              />
+            </div>
           </div>
         </div>
 
@@ -275,9 +413,10 @@ const ApplicationHistory = () => {
                     Status Lamaran
                   </label>
                   <select
+                    disabled={appLoading}
                     value={statusInput}
                     onChange={(e) => changeStatus(e.target.value)}
-                    className="w-full mt-2 border border-gray-300 rounded-lg px-3 py-2 bg-white focus:ring-2 focus:ring-primary-400 focus:outline-none"
+                    className="w-full mt-2 border border-gray-300 rounded-lg px-3 py-2 bg-white focus:ring-2 focus:ring-primary-400 focus:outline-none disabled:opacity-50"
                   >
                     {STATUS_OPTIONS.map((s) => (
                       <option key={s.value} value={s.value}>
@@ -291,9 +430,10 @@ const ApplicationHistory = () => {
               <div className="mb-4">
                 <label className="text-sm text-gray-600">Sort</label>
                 <select
+                  disabled={appLoading}
                   value={sortInput}
                   onChange={(e) => changeSort(e.target.value)}
-                  className="w-full mt-2 border rounded px-3 py-2"
+                  className="w-full mt-2 border rounded px-3 py-2 disabled:opacity-50"
                 >
                   <option value="newest">Terbaru</option>
                   <option value="oldest">Terlama</option>
@@ -316,6 +456,7 @@ const ApplicationHistory = () => {
                 className="outline-none flex-1 bg-transparent"
                 type="search"
                 placeholder="Posisi, perusahaan..."
+                disabled={appLoading}
                 value={searchInput}
                 onChange={(e) => setSearchInput(e.target.value)}
                 onKeyDown={(e) => {
@@ -324,176 +465,182 @@ const ApplicationHistory = () => {
               />
               <button
                 onClick={applySearch}
-                className="px-3 py-1 rounded bg-primary-600 text-white text-sm"
+                className="px-5 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-sm"
               >
-                Cari
+                {appLoading ? (
+                  <>
+                    <i className="fas fa-spinner animate-spin"></i> Mencari...
+                  </>
+                ) : (
+                  <>Cari</>
+                )}
               </button>
             </div>
 
             {/* Applications List */}
             <div className="space-y-4">
-              {loading && (
-                <div className="text-center text-sm text-gray-500">
-                  Memuat...
-                </div>
-              )}
+              {appLoading &&
+                Array.from({ length: 5 }).map((_, i) => (
+                  <ApplicationCardSkeleton key={i} />
+                ))}
 
-              {!loading && applications.length === 0 && (
+              {!appLoading && applications.length === 0 && (
                 <div className="bg-white rounded-md shadow-lg p-6 text-center text-gray-500">
-                  Belum ada lamaran.
+                  Tidak ada apa-apa disini
                 </div>
               )}
 
-              {applications.map((application) => (
-                <div
-                  key={application.id}
-                  className="bg-white rounded-md shadow-lg p-6 hover:shadow-xl transition cursor-pointer"
-                >
-                  <div className="flex flex-col w-full lg:flex-row lg:items-start justify-between gap-4">
-                    {/* Job Info */}
-                    <div className="flex w-full items-start gap-4">
-                      <img
-                        src={
-                          application.Job?.Company?.User?.profilePicture ||
-                          defaultCm
-                        }
-                        alt="Profile Picture"
-                        className="w-16 h-16 aspect-square object-cover"
-                      />
-                      <div className="flex flex-1 flex-col items-start mb-2">
-                        <h3
-                          className="text-xl font-bold text-blue-600 hover:underline cursor-pointer"
-                          onClick={() =>
-                            navigate(`/job/${application?.Job?.id}`)
+              {!appLoading &&
+                applications.map((application) => (
+                  <div
+                    key={application.id}
+                    className="bg-white rounded-md shadow-lg p-6 hover:shadow-xl transition cursor-pointer"
+                  >
+                    <div className="flex flex-col w-full lg:flex-row lg:items-start justify-between gap-4">
+                      {/* Job Info */}
+                      <div className="flex w-full items-start gap-4">
+                        <img
+                          src={
+                            application.Job?.Company?.User?.profilePicture ||
+                            defaultCm
                           }
-                        >
-                          {application.Job?.title}
-                        </h3>
-                        <p className="text-sm">
-                          {application.Job?.Company?.companyName} •{" "}
-                          <span className="capitalize">
-                            {`${application.Job?.employmentType} (${application.Job?.locationType})`}
+                          alt="Profile Picture"
+                          className="w-16 h-16 aspect-square object-cover"
+                        />
+                        <div className="flex flex-1 flex-col items-start mb-2">
+                          <h3
+                            className="text-xl font-bold text-blue-600 hover:underline cursor-pointer"
+                            onClick={() =>
+                              navigate(`/job/${application?.Job?.id}`)
+                            }
+                          >
+                            {application.Job?.title}
+                          </h3>
+                          <p className="text-sm">
+                            {application.Job?.Company?.companyName} •{" "}
+                            <span className="capitalize">
+                              {`${application.Job?.employmentType} (${application.Job?.locationType})`}
+                            </span>
+                          </p>
+                          <span className="text-sm text-gray-600 mt-1">
+                            <i className="fas fa-calendar mr-1"></i>
+                            Dilamar:{" "}
+                            {application?.appliedAt
+                              ? new Intl.DateTimeFormat("id-ID", {
+                                  day: "numeric",
+                                  month: "long",
+                                  year: "numeric",
+                                }).format(new Date(application.appliedAt))
+                              : ""}
                           </span>
-                        </p>
-                        <span className="text-sm text-gray-600 mt-1">
-                          <i className="fas fa-calendar mr-1"></i>
-                          Dilamar:{" "}
-                          {application?.appliedAt
-                            ? new Intl.DateTimeFormat("id-ID", {
-                                day: "numeric",
-                                month: "long",
-                                year: "numeric",
-                              }).format(new Date(application.appliedAt))
-                            : ""}
-                        </span>
-                      </div>
-                      <p
-                        className={`px-3 py-1 rounded-full text-sm uppercase font-medium ${getStatusBadgeClass(
-                          application.status
-                        )}`}
-                      >
-                        {STATUS_OPTIONS.find(
-                          (s) => s.value === application.status
-                        )?.label || application.status}
-                      </p>
-                    </div>
-                  </div>
-
-                  {/* message section */}
-                  {(application.message ||
-                    application.portofolioLink ||
-                    application.companyMessage ||
-                    application.companyExternalLink) && (
-                    <button
-                      onClick={() => toggleMessage(application.id)}
-                      className="text-sm text-gray-600 hover:underline mt-2"
-                    >
-                      {openMessages[application.id]
-                        ? "Sembunyikan pesan lamaran"
-                        : "Lihat pesan lamaran..."}
-                    </button>
-                  )}
-
-                  {openMessages[application.id] &&
-                    (application.message || application.portofolioLink) && (
-                      <div className="rounded-md p-3 mt-3 bg-blue-50 border border-blue-400 ">
-                        {application.message && (
-                          <div>
-                            <p className="text-sm text-blue-600">
-                              <i className="fa-solid fa-message mr-1"></i> Pesan
-                              Pelamar
-                            </p>
-                            <p className="text-sm leading-loose whitespace-pre-line mt-1">
-                              {application.message}
-                            </p>
-                          </div>
-                        )}
-                        {application.portofolioLink && (
-                          <div className="mt-3">
-                            <a
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              href={application.portofolioLink}
-                              className="text-xs text-blue-600"
-                            >
-                              <i className="fa-solid fa-link mr-1"></i>
-                              {application.portofolioLink}
-                            </a>
-                          </div>
-                        )}
-                      </div>
-                    )}
-
-                  {openMessages[application.id] &&
-                    (application.companyMessage ||
-                      application.companyExternalLink) && (
-                      <div
-                        className={`rounded-md p-3 mt-2 border ${
-                          application.status === "accepted"
-                            ? "border-green-400 bg-green-50"
-                            : application.status === "rejected"
-                            ? "border-red-400 bg-red-50"
-                            : "border-blue-400 bg-blue-50"
-                        }`}
-                      >
-                        {application.companyMessage && (
-                          <div>
-                            <p className="text-sm text-blue-600">
-                              <i className="fa-solid fa-message mr-1"></i> Pesan
-                              Perusahaan
-                            </p>
-                            <p className="text-sm leading-loose whitespace-pre-line mt-1">
-                              {application.companyMessage}
-                            </p>
-                          </div>
-                        )}
-                        {application.companyExternalLink && (
-                          <div className="mt-3">
-                            <a
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              href={application.companyExternalLink}
-                              className="text-xs text-blue-600"
-                            >
-                              <i className="fa-solid fa-link mr-1"></i>
-                              {application.companyExternalLink}
-                            </a>
-                          </div>
-                        )}
-                      </div>
-                    )}
-
-                  <div className="flex gap-4 mt-4 items-center">
-                    {progressMap[application.status] && (
-                      <div className="flex-1 w-full">
-                        <div className="flex justify-between text-sm text-gray-600 mb-1">
-                          <span>Progress Lamaran</span>
-                          <span>{progressMap[application.status]}%</span>
                         </div>
+                        <p
+                          className={`px-3 py-1 rounded-full text-sm uppercase font-medium ${getStatusBadgeClass(
+                            application.status
+                          )}`}
+                        >
+                          {STATUS_OPTIONS.find(
+                            (s) => s.value === application.status
+                          )?.label || application.status}
+                        </p>
+                      </div>
+                    </div>
 
-                        <div className="w-full bg-gray-200 rounded-full h-2">
-                          <div
-                            className={`h-2 rounded-full transition-all duration-500
+                    {/* message section */}
+                    {(application.message ||
+                      application.portofolioLink ||
+                      application.companyMessage ||
+                      application.companyExternalLink) && (
+                      <button
+                        onClick={() => toggleMessage(application.id)}
+                        className="text-sm text-gray-600 hover:underline mt-2"
+                      >
+                        {openMessages[application.id]
+                          ? "Sembunyikan pesan lamaran"
+                          : "Lihat pesan lamaran..."}
+                      </button>
+                    )}
+
+                    {openMessages[application.id] &&
+                      (application.message || application.portofolioLink) && (
+                        <div className="rounded-md p-3 mt-3 bg-blue-50 border border-blue-400 ">
+                          {application.message && (
+                            <div>
+                              <p className="text-sm text-blue-600">
+                                <i className="fa-solid fa-message mr-1"></i>{" "}
+                                Pesan Pelamar
+                              </p>
+                              <p className="text-sm leading-loose whitespace-pre-line mt-1">
+                                {application.message}
+                              </p>
+                            </div>
+                          )}
+                          {application.portofolioLink && (
+                            <div className="mt-3">
+                              <a
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                href={application.portofolioLink}
+                                className="text-xs text-blue-600"
+                              >
+                                <i className="fa-solid fa-link mr-1"></i>
+                                {application.portofolioLink}
+                              </a>
+                            </div>
+                          )}
+                        </div>
+                      )}
+
+                    {openMessages[application.id] &&
+                      (application.companyMessage ||
+                        application.companyExternalLink) && (
+                        <div
+                          className={`rounded-md p-3 mt-2 border ${
+                            application.status === "accepted"
+                              ? "border-green-400 bg-green-50"
+                              : application.status === "rejected"
+                              ? "border-red-400 bg-red-50"
+                              : "border-blue-400 bg-blue-50"
+                          }`}
+                        >
+                          {application.companyMessage && (
+                            <div>
+                              <p className="text-sm text-blue-600">
+                                <i className="fa-solid fa-message mr-1"></i>{" "}
+                                Pesan Perusahaan
+                              </p>
+                              <p className="text-sm leading-loose whitespace-pre-line mt-1">
+                                {application.companyMessage}
+                              </p>
+                            </div>
+                          )}
+                          {application.companyExternalLink && (
+                            <div className="mt-3">
+                              <a
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                href={application.companyExternalLink}
+                                className="text-xs text-blue-600"
+                              >
+                                <i className="fa-solid fa-link mr-1"></i>
+                                {application.companyExternalLink}
+                              </a>
+                            </div>
+                          )}
+                        </div>
+                      )}
+
+                    <div className="flex gap-4 mt-4 items-center">
+                      {progressMap[application.status] && (
+                        <div className="flex-1 w-full">
+                          <div className="flex justify-between text-sm text-gray-600 mb-1">
+                            <span>Progress Lamaran</span>
+                            <span>{progressMap[application.status]}%</span>
+                          </div>
+
+                          <div className="w-full bg-gray-200 rounded-full h-2">
+                            <div
+                              className={`h-2 rounded-full transition-all duration-500
                               ${
                                 application.status === "accepted"
                                   ? "bg-green-500"
@@ -504,24 +651,24 @@ const ApplicationHistory = () => {
                                   : "bg-blue-500"
                               }
                             `}
-                            style={{
-                              width: `${progressMap[application.status]}%`,
-                            }}
-                          />
+                              style={{
+                                width: `${progressMap[application.status]}%`,
+                              }}
+                            />
+                          </div>
                         </div>
-                      </div>
-                    )}
-                    {application.status === "applied" && (
-                      <button
-                        onClick={() => handleWithdraw(application)}
-                        className="text-sm px-5 py-2 border-red-400 text-red-700 rounded-md font-medium border cursor-pointer transition hover:bg-gray-100 "
-                      >
-                        Batalkan lamaran
-                      </button>
-                    )}
+                      )}
+                      {application.status === "applied" && (
+                        <button
+                          onClick={() => handleWithdraw(application)}
+                          className="text-sm px-5 py-2 border-red-400 text-red-700 rounded-md font-medium border cursor-pointer transition hover:bg-gray-100 "
+                        >
+                          Batalkan lamaran
+                        </button>
+                      )}
+                    </div>
                   </div>
-                </div>
-              ))}
+                ))}
             </div>
 
             {/* Pagination */}

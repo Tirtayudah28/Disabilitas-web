@@ -13,6 +13,16 @@ import AddUserEduPopup from "../../components/popups/AddUserEduPopup";
 import AddUserExpPopup from "../../components/popups/AddUserExpPopup";
 import AddUserSkiPopup from "../../components/popups/AddUserSkiPopup";
 
+const STATUS_COLOR = {
+  applied: { colorClass: "bg-blue-100 text-blue-800", badgeColor: "blue" },
+  reviewed: {
+    colorClass: "bg-yellow-100 text-yellow-800",
+    badgeColor: "yellow",
+  },
+  accepted: { colorClass: "bg-green-100 text-green-800", badgeColor: "green" },
+  rejected: { colorClass: "bg-red-100 text-red-800", badgeColor: "red" },
+};
+
 const ProfilePage = () => {
   const { token, userData } = useAuth();
   const { userId } = useParams();
@@ -20,12 +30,17 @@ const ProfilePage = () => {
   const { enqueueSnackbar } = useSnackbar();
 
   const [loading, setLoading] = useState(false);
+  const [asideLoading, setAsideLoading] = useState(false);
+  const [operationsLoading, setOperationsLoading] = useState(false);
 
   const [profileData, setProfileData] = useState({});
   const [educations, setEducations] = useState([]);
   const [experiences, setExperiences] = useState([]);
   const [skills, setSkills] = useState([]);
   const [disabilities, setDisabilities] = useState([]);
+  const [previewApp, setPreviewApp] = useState([]);
+  const [company, setCompany] = useState({});
+  const [otherJsPreview, setOtherJsPreview] = useState([]);
 
   const [countries, setCountries] = useState([]);
 
@@ -188,6 +203,31 @@ const ProfilePage = () => {
       navigate("/");
     }
   };
+  const getJsPreviewApp = async () => {
+    try {
+      const res = await axios.get(
+        `/api/user/cm/${userId}/js-preview-applications`,
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      setPreviewApp(res.data.data.applications);
+      setCompany(res.data.data.company);
+    } catch (error) {
+      console.error("Error fetching app preview:", error);
+    }
+  };
+  const getOtherJsPreview = async () => {
+    try {
+      const res = await axios.get(
+        `/api/data/other-user-preview?excludeCurrentUserId=${userId}&role=job-seeker`,
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
+      setOtherJsPreview(res.data.data);
+    } catch (error) {
+      console.error("Error fetching app preview:", error);
+    }
+  };
 
   useEffect(() => {
     const fetchAll = async () => {
@@ -209,6 +249,31 @@ const ProfilePage = () => {
 
     fetchAll();
   }, [userId]);
+  //aside effect
+  useEffect(() => {
+    let isMounted = true;
+
+    const fetchData = async () => {
+      try {
+        setAsideLoading(true);
+        await getOtherJsPreview();
+
+        if (token && userData?.role === "company") {
+          await getJsPreviewApp();
+        }
+      } catch (error) {
+        console.error(error);
+      } finally {
+        if (isMounted) setAsideLoading(false);
+      }
+    };
+
+    fetchData();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [token, userId, userData?.role]);
 
   /*
     fatir: EDITING/UPDATING OPERATIONS
@@ -309,7 +374,7 @@ const ProfilePage = () => {
     const headers = {
       Authorization: `Bearer ${token}`,
     };
-    setLoading(true);
+    setOperationsLoading(true);
     try {
       const res = await axios.post("/api/user/js/disability", payload, {
         headers,
@@ -324,7 +389,7 @@ const ProfilePage = () => {
         { variant: "warning" }
       );
     } finally {
-      setLoading(false);
+      setOperationsLoading(false);
     }
   };
   //add new skill
@@ -337,8 +402,7 @@ const ProfilePage = () => {
     const headers = {
       Authorization: `Bearer ${token}`,
     };
-
-    setLoading(true);
+    setOperationsLoading(true);
     try {
       const res = await axios.post("/api/user/js/skill", payload, {
         headers,
@@ -353,7 +417,7 @@ const ProfilePage = () => {
         { variant: "warning" }
       );
     } finally {
-      setLoading(false);
+      setOperationsLoading(false);
     }
   };
   //add new education
@@ -371,7 +435,7 @@ const ProfilePage = () => {
     const headers = {
       Authorization: `Bearer ${token}`,
     };
-    setLoading(true);
+    setOperationsLoading(true);
     try {
       const res = await axios.post("/api/user/js/education", payload, {
         headers,
@@ -385,7 +449,7 @@ const ProfilePage = () => {
         { variant: "warning" }
       );
     } finally {
-      setLoading(false);
+      setOperationsLoading(false);
     }
   };
   //add new disability
@@ -402,7 +466,7 @@ const ProfilePage = () => {
     const headers = {
       Authorization: `Bearer ${token}`,
     };
-    setLoading(true);
+    setOperationsLoading(true);
     try {
       const res = await axios.post("/api/user/js/experience", payload, {
         headers,
@@ -416,7 +480,7 @@ const ProfilePage = () => {
         { variant: "warning" }
       );
     } finally {
-      setLoading(false);
+      setOperationsLoading(false);
     }
   };
 
@@ -430,7 +494,7 @@ const ProfilePage = () => {
     const headers = {
       Authorization: `Bearer ${token}`,
     };
-    setLoading(true);
+    setOperationsLoading(true);
     try {
       const res = await axios.delete(`/api/user/js/disability/${id}`, {
         headers,
@@ -445,7 +509,7 @@ const ProfilePage = () => {
         { variant: "error" }
       );
     } finally {
-      setLoading(false);
+      setOperationsLoading(false);
     }
   };
   //handle delete skill
@@ -455,7 +519,7 @@ const ProfilePage = () => {
     const headers = {
       Authorization: `Bearer ${token}`,
     };
-    setLoading(true);
+    setOperationsLoading(true);
     try {
       const res = await axios.delete(`/api/user/js/skill/${id}`, {
         headers,
@@ -470,7 +534,7 @@ const ProfilePage = () => {
         { variant: "error" }
       );
     } finally {
-      setLoading(false);
+      setOperationsLoading(false);
     }
   };
   //handle delete education
@@ -480,7 +544,7 @@ const ProfilePage = () => {
     const headers = {
       Authorization: `Bearer ${token}`,
     };
-    setLoading(true);
+    setOperationsLoading(true);
     try {
       const res = await axios.delete(`/api/user/js/education/${id}`, {
         headers,
@@ -495,7 +559,7 @@ const ProfilePage = () => {
         { variant: "error" }
       );
     } finally {
-      setLoading(false);
+      setOperationsLoading(false);
     }
   };
   //handle delete experience
@@ -505,7 +569,7 @@ const ProfilePage = () => {
     const headers = {
       Authorization: `Bearer ${token}`,
     };
-    setLoading(true);
+    setOperationsLoading(true);
     try {
       const res = await axios.delete(`/api/user/js/experience/${id}`, {
         headers,
@@ -520,154 +584,252 @@ const ProfilePage = () => {
         { variant: "error" }
       );
     } finally {
-      setLoading(false);
+      setOperationsLoading(false);
     }
+  };
+
+  const getStatusBadgeClass = (status) => {
+    return (
+      (STATUS_COLOR[status] && STATUS_COLOR[status].colorClass) ||
+      "bg-gray-100 text-gray-800"
+    );
+  };
+
+  /*
+    SKELETON LOADER
+  */
+  const ProfileHeaderSkeleton = () => {
+    return (
+      <div className="bg-white rounded-md shadow-lg overflow-hidden mb-4 animate-pulse">
+        {/* Cover */}
+        <div className="bg-gray-200 h-28" />
+
+        <div className="px-8 pb-8">
+          <div className="flex flex-col items-start -mt-16">
+            {/* Avatar */}
+            <div className="h-32 w-32 rounded-full bg-gray-200 border-4 border-white" />
+
+            {/* Name & Meta */}
+            <div className="mt-6 w-full">
+              <div className="space-y-3">
+                <div className="h-8 w-1/2 bg-gray-200 rounded" />
+                <div className="h-5 w-1/3 bg-gray-200 rounded" />
+
+                <div className="flex items-center gap-4 mt-2">
+                  <div className="h-4 w-40 bg-gray-200 rounded" />
+                  <div className="h-4 w-32 bg-gray-200 rounded" />
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  };
+  const OtherJsPreviewSkeleton = ({ count = 4 }) => {
+    return (
+      <div className="bg-white rounded shadow-lg overflow-hidden mb-4 p-4 animate-pulse">
+        {/* Title */}
+        <h2>Pengguna lain</h2>
+
+        <div className="flex flex-col gap-3 mt-4">
+          {Array.from({ length: count }).map((_, idx) => (
+            <div
+              key={idx}
+              className="flex flex-col items-center gap-3 p-3 border border-gray-200 rounded-md"
+            >
+              {/* Avatar */}
+              <div className="h-20 w-20 rounded-full bg-gray-200" />
+
+              {/* Name */}
+              <div className="flex flex-col items-center gap-2">
+                <div className="h-4 w-32 bg-gray-200 rounded" />
+                <div className="h-3 w-20 bg-gray-200 rounded" />
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  };
+  const ProfileTabSkeleton = ({ rows = 2 }) => {
+    return (
+      <div className="bg-white rounded-md shadow-lg p-6 animate-pulse col-span-3">
+        {/* Header */}
+        <div className="flex justify-between items-center mb-6">
+          <div className="h-6 w-40 bg-gray-200 rounded" />
+        </div>
+
+        {/* Content */}
+        <div className="space-y-6">
+          {Array.from({ length: rows }).map((_, idx) => (
+            <div
+              key={idx}
+              className="flex justify-between items-start border-b border-gray-200 pb-4"
+            >
+              <div className="flex gap-5 w-full">
+                <div className="flex-1 space-y-2">
+                  <div className="h-5 w-2/3 bg-gray-200 rounded" />
+                  <div className="h-4 w-1/2 bg-gray-200 rounded" />
+                  <div className="h-4 w-full bg-gray-200 rounded" />
+                  <div className="h-4 w-5/6 bg-gray-200 rounded" />
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    );
   };
 
   return (
     <>
-      <div className="flex gap-10 min-h-screen bg-gradient-to-br from-primary-50 to-secondary-50 mx-auto lg:px-32 xl:px-36 py-8">
+      <div className="grid grid-cols-1 lg:grid-cols-4 gap-4 min-h-screen mx-auto lg:px-28 xl:px-32 py-8">
         {/* Main Content */}
-        <main id="main-content" className="container">
+        <main id="main-content" className="container col-span-3">
           {/* Profile Header */}
-          <div className="bg-white rounded shadow-lg overflow-hidden mb-4 relative">
-            {userData?.id === profileData?.id && (
-              <div className="absolute top-3 right-3 flex gap-5">
-                <Link to="/js/applications">
-                  <button className="px-5 py-2 rounded bg-white">
-                    Riwayat Lamaran{" "}
-                    <i className="fas fa-history w-4" aria-hidden="true"></i>
+          {loading ? (
+            <ProfileHeaderSkeleton />
+          ) : (
+            <div className="bg-white rounded-md shadow-lg overflow-hidden mb-4 relative">
+              {userData?.id === profileData?.id && (
+                <div className="absolute top-3 right-3 flex gap-5">
+                  <Link to="/js/applications">
+                    <button className="px-5 py-2 rounded bg-white">
+                      Riwayat Lamaran{" "}
+                      <i className="fas fa-history w-4" aria-hidden="true"></i>
+                    </button>
+                  </Link>
+                  <button
+                    className="px-5 py-2 rounded bg-white"
+                    onClick={() => setShowEditProfPopup(!showEditProfPopup)}
+                  >
+                    Edit Profile <i class="fa-solid fa-pen-to-square"></i>
                   </button>
-                </Link>
-                <button
-                  className="px-5 py-2 rounded bg-white"
-                  onClick={() => setShowEditProfPopup(!showEditProfPopup)}
-                >
-                  Edit Profile <i class="fa-solid fa-pen-to-square"></i>
-                </button>
-              </div>
-            )}
-            <div className="bg-gradient-to-r from-blue-600 to-blue-300 h-28"></div>
-            <div className="px-8 pb-8">
-              <div className="flex flex-col items-start -mt-16">
-                <div className="relative">
-                  <div className="h-32 w-32 aspect-square rounded-full bg-white">
-                    <img
-                      src={profileData?.profilePicture || defaultPfp}
-                      alt="profile picture"
-                      className="h-32 w-32 aspect-square rounded-full object-cover"
-                    />
-                  </div>
-                  {userData?.id === profileData?.id && (
-                    <>
-                      <label
-                        htmlFor="profilePictureInput"
-                        className={`${
-                          profileData?.profilePicture
-                            ? "absolute right-0 bottom-0"
-                            : "absolute bottom-2 right-2"
-                        } bg-white/70 p-2 rounded-full shadow-md hover:bg-gray-100 transition cursor-pointer`}
-                      >
-                        <i className="fas fa-camera text-gray-600"></i>
-                      </label>
-
-                      <input
-                        id="profilePictureInput"
-                        type="file"
-                        accept="image/*"
-                        className="hidden"
-                        onChange={(e) => handleEditPfp(e, "upload")}
-                      />
-                      {profileData?.profilePicture && (
-                        <button
-                          title="Delete Profile Picture"
-                          onClick={(e) => handleEditPfp(null, "delete")}
-                          className="absolute -bottom-4 right-10 p-2 bg-white/70 rounded-full shadow-md hover:bg-gray-100 transition cursor-pointer"
-                        >
-                          <i class="fa-solid fa-trash text-gray-600"></i>
-                        </button>
-                      )}
-                    </>
-                  )}
                 </div>
+              )}
+              <div className="bg-gradient-to-r from-blue-600 to-blue-300 h-28"></div>
+              <div className="px-8 pb-8">
+                <div className="flex flex-col items-start -mt-16">
+                  <div className="relative">
+                    <div className="h-32 w-32 aspect-square rounded-full bg-white">
+                      <img
+                        src={profileData?.profilePicture || defaultPfp}
+                        alt="profile picture"
+                        className="h-32 w-32 aspect-square rounded-full object-cover"
+                      />
+                    </div>
+                    {userData?.id === profileData?.id && (
+                      <>
+                        <label
+                          htmlFor="profilePictureInput"
+                          className={`${
+                            profileData?.profilePicture
+                              ? "absolute right-0 bottom-0"
+                              : "absolute bottom-2 right-2"
+                          } bg-white/70 p-2 rounded-full shadow-md hover:bg-gray-100 transition cursor-pointer`}
+                        >
+                          <i className="fas fa-camera text-gray-600"></i>
+                        </label>
 
-                <div className="mt-6 flex-1">
-                  <div className="flex flex-col md:flex-row md:items-center justify-between">
-                    <div>
-                      <h1 className="text-3xl font-bold text-gray-900">
-                        {profileData?.profile?.fullName}{" "}
-                        <span className="text-gray-500 text-base font-normal">
-                          {profileData?.profile?.gender !== "blank"
-                            ? profileData?.profile?.gender
-                            : ""}
-                        </span>
-                      </h1>
-                      <Link
-                        to={`/js/${profileData?.id}`}
-                        className="text-lg text-blue-600"
-                      >
-                        @{profileData?.username}
-                      </Link>
-                      <div className="flex items-center mt-2 text-gray-500">
-                        <i className="fas fa-map-marker-alt mr-2"></i>
-                        <span className="capitalize">
-                          {profileData?.profile?.country},{" "}
-                          {profileData?.profile?.city}
-                        </span>
-                        <span className="mx-2">•</span>
-                        <i className="fas fa-clock mr-2"></i>
-                        <span>
-                          Bergabung sejak{" "}
-                          {profileData?.createdAt
-                            ? new Intl.DateTimeFormat("id-ID", {
-                                day: "numeric",
-                                month: "long",
-                                year: "numeric",
-                              }).format(new Date(profileData.createdAt))
-                            : "-"}
-                        </span>
+                        <input
+                          id="profilePictureInput"
+                          type="file"
+                          accept="image/*"
+                          className="hidden"
+                          onChange={(e) => handleEditPfp(e, "upload")}
+                        />
+                        {profileData?.profilePicture && (
+                          <button
+                            title="Delete Profile Picture"
+                            onClick={(e) => handleEditPfp(null, "delete")}
+                            className="absolute -bottom-4 right-10 p-2 bg-white/70 rounded-full shadow-md hover:bg-gray-100 transition cursor-pointer"
+                          >
+                            <i class="fa-solid fa-trash text-gray-600"></i>
+                          </button>
+                        )}
+                      </>
+                    )}
+                  </div>
+
+                  <div className="mt-6 flex-1">
+                    <div className="flex flex-col md:flex-row md:items-center justify-between">
+                      <div>
+                        <h1 className="text-3xl font-bold text-gray-900">
+                          {profileData?.profile?.fullName}{" "}
+                          <span className="text-gray-500 text-base font-normal">
+                            {profileData?.profile?.gender !== "blank"
+                              ? profileData?.profile?.gender
+                              : ""}
+                          </span>
+                        </h1>
+                        <Link
+                          to={`/js/${profileData?.id}`}
+                          className="text-lg text-blue-600"
+                        >
+                          @{profileData?.username}
+                        </Link>
+                        <div className="flex items-center mt-2 text-gray-500">
+                          <i className="fas fa-map-marker-alt mr-2"></i>
+                          <span className="capitalize">
+                            {profileData?.profile?.country},{" "}
+                            {profileData?.profile?.city}
+                          </span>
+                          <span className="mx-2">•</span>
+                          <i className="fas fa-clock mr-2"></i>
+                          <span>
+                            Bergabung sejak{" "}
+                            {profileData?.createdAt
+                              ? new Intl.DateTimeFormat("id-ID", {
+                                  day: "numeric",
+                                  month: "long",
+                                  year: "numeric",
+                                }).format(new Date(profileData.createdAt))
+                              : "-"}
+                          </span>
+                        </div>
                       </div>
                     </div>
                   </div>
                 </div>
-              </div>
 
-              {/* Profile Completion */}
-              {userData?.id === profileData?.id && (
-                <div className="mt-6 bg-primary-50 rounded-lg p-4">
-                  <div className="flex justify-between items-center mb-2">
-                    <span className="font-medium">Kelengkapan Profil</span>
-                    <span className="font-bold text-primary-600">
-                      {profileCompletion.percent}%
-                    </span>
+                {/* Profile Completion */}
+                {userData?.id === profileData?.id && (
+                  <div className="mt-6 bg-primary-50 rounded-lg p-4">
+                    <div className="flex justify-between items-center mb-2">
+                      <span className="font-medium">Kelengkapan Profil</span>
+                      <span className="font-bold text-primary-600">
+                        {profileCompletion.percent}%
+                      </span>
+                    </div>
+                    <div className="w-full bg-gray-200 rounded-full h-2 overflow-hidden">
+                      <div
+                        className={`h-2 rounded-full transition-all duration-300 ${
+                          profileCompletion.percent >= 75
+                            ? "bg-green-500"
+                            : profileCompletion.percent >= 50
+                            ? "bg-yellow-400"
+                            : "bg-red-400"
+                        }`}
+                        style={{ width: `${profileCompletion.percent}%` }}
+                      />
+                    </div>
+                    <p className="text-sm text-gray-600 mt-2">
+                      {profileCompletion.percent !== 100
+                        ? "Lengkapi profil Anda untuk meningkatkan peluang diterima kerja"
+                        : "Profil anda sudah sempurna!"}
+                    </p>
                   </div>
-                  <div className="w-full bg-gray-200 rounded-full h-2 overflow-hidden">
-                    <div
-                      className={`h-2 rounded-full transition-all duration-300 ${
-                        profileCompletion.percent >= 75
-                          ? "bg-green-500"
-                          : profileCompletion.percent >= 50
-                          ? "bg-yellow-400"
-                          : "bg-red-400"
-                      }`}
-                      style={{ width: `${profileCompletion.percent}%` }}
-                    />
-                  </div>
-                  <p className="text-sm text-gray-600 mt-2">
-                    {profileCompletion.percent !== 100
-                      ? "Lengkapi profil Anda untuk meningkatkan peluang diterima kerja"
-                      : "Profil anda sudah sempurna!"}
-                  </p>
-                </div>
-              )}
+                )}
+              </div>
             </div>
-          </div>
+          )}
 
           {/* Main Content Area */}
           <div className="grid grid-cols-1 lg:grid-cols-4 gap-4">
             {/* Sidebar */}
             <div className="lg:col-span-1">
-              <div className="bg-white rounded shadow-lg p-6 sticky top-32">
+              <div className="bg-white rounded-md shadow-lg p-6 sticky top-32">
                 <nav className="space-y-2">
                   {tabs.map((tab) => (
                     <button
@@ -690,323 +852,436 @@ const ProfilePage = () => {
             </div>
 
             {/* Content Area */}
-            <div className="lg:col-span-3">
-              {/* === Tentang TAB === */}
-              {activeTab === "data-diri" && (
-                <div className="bg-white rounded shadow-lg p-6">
-                  <div className="flex justify-between items-center mb-4">
-                    <h2 className="text-2xl font-bold text-gray-900">
-                      Tentang
-                    </h2>
-                    {userData?.id === profileData?.id && (
-                      <button
-                        onClick={() => setShowEditProfPopup(!showEditProfPopup)}
-                      >
-                        <i class="fa-solid fa-pen-to-square"></i>
-                      </button>
-                    )}
-                  </div>
+            {loading ? (
+              <ProfileTabSkeleton />
+            ) : (
+              <div className="lg:col-span-3">
+                {/* === Tentang TAB === */}
+                {activeTab === "data-diri" && (
+                  <div className="bg-white rounded-md shadow-lg p-6">
+                    <div className="flex justify-between items-center mb-4">
+                      <h2 className="text-2xl font-bold text-gray-900">
+                        Tentang
+                      </h2>
+                      {userData?.id === profileData?.id && (
+                        <button
+                          onClick={() =>
+                            setShowEditProfPopup(!showEditProfPopup)
+                          }
+                        >
+                          <i class="fa-solid fa-pen-to-square"></i>
+                        </button>
+                      )}
+                    </div>
 
-                  <p className="mb-4">{profileData?.profile?.bio}</p>
+                    <p className="mb-4">{profileData?.profile?.bio}</p>
 
-                  <table className="table-auto">
-                    <tbody>
-                      <tr>
-                        <td className="pr-3 py-2">
-                          <i class="fa-solid fa-user"></i>
-                        </td>
-                        <td className="py-2">
-                          {profileData?.profile?.fullName}{" "}
-                          <Link
-                            to={`/js/${profileData?.id}`}
-                            className="text-xs text-blue-600"
-                          >
-                            @{profileData?.username}
-                          </Link>
-                        </td>
-                      </tr>
-                      <tr>
-                        <td className="pr-3 pb-2 pt-1 align-top">
-                          <i class="fa-solid fa-location-dot"></i>
-                        </td>
-                        <td className="align-top pb-2 pt-1">
-                          <span className="capitalize">
-                            {profileData?.profile?.country}
-                            {", "}
-                            {profileData?.profile?.city}
-                          </span>
-                          {profileData?.profile?.address && (
-                            <>
-                              <br />
-                              <span className="text-xs text-gray-600">
-                                {profileData?.profile?.address}
-                              </span>
-                            </>
-                          )}
-                        </td>
-                      </tr>
-                      {profileData?.profile?.phoneNumber && (
+                    <table className="table-auto">
+                      <tbody>
                         <tr>
                           <td className="pr-3 py-2">
-                            <i class="fa-solid fa-phone"></i>
+                            <i class="fa-solid fa-user"></i>
                           </td>
-                          <td>{profileData.profile.phoneNumber}</td>
+                          <td className="py-2">
+                            {profileData?.profile?.fullName}{" "}
+                            <Link
+                              to={`/js/${profileData?.id}`}
+                              className="text-xs text-blue-600"
+                            >
+                              @{profileData?.username}
+                            </Link>
+                          </td>
                         </tr>
-                      )}
-                      {profileData?.profile?.dateOfBirth && (
                         <tr>
-                          <td className="pr-3 py-2">
-                            <i class="fa-solid fa-calendar"></i>
+                          <td className="pr-3 pb-2 pt-1 align-top">
+                            <i class="fa-solid fa-location-dot"></i>
                           </td>
-                          <td>
-                            {new Intl.DateTimeFormat("id-ID", {
-                              day: "numeric",
-                              month: "long",
-                              year: "numeric",
-                            }).format(
-                              new Date(profileData.profile.dateOfBirth)
-                            )}
-                          </td>
-                        </tr>
-                      )}
-                    </tbody>
-                  </table>
-                </div>
-              )}
-
-              {/* === JENIS DISABILITAS TAB === */}
-              {activeTab === "disabilitas" && (
-                <div className="bg-white rounded shadow-lg p-6">
-                  <div className="flex justify-between items-center mb-4">
-                    <h2 className="text-2xl font-bold text-gray-900">
-                      Jenis Disabilitas
-                    </h2>
-                    {userData?.id === profileData?.id && (
-                      <button
-                        onClick={() => setShowAddDisPopup(!showAddDisPopup)}
-                      >
-                        <i class="fa-solid fa-plus"></i>
-                      </button>
-                    )}
-                  </div>
-
-                  {disabilities && disabilities.length > 0 ? (
-                    disabilities.map((d) => (
-                      <div
-                        className="flex justify-between items-start px-2 py-4 hover:bg-gray-100 transition border-b border-gray-300"
-                        key={d.id}
-                      >
-                        <div className="flex flex-col gap-1">
-                          <h3 className="capitalize">
-                            {d.disabilityName || d.Disability.name} /{" "}
-                            <span className="text-blue-600">
-                              {d.type || d.Disability.type}
+                          <td className="align-top pb-2 pt-1">
+                            <span className="capitalize">
+                              {profileData?.profile?.country}
+                              {", "}
+                              {profileData?.profile?.city}
                             </span>
-                          </h3>
-                          {d.description && (
-                            <p className="text-gray-600 text-sm">
-                              {d.description}
-                            </p>
-                          )}
-                        </div>
-                        {userData?.id === profileData?.id && (
-                          <button onClick={() => handleDeleteDisability(d.id)}>
-                            <i className="fa-solid fa-trash"></i>
-                          </button>
-                        )}
-                      </div>
-                    ))
-                  ) : (
-                    <p className="text-gray-600 text-sm">
-                      Tidak ada data disabilitas.
-                    </p>
-                  )}
-                </div>
-              )}
-
-              {/* === KEAHLIAN TAB === */}
-              {activeTab === "keahlian" && (
-                <div className="bg-white rounded shadow-lg p-6">
-                  <div className="flex justify-between items-center mb-4">
-                    <h2 className="text-2xl font-bold text-gray-900">
-                      Keahlian
-                    </h2>
-                    {userData?.id === profileData?.id && (
-                      <button
-                        onClick={() => setShowAddSkiPopup(!showAddSkiPopup)}
-                      >
-                        <i class="fa-solid fa-plus"></i>
-                      </button>
-                    )}
-                  </div>
-
-                  {skills && skills.length > 0 ? (
-                    skills.map((s) => (
-                      <div
-                        className="flex justify-between items-start px-2 py-4 hover:bg-gray-100 transition border-b border-gray-300"
-                        key={s.id}
-                      >
-                        <div className="flex flex-col gap-1">
-                          <h3 className="capitalize">
-                            {s.skillName || s.Skill.name}
-                          </h3>
-                          {s.description && (
-                            <p className="text-gray-600 text-sm">
-                              {s.description}
-                            </p>
-                          )}
-                        </div>
-                        {userData?.id === profileData?.id && (
-                          <button onClick={() => handleDeleteSkill(s.id)}>
-                            <i className="fa-solid fa-trash"></i>
-                          </button>
-                        )}
-                      </div>
-                    ))
-                  ) : (
-                    <p className="text-gray-600 text-sm">
-                      Tidak ada data keahlian.
-                    </p>
-                  )}
-                </div>
-              )}
-
-              {/* === PENGALAMAN TAB === */}
-              {activeTab === "pengalaman" && (
-                <div className="bg-white rounded shadow-lg p-6">
-                  <div className="flex justify-between items-center mb-4">
-                    <h2 className="text-2xl font-bold text-gray-900">
-                      Pengalaman
-                    </h2>
-                    {userData?.id === profileData?.id && (
-                      <button
-                        onClick={() => setShowAddExpPopup(!showAddExpPopup)}
-                      >
-                        <i class="fa-solid fa-plus"></i>
-                      </button>
-                    )}
-                  </div>
-
-                  {experiences && experiences.length > 0 ? (
-                    experiences.map((e) => (
-                      <div
-                        className="flex justify-between items-start px-2 py-6 hover:bg-gray-100 transition border-b border-gray-300"
-                        key={e.id}
-                      >
-                        <div className="flex gap-5">
-                          <img
-                            src={e.Company?.User?.profilePicture || defaultCm}
-                            alt="companyPfp"
-                            className="aspect-square h-20 w-20 object-cover"
-                          />
-                          <div className="flex flex-col gap-1">
-                            <h3 className="capitalize text-lg font-semibold">
-                              {e.position}
-                            </h3>
-                            <p className="text-sm">
-                              {e.Company?.companyName || e.companyName}{" "}
-                              <span className="mx-1">•</span>{" "}
-                              <span className="capitalize">
-                                {e.experienceType}
-                              </span>
-                            </p>
-                            <p className="text-sm text-gray-600">
-                              {e.startDate} - {e.endDate ? e.endDate : "now"}
-                            </p>
-                            {e.description && (
-                              <p className="text-gray-600 text-sm">
-                                {e.description}
-                              </p>
+                            {profileData?.profile?.address && (
+                              <>
+                                <br />
+                                <span className="text-xs text-gray-600">
+                                  {profileData?.profile?.address}
+                                </span>
+                              </>
                             )}
-                          </div>
-                        </div>
-                        {userData?.id === profileData?.id && (
-                          <button onClick={() => handleDeleteExperience(e.id)}>
-                            <i className="fa-solid fa-trash"></i>
-                          </button>
+                          </td>
+                        </tr>
+                        {profileData?.profile?.phoneNumber && (
+                          <tr>
+                            <td className="pr-3 py-2">
+                              <i class="fa-solid fa-phone"></i>
+                            </td>
+                            <td>{profileData.profile.phoneNumber}</td>
+                          </tr>
                         )}
-                      </div>
-                    ))
-                  ) : (
-                    <p className="text-gray-600 text-sm">
-                      Tidak ada data pengalaman.
-                    </p>
-                  )}
-                </div>
-              )}
-
-              {/* === PENDIDIKAN TAB === */}
-              {activeTab === "pendidikan" && (
-                <div className="bg-white rounded shadow-lg p-6">
-                  <div className="flex justify-between items-center mb-4">
-                    <h2 className="text-2xl font-bold text-gray-900">
-                      Pendidikan
-                    </h2>
-                    {userData?.id === profileData?.id && (
-                      <button
-                        onClick={() => setShowAddEduPopup(!showAddEduPopup)}
-                      >
-                        <i class="fa-solid fa-plus"></i>
-                      </button>
-                    )}
-                  </div>
-
-                  {educations && educations.length > 0 ? (
-                    educations.map((e) => (
-                      <div
-                        className="flex justify-between items-start px-2 py-6 hover:bg-gray-100 transition border-b border-gray-300"
-                        key={e.id}
-                      >
-                        <div className="flex gap-5">
-                          <img
-                            src={e.Company?.User?.profilePicture || defaultCm}
-                            alt="companyPfp"
-                            className="aspect-square h-20 w-20 object-cover"
-                          />
-                          <div className="flex flex-col gap-1">
-                            <h3 className="capitalize text-lg font-semibold">
-                              {e.Company?.companyName || e.institutionName}
-                            </h3>
-                            <p className="text-sm">
-                              {e.degree}/{e.fieldOfStudy}{" "}
-                              {e.score && (
-                                <>
-                                  <span className="mx-1">•</span>
-                                  <span className="capitalize">{e.score}</span>
-                                </>
+                        {profileData?.profile?.dateOfBirth && (
+                          <tr>
+                            <td className="pr-3 py-2">
+                              <i class="fa-solid fa-calendar"></i>
+                            </td>
+                            <td>
+                              {new Intl.DateTimeFormat("id-ID", {
+                                day: "numeric",
+                                month: "long",
+                                year: "numeric",
+                              }).format(
+                                new Date(profileData.profile.dateOfBirth)
                               )}
-                            </p>
-                            <p className="text-sm text-gray-600">
-                              {e.startDate} - {e.endDate ? e.endDate : "now"}
-                            </p>
-                            {e.description && (
+                            </td>
+                          </tr>
+                        )}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
+
+                {/* === JENIS DISABILITAS TAB === */}
+                {activeTab === "disabilitas" && (
+                  <div className="bg-white rounded-md shadow-lg p-6">
+                    <div className="flex justify-between items-center mb-4">
+                      <h2 className="text-2xl font-bold text-gray-900">
+                        Jenis Disabilitas
+                      </h2>
+                      {userData?.id === profileData?.id && (
+                        <button
+                          onClick={() => setShowAddDisPopup(!showAddDisPopup)}
+                        >
+                          <i class="fa-solid fa-plus"></i>
+                        </button>
+                      )}
+                    </div>
+
+                    {disabilities && disabilities.length > 0 ? (
+                      disabilities.map((d) => (
+                        <div
+                          className="flex justify-between items-start px-2 py-4 hover:bg-gray-100 transition border-b border-gray-300"
+                          key={d.id}
+                        >
+                          <div className="flex flex-col gap-1">
+                            <h3 className="capitalize">
+                              {d.disabilityName || d.Disability.name} /{" "}
+                              <span className="text-blue-600">
+                                {d.type || d.Disability.type}
+                              </span>
+                            </h3>
+                            {d.description && (
                               <p className="text-gray-600 text-sm">
-                                {e.description}
+                                {d.description}
                               </p>
                             )}
                           </div>
+                          {userData?.id === profileData?.id && (
+                            <button
+                              onClick={() => handleDeleteDisability(d.id)}
+                            >
+                              <i className="fa-solid fa-trash"></i>
+                            </button>
+                          )}
                         </div>
-                        {userData?.id === profileData?.id && (
-                          <button onClick={() => handleDeleteEducation(e.id)}>
-                            <i className="fa-solid fa-trash"></i>
-                          </button>
-                        )}
-                      </div>
-                    ))
-                  ) : (
-                    <p className="text-gray-600 text-sm">
-                      Tidak ada data pendidikan.
-                    </p>
-                  )}
-                </div>
-              )}
-            </div>
+                      ))
+                    ) : (
+                      <p className="text-gray-600 text-sm">
+                        Tidak ada data disabilitas.
+                      </p>
+                    )}
+                  </div>
+                )}
+
+                {/* === KEAHLIAN TAB === */}
+                {activeTab === "keahlian" && (
+                  <div className="bg-white rounded-md shadow-lg p-6">
+                    <div className="flex justify-between items-center mb-4">
+                      <h2 className="text-2xl font-bold text-gray-900">
+                        Keahlian
+                      </h2>
+                      {userData?.id === profileData?.id && (
+                        <button
+                          onClick={() => setShowAddSkiPopup(!showAddSkiPopup)}
+                        >
+                          <i class="fa-solid fa-plus"></i>
+                        </button>
+                      )}
+                    </div>
+
+                    {skills && skills.length > 0 ? (
+                      skills.map((s) => (
+                        <div
+                          className="flex justify-between items-start px-2 py-4 hover:bg-gray-100 transition border-b border-gray-300"
+                          key={s.id}
+                        >
+                          <div className="flex flex-col gap-1">
+                            <h3 className="capitalize">
+                              {s.skillName || s.Skill.name}
+                            </h3>
+                            {s.description && (
+                              <p className="text-gray-600 text-sm">
+                                {s.description}
+                              </p>
+                            )}
+                          </div>
+                          {userData?.id === profileData?.id && (
+                            <button onClick={() => handleDeleteSkill(s.id)}>
+                              <i className="fa-solid fa-trash"></i>
+                            </button>
+                          )}
+                        </div>
+                      ))
+                    ) : (
+                      <p className="text-gray-600 text-sm">
+                        Tidak ada data keahlian.
+                      </p>
+                    )}
+                  </div>
+                )}
+
+                {/* === PENGALAMAN TAB === */}
+                {activeTab === "pengalaman" && (
+                  <div className="bg-white rounded-md shadow-lg p-6">
+                    <div className="flex justify-between items-center mb-4">
+                      <h2 className="text-2xl font-bold text-gray-900">
+                        Pengalaman
+                      </h2>
+                      {userData?.id === profileData?.id && (
+                        <button
+                          onClick={() => setShowAddExpPopup(!showAddExpPopup)}
+                        >
+                          <i class="fa-solid fa-plus"></i>
+                        </button>
+                      )}
+                    </div>
+
+                    {experiences && experiences.length > 0 ? (
+                      experiences.map((e) => (
+                        <div
+                          className="flex justify-between items-start px-2 py-6 hover:bg-gray-100 transition border-b border-gray-300"
+                          key={e.id}
+                        >
+                          <div className="flex gap-5">
+                            <img
+                              src={e.Company?.User?.profilePicture || defaultCm}
+                              alt="companyPfp"
+                              className="aspect-square h-20 w-20 object-cover"
+                            />
+                            <div className="flex flex-col gap-1">
+                              <h3 className="capitalize text-lg font-semibold">
+                                {e.position}
+                              </h3>
+                              <p className="text-sm">
+                                {e.Company?.companyName || e.companyName}{" "}
+                                <span className="mx-1">•</span>{" "}
+                                <span className="capitalize">
+                                  {e.experienceType}
+                                </span>
+                              </p>
+                              <p className="text-sm text-gray-600">
+                                {e.startDate} - {e.endDate ? e.endDate : "now"}
+                              </p>
+                              {e.description && (
+                                <p className="text-gray-600 text-sm">
+                                  {e.description}
+                                </p>
+                              )}
+                            </div>
+                          </div>
+                          {userData?.id === profileData?.id && (
+                            <button
+                              onClick={() => handleDeleteExperience(e.id)}
+                            >
+                              <i className="fas fa-trash"></i>
+                            </button>
+                          )}
+                        </div>
+                      ))
+                    ) : (
+                      <p className="text-gray-600 text-sm">
+                        Tidak ada data pengalaman.
+                      </p>
+                    )}
+                  </div>
+                )}
+
+                {/* === PENDIDIKAN TAB === */}
+                {activeTab === "pendidikan" && (
+                  <div className="bg-white rounded-md shadow-lg p-6">
+                    <div className="flex justify-between items-center mb-4">
+                      <h2 className="text-2xl font-bold text-gray-900">
+                        Pendidikan
+                      </h2>
+                      {userData?.id === profileData?.id && (
+                        <button
+                          onClick={() => setShowAddEduPopup(!showAddEduPopup)}
+                        >
+                          <i class="fa-solid fa-plus"></i>
+                        </button>
+                      )}
+                    </div>
+
+                    {educations && educations.length > 0 ? (
+                      educations.map((e) => (
+                        <div
+                          className="flex justify-between items-start px-2 py-6 hover:bg-gray-100 transition border-b border-gray-300"
+                          key={e.id}
+                        >
+                          <div className="flex gap-5">
+                            <img
+                              src={e.Company?.User?.profilePicture || defaultCm}
+                              alt="companyPfp"
+                              className="aspect-square h-20 w-20 object-cover"
+                            />
+                            <div className="flex flex-col gap-1">
+                              <h3 className="capitalize text-lg font-semibold">
+                                {e.Company?.companyName || e.institutionName}
+                              </h3>
+                              <p className="text-sm">
+                                {e.degree}/{e.fieldOfStudy}{" "}
+                                {e.score && (
+                                  <>
+                                    <span className="mx-1">•</span>
+                                    <span className="capitalize">
+                                      {e.score}
+                                    </span>
+                                  </>
+                                )}
+                              </p>
+                              <p className="text-sm text-gray-600">
+                                {e.startDate} - {e.endDate ? e.endDate : "now"}
+                              </p>
+                              {e.description && (
+                                <p className="text-gray-600 text-sm">
+                                  {e.description}
+                                </p>
+                              )}
+                            </div>
+                          </div>
+                          {userData?.id === profileData?.id && (
+                            <button onClick={() => handleDeleteEducation(e.id)}>
+                              <i className="fa-solid fa-trash"></i>
+                            </button>
+                          )}
+                        </div>
+                      ))
+                    ) : (
+                      <p className="text-gray-600 text-sm">
+                        Tidak ada data pendidikan.
+                      </p>
+                    )}
+                  </div>
+                )}
+              </div>
+            )}
           </div>
         </main>
         {/* Aside */}
         <aside className="flex flex-col">
-          <h2>Orang/Perusahaan lain</h2>
-          <div className="h-56 w-56"></div>
+          {previewApp.length > 0 && (
+            <div className="bg-white rounded-md shadow-lg overflow-hidden mb-4 p-4">
+              <h2 className="text-blue-600">
+                <i class="fa-solid fa-circle-info mr-1"></i> User ini melamar di
+                pekerjaan anda
+              </h2>
+
+              <div className="flex flex-col gap-3 mt-4">
+                {previewApp.map((pa) => (
+                  <div
+                    key={pa.id}
+                    className="flex flex-col p-3 border border-gray-200 rounded-md"
+                  >
+                    <div className="flex items-center gap-4 transition">
+                      <img
+                        src={company?.User?.profilePicture || defaultCm}
+                        alt="Profile Picture"
+                        className="h-8 w-8 object-cover aspect-square"
+                      />
+                      <div>
+                        <h3 className="font-semibold text-sm">
+                          {company?.companyName}
+                        </h3>
+                        <p className="text-xs text-blue-600">
+                          @{company?.User?.username}
+                        </p>
+                      </div>
+                    </div>
+                    <div className="flex mt-3 items-center gap-2">
+                      <Link
+                        to={`/job/${pa.Job?.id}`}
+                        className="text-blue-600 text-lg font-medium hover:underline"
+                      >
+                        {pa.Job?.title}
+                      </Link>
+                      <span
+                        className={`px-3 rounded-full text-xs uppercase text-center font-medium ${getStatusBadgeClass(
+                          pa.status
+                        )}`}
+                      >
+                        {pa.status}
+                      </span>
+                    </div>
+                    <div className="mt-1">
+                      <p className="text-xs ">
+                        <i class="fa-solid fa-calendar mr-2"></i>
+                        Dilamar pada{" "}
+                        {pa?.appliedAt
+                          ? new Intl.DateTimeFormat("id-ID", {
+                              day: "numeric",
+                              month: "long",
+                              year: "numeric",
+                            }).format(new Date(pa.appliedAt))
+                          : ""}
+                      </p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+              <div className="mt-3 flex justify-center items-center">
+                <Link
+                  to={`/employer/applications?q=${profileData?.username}`}
+                  className="bg-blue-600 hover:bg-blue-700 text-gray-50 text-sm px-5 py-1 cursor-pointer transition rounded-md"
+                >
+                  <i class="fa-solid fa-eye mr-1"></i> Lihat detail
+                </Link>
+              </div>
+            </div>
+          )}
+
+          {asideLoading ? (
+            <OtherJsPreviewSkeleton />
+          ) : (
+            otherJsPreview.length > 0 && (
+              <div className="bg-white rounded shadow-lg overflow-hidden mb-4 p-4">
+                <h2>Pengguna lain</h2>
+                <div className="flex flex-col gap-3 mt-4">
+                  {otherJsPreview.map((ojp) => (
+                    <Link to={`/js/${ojp.id}`}>
+                      <div
+                        key={ojp.id}
+                        className="flex flex-col items-center gap-3 p-3 border border-gray-200 rounded-md hover:bg-blue-50 transition"
+                      >
+                        <img
+                          src={ojp.profilePicture || defaultPfp}
+                          alt="Profile Picture"
+                          className="h-20 w-20 object-cover aspect-square rounded-full"
+                        />
+                        <div className="flex flex-col items-center">
+                          <h3 className="font-semibold text-center">
+                            {ojp.UserProfile?.fullName}
+                          </h3>
+                          <p className="text-sm text-blue-600">
+                            @{ojp.username}
+                          </p>
+                        </div>
+                      </div>
+                    </Link>
+                  ))}
+                </div>
+              </div>
+            )
+          )}
         </aside>
       </div>
       <EditProfilePopup

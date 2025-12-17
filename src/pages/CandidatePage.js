@@ -4,16 +4,15 @@ import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContext";
 import axios from "axios";
 
-import defaultCm from "../assets/default-company.png";
+import defaultPfp from "../assets/default-pfp.png";
 
-const CompaniesPage = () => {
+const CandidatePage = () => {
   const { token } = useAuth();
   const navigate = useNavigate();
-  const location = useLocation();
 
   const [loading, setLoading] = useState(false);
 
-  const [companies, setCompanies] = useState([]);
+  const [jobSeekers, setJobSeekers] = useState([]);
   const [filters, setFilters] = useState({
     search: "",
     country: "",
@@ -33,8 +32,8 @@ const CompaniesPage = () => {
   const [filteredCountries, setFilteredCountries] = useState([]);
   const [showDropdown, setShowDropdown] = useState(false);
 
-  //fetch companies
-  const fetchCompanies = async (page) => {
+  //fetch job seekers
+  const fetchJobSeekers = async (page) => {
     try {
       setLoading(true);
 
@@ -45,12 +44,12 @@ const CompaniesPage = () => {
         country: filters.country || "",
       };
 
-      const res = await axios.get("/api/companies", {
+      const res = await axios.get("/api/job-seekers", {
         params,
         headers: { Authorization: `Bearer ${token}` },
       });
 
-      setCompanies(res.data.data || []);
+      setJobSeekers(res.data.data || []);
       setMeta({
         page: res.data.meta.page,
         limit: res.data.meta.limit,
@@ -77,7 +76,7 @@ const CompaniesPage = () => {
   };
   //effects
   useEffect(() => {
-    fetchCompanies(filters.page);
+    fetchJobSeekers(filters.page);
   }, [filters.page, filters.search, filters.country, filters.limit, token]);
   useEffect(() => {
     fetchCountries();
@@ -138,44 +137,41 @@ const CompaniesPage = () => {
   /*
     SKELETON LOADER
   */
-  const CompanyCardSkeleton = () => {
+  const CandidateCardSkeleton = () => {
     return (
       <div className="bg-white border border-gray-200 rounded-2xl p-5 shadow-sm animate-pulse">
         {/* Header */}
-        <div className="flex items-center gap-4 mb-4">
-          {/* Logo */}
+        <div className="flex items-center gap-4 mb-3">
+          {/* Avatar */}
           <div className="w-16 h-16 rounded-full bg-gray-200" />
 
-          {/* Name */}
+          {/* Name & meta */}
           <div className="flex-1 space-y-2">
             <div className="h-5 w-2/3 bg-gray-200 rounded" />
             <div className="h-4 w-1/3 bg-gray-200 rounded" />
+            <div className="h-4 w-1/2 bg-gray-200 rounded" />
           </div>
         </div>
 
-        {/* Description */}
+        {/* Bio */}
         <div className="space-y-2 mb-4">
           <div className="h-4 w-full bg-gray-200 rounded" />
           <div className="h-4 w-11/12 bg-gray-200 rounded" />
           <div className="h-4 w-4/5 bg-gray-200 rounded" />
         </div>
 
-        {/* Footer */}
-        <div className="flex items-end justify-between">
-          <div className="space-y-2">
-            <div className="flex items-center gap-2">
-              <div className="h-4 w-4 bg-gray-200 rounded" />
-              <div className="h-4 w-32 bg-gray-200 rounded" />
-            </div>
+        {/* Skills */}
+        <div className="flex flex-wrap gap-2 mb-4">
+          <div className="h-6 w-20 bg-gray-200 rounded-full" />
+          <div className="h-6 w-24 bg-gray-200 rounded-full" />
+          <div className="h-6 w-16 bg-gray-200 rounded-full" />
+          <div className="h-6 w-14 bg-gray-200 rounded-full" />
+        </div>
 
-            <div className="flex items-center gap-2">
-              <div className="h-4 w-4 bg-gray-200 rounded" />
-              <div className="h-4 w-40 bg-gray-200 rounded" />
-            </div>
-          </div>
-
-          {/* Website link */}
-          <div className="h-4 w-20 bg-gray-200 rounded" />
+        {/* Disabilities */}
+        <div className="flex flex-wrap gap-2">
+          <div className="h-6 w-28 bg-gray-200 rounded-full" />
+          <div className="h-6 w-32 bg-gray-200 rounded-full" />
         </div>
       </div>
     );
@@ -188,16 +184,18 @@ const CompaniesPage = () => {
         <div className="container mx-auto px-4 py-8">
           <div className="text-center mb-8">
             <h1 className="text-4xl font-bold text-gray-900 mb-4">
-              Temukan Perusahaan <span className="text-blue-600">Inklusif</span>
+              Lebih dekat dengan{" "}
+              <span className="text-blue-600">Talenta Inklusif</span>
             </h1>
             <p className="text-lg text-gray-600 max-w-2xl mx-auto">
-              Jelajahi perusahaan-perusahaan yang berkomitmen menciptakan
-              lingkungan kerja yang ramah dan accessible untuk penyandang
-              disabilitas
+              Jelajahi profil kandidat dari berbagai latar belakang disabilitas,
+              dengan keterampilan dan pengalaman yang siap berkontribusi dalam
+              lingkungan kerja yang inklusif dan setara.
             </p>
           </div>
         </div>
       )}
+
       {/* Search & Filter */}
       <div className="flex w-full justify-center mb-8">
         <div className="max-w-5xl w-full flex gap-4">
@@ -207,7 +205,7 @@ const CompaniesPage = () => {
               <i className="fa-solid fa-magnifying-glass text-gray-400" />
               <input
                 type="search"
-                placeholder="Cari nama perusahaan, industri..."
+                placeholder="Cari nama kandidat..."
                 value={searchInput}
                 onChange={(e) => setSearchInput(e.target.value)}
                 onKeyDown={(e) => e.key === "Enter" && handleSearch()}
@@ -279,7 +277,7 @@ const CompaniesPage = () => {
         {/* Results Header */}
         <div className="flex gap-6 items-center">
           <h2 className="text-xl font-semibold text-gray-800">
-            {meta?.total || 0} Perusahaan Ditemukan
+            {meta?.total || 0} Kandidat Ditemukan
           </h2>
           <div className="flex gap-4 mt-1 text-sm text-gray-600">
             {filters.search && (
@@ -303,96 +301,110 @@ const CompaniesPage = () => {
             )}
           </div>
         </div>
-        {/* Grid Companies */}
+        {/* Grid Candidate */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
           {loading &&
             Array.from({ length: 9 }).map((_, i) => (
-              <CompanyCardSkeleton key={i} />
+              <CandidateCardSkeleton key={i} />
             ))}
-          {!loading && companies.length === 0 && (
+          {!loading && jobSeekers.length === 0 && (
             <div className="text-center py-8 text-gray-600 col-span-3">
               Tidak ada apa-apa disini
             </div>
           )}
-          {!loading && companies.map((company) => (
-            <div
-              key={company.id}
-              onClick={() => navigate(`/cm/${company.User?.id}`)}
-              className="group cursor-pointer bg-white border border-gray-200 rounded-2xl p-5 shadow-sm hover:shadow-lg transition-all"
-            >
-              {/* Header */}
-              <div className="flex items-center gap-4 mb-4">
-                {/* Logo */}
-                <img
-                  src={company.User.profilePicture || defaultCm}
-                  alt={company.companyName}
-                  className="w-16 h-16 aspect-square object-cover"
-                />
 
-                {/* Name */}
-                <div className="flex-1">
-                  <h3 className="font-semibold text-gray-800 group-hover:text-blue-600 transition">
-                    {company.companyName}
-                  </h3>
-                  <p className="text-sm text-gray-500 capitalize">
-                    {company.industryName || company.Industry?.name || "—"}
-                  </p>
+          {!loading && jobSeekers.map((js) => {
+            const skillsPreview = js.UserSkills?.slice(0, 2) || [];
+            const extraSkills =
+              js.UserSkills?.length > 2 ? js.UserSkills.length - 2 : 0;
+
+            const disabilityPreview = js.UserDisabilities?.slice(0, 2) || [];
+            const extraDisability =
+              js.UserDisabilities?.length > 2
+                ? js.UserDisabilities.length - 2
+                : 0;
+
+            return (
+              <div
+                key={js.id}
+                onClick={() => navigate(`/js/${js.id}`)}
+                className="group cursor-pointer bg-white border border-gray-200 rounded-2xl p-5 shadow-sm hover:shadow-lg transition-all"
+                role="button"
+              >
+                {/* Header */}
+                <div className="flex items-center gap-4 mb-3">
+                  {/* Avatar */}
+                  <img
+                    src={js.profilePicture || defaultPfp}
+                    alt={js.UserProfile?.fullName}
+                    className="w-16 h-16 object-cover aspect-square rounded-full"
+                  />
+
+                  {/* Name & meta */}
+                  <div className="flex-1 min-w-0">
+                    <h3 className="font-semibold text-gray-800 group-hover:text-blue-600 transition truncate text-lg">
+                      {js.UserProfile?.fullName}
+                    </h3>
+                    <p className="text-xs text-blue-600 truncate">
+                      @{js.username}
+                    </p>
+                    <p className="text-xs text-gray-600 mt-1 truncate capitalize flex items-center gap-2">
+                      <i className="fas fa-location-dot text-xs" />{" "}
+                      {js.UserProfile?.city}, {js.UserProfile?.country}
+                    </p>
+                  </div>
                 </div>
-              </div>
 
-              {/* Description */}
-              {company.companyDescription && (
-                <p className="text-sm text-gray-600 line-clamp-3 leading-relaxed mb-4">
-                  {company.companyDescription || ""}
-                </p>
-              )}
+                {/* Bio */}
+                {js.UserProfile?.bio && (
+                  <p className="text-sm text-gray-600 line-clamp-3 leading-relaxed mb-3">
+                    {js.UserProfile?.bio}
+                  </p>
+                )}
 
-              {/* Footer */}
-              <div className="flex items-end justify-between text-sm text-gray-500">
-                <table>
-                  <tbody>
-                    {company.jobCounts > 0 && (
-                      <tr>
-                        <td className="pr-2">
-                          <i className="fas fa-briefcase"></i>
-                        </td>
-                        <td>
-                          <span className="flex items-center gap-1 capitalize">
-                            {company.jobCounts} Lowongan dibuka
-                          </span>
-                        </td>
-                      </tr>
+                {/* Disabilities & Skills */}
+                {/* Skills */}
+                {skillsPreview.length > 0 && (
+                  <div className="flex flex-wrap gap-2 mb-4 mt-4">
+                    {skillsPreview.map((skill) => (
+                      <span
+                        key={skill.id}
+                        className="bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-xs font-medium capitalize"
+                      >
+                        {skill.skillName}
+                      </span>
+                    ))}
+
+                    {extraSkills > 0 && (
+                      <span className="bg-gray-100 text-gray-700 px-3 py-1 rounded-full text-xs">
+                        +{extraSkills} lainnya
+                      </span>
                     )}
-                    <tr>
-                      <td className="pr-2">
-                        <i className="fas fa-location-dot"></i>
-                      </td>
-                      <td>
-                        <span className="flex items-center gap-1 capitalize">
-                          {company.city
-                            ? `${company.city}, ${company.country}`
-                            : company.country}
-                        </span>
-                      </td>
-                    </tr>
-                  </tbody>
-                </table>
+                  </div>
+                )}
 
-                {company.websiteLink && (
-                  <a
-                    href={company.websiteLink}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    onClick={(e) => e.stopPropagation()}
-                    className="text-blue-600 hover:underline font-medium"
-                  >
-                    <i class="fa-solid fa-globe mr-1"></i>
-                    Website
-                  </a>
+                {/* Disabilities */}
+                {disabilityPreview.length > 0 && (
+                  <div className="flex flex-wrap gap-2 mb-4">
+                    {disabilityPreview.map((disability) => (
+                      <span
+                        key={disability.id}
+                        className="bg-green-100 text-green-800 px-3 py-1 rounded-full font-medium text-xs capitalize"
+                      >
+                        {disability.disabilityName} / {disability.type}
+                      </span>
+                    ))}
+
+                    {extraDisability > 0 && (
+                      <span className="bg-gray-100 text-gray-700 px-3 py-1 rounded-full text-xs">
+                        +{extraDisability} lainnya
+                      </span>
+                    )}
+                  </div>
                 )}
               </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
 
         {/* Pagination */}
@@ -412,7 +424,7 @@ const CompaniesPage = () => {
           </div>
           <div className="flex gap-2 items-center">
             <button
-              className="px-3 py-1 border bg-gray-50 cursor-pointer rounded disabled:opacity-50"
+              className="px-3 py-1 bg-gray-50 cursor-pointer border rounded disabled:opacity-50"
               onClick={() => handlePageChange(meta.page - 1)}
               disabled={meta.page <= 1 || loading}
             >
@@ -435,4 +447,4 @@ const CompaniesPage = () => {
   );
 };
 
-export default CompaniesPage;
+export default CandidatePage;

@@ -3,6 +3,7 @@ import React, { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import axios from "axios";
 import { useAuth } from "../../contexts/AuthContext";
+import { enqueueSnackbar } from "notistack";
 
 const EmployerRegistrationPage = () => {
   const [step, setStep] = useState(1);
@@ -143,6 +144,9 @@ const EmployerRegistrationPage = () => {
         !formData.city
       ) {
         setError("Field yang dibutuhkan masih belum lengkap");
+        enqueueSnackbar("Field yang dibutuhkan masih belum lengkap", {
+          variant: "warning",
+        });
         return;
       }
     }
@@ -174,19 +178,29 @@ const EmployerRegistrationPage = () => {
       !formData.password ||
       !formData.confirmPassword
     ) {
-      setError("Required fields are still incomplete");
+      setError("Field yang dibutuhkan masih belum lengkap");
+      enqueueSnackbar("Field yang dibutuhkan masih belum lengkap", {
+        variant: "warning",
+      });
+
       setIsLoading(false);
       return;
     }
 
     if (formData.password !== formData.confirmPassword) {
-      setError("Password and Confirm Password unmatched");
+      setError("Password dan Konfirmasi Password tidak serasi");
+      enqueueSnackbar("Password dan Konfirmasi Password tidak serasi", {
+        variant: "warning",
+      });
       setIsLoading(false);
       return;
     }
 
     if (!formData.agreeToTerms) {
-      setError("Please agree to terms and services");
+      setError("Perlu untuk menyetujui terms and services");
+      enqueueSnackbar("Perlu untuk menyetujui terms and services", {
+        variant: "info",
+      });
       setIsLoading(false);
       return;
     }
@@ -214,26 +228,8 @@ const EmployerRegistrationPage = () => {
       setIsLoading(false);
     }
   };
-
-  // Accessibility functions
-  const increaseFontSize = () => {
-    document.documentElement.style.fontSize = "18px";
-  };
-
-  const decreaseFontSize = () => {
-    document.documentElement.style.fontSize = "14px";
-  };
-
-  const resetFontSize = () => {
-    document.documentElement.style.fontSize = "16px";
-  };
-
-  const toggleHighContrast = () => {
-    document.body.classList.toggle("high-contrast");
-  };
-
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-green-50 flex items-center justify-center py-12 px-4">
+    <div className="min-h-screen flex items-center justify-center py-12 px-4">
       <div className="max-w-2xl w-full space-y-8">
         {/* Header - Clean & Professional */}
         <div className="text-center space-y-4">
@@ -382,6 +378,7 @@ const EmployerRegistrationPage = () => {
                         id="companyName"
                         type="text"
                         required
+                        autoComplete="off"
                         value={formData.companyName}
                         onChange={(e) =>
                           handleInputChange("companyName", e.target.value)
@@ -408,6 +405,7 @@ const EmployerRegistrationPage = () => {
                         id="country"
                         type="text"
                         required
+                        autoComplete="off"
                         value={formData.country}
                         onChange={(e) => {
                           const value = e.target.value;
@@ -465,6 +463,7 @@ const EmployerRegistrationPage = () => {
                         id="city"
                         type="text"
                         required
+                        autoComplete="off"
                         value={formData.city}
                         onChange={(e) =>
                           handleInputChange("city", e.target.value)
@@ -490,11 +489,11 @@ const EmployerRegistrationPage = () => {
                       <input
                         type="text"
                         name="industryName"
+                        autoComplete="off"
                         value={formData.industryName}
                         onChange={handleIndustryInput}
                         placeholder="Cari atau ketik nama industri..."
                         className="w-full pl-12 pr-4 py-3.5 bg-white border-2 border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all shadow-sm"
-                        autoComplete="off"
                         onFocus={() => {
                           if (industries.length > 0)
                             setShowIndSuggestions(true);
@@ -542,6 +541,7 @@ const EmployerRegistrationPage = () => {
                       <input
                         id="websiteLink"
                         type="url"
+                        autoComplete="off"
                         value={formData.websiteLink}
                         onChange={(e) =>
                           handleInputChange("websiteLink", e.target.value)
@@ -605,6 +605,7 @@ const EmployerRegistrationPage = () => {
                         id="username"
                         type="text"
                         required
+                        autoComplete="off"
                         value={formData.username}
                         onChange={(e) => {
                           const cleaned = e.target.value
@@ -639,6 +640,7 @@ const EmployerRegistrationPage = () => {
                         id="email"
                         type="email"
                         required
+                        autoComplete="off"
                         value={formData.email}
                         onChange={(e) =>
                           handleInputChange("email", e.target.value)
@@ -667,6 +669,7 @@ const EmployerRegistrationPage = () => {
                           id="password"
                           type="password"
                           required
+                          autoComplete="off"
                           value={formData.password}
                           onChange={(e) =>
                             handleInputChange("password", e.target.value)
@@ -694,6 +697,7 @@ const EmployerRegistrationPage = () => {
                           id="confirmPassword"
                           type="password"
                           required
+                          autoComplete="off"
                           value={formData.confirmPassword}
                           onChange={(e) =>
                             handleInputChange("confirmPassword", e.target.value)
@@ -773,48 +777,6 @@ const EmployerRegistrationPage = () => {
               </div>
             )}
           </form>
-        </div>
-
-        {/* Accessibility Quick Options */}
-        <div className="bg-blue-50 rounded-lg p-4">
-          <h4 className="text-sm font-medium text-blue-900 mb-3 flex items-center justify-center">
-            <i className="fas fa-universal-access mr-2"></i>
-            Opsi Aksesibilitas
-          </h4>
-          <div className="flex flex-wrap gap-2 justify-center">
-            <button
-              className="text-sm bg-white text-blue-700 px-4 py-2 rounded-lg border border-blue-200 hover:bg-blue-100 transition flex items-center gap-2"
-              onClick={increaseFontSize}
-              aria-label="Perbesar ukuran teks"
-            >
-              <i className="fas fa-text-height"></i>
-              <span>A+</span>
-            </button>
-            <button
-              className="text-sm bg-white text-blue-700 px-4 py-2 rounded-lg border border-blue-200 hover:bg-blue-100 transition flex items-center gap-2"
-              onClick={decreaseFontSize}
-              aria-label="Perkecil ukuran teks"
-            >
-              <i className="fas fa-text-height"></i>
-              <span>A-</span>
-            </button>
-            <button
-              className="text-sm bg-white text-blue-700 px-4 py-2 rounded-lg border border-blue-200 hover:bg-blue-100 transition flex items-center gap-2"
-              onClick={resetFontSize}
-              aria-label="Reset ukuran teks ke normal"
-            >
-              <i className="fas fa-undo-alt"></i>
-              <span>Reset</span>
-            </button>
-            <button
-              className="text-sm bg-white text-blue-700 px-4 py-2 rounded-lg border border-blue-200 hover:bg-blue-100 transition flex items-center gap-2"
-              onClick={toggleHighContrast}
-              aria-label="Toggle mode kontras tinggi"
-            >
-              <i className="fas fa-adjust"></i>
-              <span>Kontras</span>
-            </button>
-          </div>
         </div>
 
         {/* Login Link */}

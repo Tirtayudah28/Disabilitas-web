@@ -5,6 +5,13 @@ import JobCard from "../components/JobCard";
 import { useAuth } from "../contexts/AuthContext";
 import axios from "axios";
 
+const DEFAULT_FILTERS = {
+  search: "",
+  disabilityTypes: ["semua-jenis"],
+  limit: 30,
+  page: 1,
+};
+
 const JobPage = () => {
   const { token } = useAuth();
   const navigate = useNavigate();
@@ -13,12 +20,7 @@ const JobPage = () => {
   const [loading, setLoading] = useState(false);
   const [jobs, setJobs] = useState([]);
 
-  const [filters, setFilters] = useState({
-    search: "",
-    disabilityTypes: [],
-    limit: 30,
-    page: 1,
-  });
+  const [filters, setFilters] = useState(DEFAULT_FILTERS);
 
   const [meta, setMeta] = useState({
     page: 1,
@@ -28,8 +30,11 @@ const JobPage = () => {
   });
 
   const [searchInput, setSearchInput] = useState("");
+  const [pendingDisabilityTypes, setPendingDisabilityTypes] = useState(
+    DEFAULT_FILTERS.disabilityTypes
+  );
 
-  // Build disability CSV untuk API
+  //disability CSV
   const buildDisabilityCsv = useCallback(
     (disabilityArray) => {
       const arr = disabilityArray || filters.disabilityTypes;
@@ -38,17 +43,14 @@ const JobPage = () => {
     },
     [filters.disabilityTypes]
   );
-
-  // Fetch jobs dengan filter yang diberikan
+  //fetch jobs
   const fetchJobs = useCallback(
     async (filterOverrides = {}) => {
       try {
         setLoading(true);
 
-        // Gabungkan filter saat ini dengan overrides
         const currentFilters = { ...filters, ...filterOverrides };
 
-        // Build params untuk API
         const params = {
           page: currentFilters.page,
           limit: currentFilters.limit,
@@ -57,7 +59,6 @@ const JobPage = () => {
             buildDisabilityCsv(currentFilters.disabilityTypes) || "",
         };
 
-        // Hapus empty values
         Object.keys(params).forEach((key) => {
           if (params[key] === "") delete params[key];
         });
@@ -76,7 +77,6 @@ const JobPage = () => {
           totalPages: data.meta.totalPages,
         });
 
-        // Update filter state dengan nilai yang benar-benar digunakan
         setFilters((prev) => ({
           ...prev,
           page: data.meta.page,
@@ -85,7 +85,13 @@ const JobPage = () => {
           limit: currentFilters.limit,
         }));
 
-        // Sync URL
+        setPendingDisabilityTypes(
+          currentFilters.disabilityTypes &&
+            currentFilters.disabilityTypes.length > 0
+            ? currentFilters.disabilityTypes
+            : DEFAULT_FILTERS.disabilityTypes
+        );
+
         const qs = new URLSearchParams();
         if (currentFilters.search) qs.set("q", currentFilters.search);
         navigate(`/jobs?${qs.toString()}`, { replace: true });
@@ -99,15 +105,13 @@ const JobPage = () => {
     },
     [filters, token, navigate, buildDisabilityCsv]
   );
-
-  // Initial load - baca dari URL
+  // initial effect
   useEffect(() => {
     const sp = new URLSearchParams(location.search);
     const searchFromUrl = sp.get("q") || "";
 
     setSearchInput(searchFromUrl);
 
-    // Set initial filters dari URL
     const initialFilters = {
       search: searchFromUrl,
       disabilityTypes: ["semua-jenis"],
@@ -116,61 +120,112 @@ const JobPage = () => {
     };
 
     setFilters(initialFilters);
+    setPendingDisabilityTypes(initialFilters.disabilityTypes);
 
-    // Fetch dengan filter awal
     fetchJobs(initialFilters);
   }, []);
+  useEffect(() => {
+    if (filters?.disabilityTypes) {
+      setPendingDisabilityTypes(filters.disabilityTypes);
+    }
+  }, [filters.disabilityTypes]);
 
-  // Handle search dari input
+  //search input handler
   const handleSearch = () => {
+    if ((!searchInput && !filters.search) || searchInput === filters.search)
+      return;
     const newFilters = {
       ...filters,
       search: searchInput.trim(),
-      page: 1, // Reset ke halaman 1
+      page: 1,
     };
 
     setFilters(newFilters);
     fetchJobs(newFilters);
   };
 
-  // Handle disability filter changes
-  const handleDisabilityFilterChange = (value) => {
-    let newDisabilityTypes;
+  /*
+    DISABILITY FILTER HANDLERS
+  */
+  const togglePendingDisabilityType = (value) => {
+    let newPending;
 
     if (value === "semua-jenis") {
-      newDisabilityTypes = ["semua-jenis"];
+      newPending = ["semua-jenis"];
     } else {
-      const current = filters.disabilityTypes;
+      const current = pendingDisabilityTypes || [];
       if (current.includes(value)) {
-        // Hapus jika sudah ada
-        newDisabilityTypes = current.filter(
-          (v) => v !== value && v !== "semua-jenis"
-        );
+        // Hapus jika sudah ada (dan pastikan "semua-jenis" tidak ikut)
+        newPending = current.filter((v) => v !== value && v !== "semua-jenis");
       } else {
         // Tambah jika belum ada
-        newDisabilityTypes = [
-          ...current.filter((v) => v !== "semua-jenis"),
-          value,
-        ];
+        newPending = [...current.filter((v) => v !== "semua-jenis"), value];
       }
 
       // Jika kosong, set ke "semua-jenis"
-      if (newDisabilityTypes.length === 0) {
-        newDisabilityTypes = ["semua-jenis"];
+      if (newPending.length === 0) {
+        newPending = ["semua-jenis"];
       }
     }
 
+    setPendingDisabilityTypes(newPending);
+  };
+  // compare array helper (unordered)
+  const arraysEqualUnordered = (a = [], b = []) => {
+    if (a.length !== b.length) return false;
+    const setA = new Set(a);
+    return b.every((v) => setA.has(v));
+  };
+  // apply pending filters ke filters utama + fetch
+  const applyDisabilityFilters = () => {
+    const current = filters.disabilityTypes || DEFAULT_FILTERS.disabilityTypes;
+    const pending = pendingDisabilityTypes || DEFAULT_FILTERS.disabilityTypes;
+
+    const same = arraysEqualUnordered(current, pending);
+    if (same) return; 
+
     const newFilters = {
       ...filters,
-      disabilityTypes: newDisabilityTypes,
-      page: 1, // Reset ke halaman 1
+      disabilityTypes: pending,
+      page: 1,
     };
 
     setFilters(newFilters);
     fetchJobs(newFilters);
   };
-  // Reset filters
+
+  /*
+    FILTER RESET
+  */
+  //check default filter
+  const isDefaultFilter = (filterType = "all") => {
+    if (filterType === "search") {
+      return filters.search === "" && searchInput === "";
+    }
+
+    if (filterType === "disabilityType") {
+      return (
+        filters.disabilityTypes.length === 1 &&
+        filters.disabilityTypes[0] === "semua-jenis"
+      );
+    }
+
+    // all
+    return (
+      filters.search === "" &&
+      searchInput === "" &&
+      filters.disabilityTypes.length === 1 &&
+      filters.disabilityTypes[0] === "semua-jenis" &&
+      filters.page === 1
+    );
+  };
+  // reset filters
   const resetFilters = (filterType = "all") => {
+    if (isDefaultFilter(filterType)) {
+      setPendingDisabilityTypes(DEFAULT_FILTERS.disabilityTypes);
+      return;
+    }
+
     let newFilters = { ...filters, page: 1 };
     let newSearchInput = searchInput;
 
@@ -181,6 +236,7 @@ const JobPage = () => {
 
     if (filterType === "disabilityType" || filterType === "all") {
       newFilters.disabilityTypes = ["semua-jenis"];
+      setPendingDisabilityTypes(["semua-jenis"]);
     }
 
     setSearchInput(newSearchInput);
@@ -188,8 +244,10 @@ const JobPage = () => {
     fetchJobs(newFilters);
   };
 
-  // Pagination
-  const goToPage = (newPage) => {
+  /*
+    PAGINATION
+  */
+  const handlePageChange = (newPage) => {
     if (newPage < 1 || newPage > (meta.totalPages || 1)) return;
 
     const newFilters = {
@@ -201,7 +259,6 @@ const JobPage = () => {
     fetchJobs(newFilters);
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
-
   // Change limit
   const handleLimitChange = (newLimit) => {
     const newFilters = {
@@ -214,9 +271,69 @@ const JobPage = () => {
     fetchJobs(newFilters);
   };
 
+  /*
+    SKELETON LOADER
+  */
+  const JobCardSkeleton = () => {
+    return (
+      <div className="bg-white border border-gray-200 rounded p-5 shadow animate-pulse">
+        {/* Title + Company */}
+        <div className="mb-3 flex gap-3">
+          {/* Image */}
+          <div className="h-16 w-16 rounded bg-gray-200" />
+
+          <div className="flex-1 space-y-2">
+            <div className="h-5 w-2/3 bg-gray-200 rounded" />
+            <div className="h-4 w-1/2 bg-gray-200 rounded" />
+            <div className="h-4 w-1/3 bg-gray-200 rounded" />
+          </div>
+        </div>
+
+        {/* Basic Info */}
+        <div className="flex flex-wrap gap-3 text-sm mb-3">
+          <div className="h-7 w-32 bg-gray-200 rounded-full" />
+          <div className="h-7 w-40 bg-gray-200 rounded-full" />
+        </div>
+
+        {/* Description */}
+        <div className="space-y-2 mb-4">
+          <div className="h-4 w-full bg-gray-200 rounded" />
+          <div className="h-4 w-5/6 bg-gray-200 rounded" />
+        </div>
+
+        {/* Skills */}
+        <div className="flex flex-wrap gap-2 mb-4">
+          <div className="h-7 w-20 bg-gray-200 rounded-full" />
+          <div className="h-7 w-24 bg-gray-200 rounded-full" />
+          <div className="h-7 w-16 bg-gray-200 rounded-full" />
+        </div>
+
+        {/* Disabilities */}
+        <div className="flex flex-wrap gap-2">
+          <div className="h-7 w-28 bg-gray-200 rounded-full" />
+          <div className="h-7 w-32 bg-gray-200 rounded-full" />
+        </div>
+      </div>
+    );
+  };
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-green-50">
+    <div className="min-h-screen">
       <main className="container mx-auto lg:px-32 xl:px-36 py-8">
+        {/* Header Section */}
+        {token ? null : (
+          <div className="container mx-auto px-4 py-8">
+            <div className="text-center mb-8">
+              <h1 className="text-4xl font-bold text-gray-900 mb-4">
+                Semua Bisa <span className="text-blue-600">Kerja</span>
+              </h1>
+              <p className="text-lg text-gray-600 max-w-2xl mx-auto">
+                Mencari pekerjaan seharusnya mudah untuk semua. Kami
+                menghubungkan talenta disabilitas dengan perusahaan-perusahaan inklusif
+              </p>
+            </div>
+          </div>
+        )}
         {/* Search */}
         <div className="bg-white rounded-md shadow p-6 mb-8">
           <div className="flex flex-col md:flex-row gap-2">
@@ -259,38 +376,66 @@ const JobPage = () => {
 
               <div className="space-y-2 mb-6">
                 {[
-                  { value: "sensory", label: "Sensory" },
-                  { value: "physical", label: "Physical" },
+                  { value: "sensory", label: "Indrawi" },
+                  { value: "physical", label: "Fisik" },
                   { value: "mental", label: "Mental" },
-                  { value: "intellectual", label: "Intellectual" },
-                  { value: "multiple", label: "Multiple" },
-                  { value: "other", label: "Other" },
+                  { value: "intellectual", label: "Kecerdasan" },
+                  { value: "multiple", label: "Ganda" },
+                  { value: "other", label: "Lain-lain" },
                   { value: "semua-jenis", label: "Semua Jenis" },
-                ].map((type) => (
-                  <label
-                    key={type.value}
-                    className={`flex items-center p-2 rounded cursor-pointer transition ${
-                      filters.disabilityTypes.includes(type.value)
-                        ? "bg-blue-100 text-blue-800"
-                        : "hover:bg-gray-50"
-                    }`}
-                  >
-                    <input
-                      type="checkbox"
-                      checked={filters.disabilityTypes.includes(type.value)}
-                      onChange={() => handleDisabilityFilterChange(type.value)}
-                      className="mr-3 h-4 w-4 text-blue-500"
-                    />
-                    <span>{type.label}</span>
-                  </label>
-                ))}
+                ].map((type) => {
+                  const checked = (
+                    pendingDisabilityTypes || DEFAULT_FILTERS.disabilityTypes
+                  ).includes(type.value);
+                  return (
+                    <label
+                      key={type.value}
+                      className={`flex items-center p-2 rounded cursor-pointer transition ${
+                        checked
+                          ? "bg-blue-100 text-blue-800"
+                          : "hover:bg-gray-50"
+                      }`}
+                    >
+                      <input
+                        type="checkbox"
+                        checked={checked}
+                        onChange={() => togglePendingDisabilityType(type.value)}
+                        className="mr-3 h-4 w-4 text-blue-500"
+                      />
+                      <span>{type.label}</span>
+                    </label>
+                  );
+                })}
               </div>
-              <button
-                onClick={() => resetFilters("all")}
-                className="w-full border border-gray-300 text-gray-700 py-2 rounded-lg hover:bg-gray-50 transition mt-2"
-              >
-                Reset Filter
-              </button>
+
+              {/* Tombol Terapkan + Reset */}
+              <div className="flex flex-col gap-3">
+                <button
+                  onClick={applyDisabilityFilters}
+                  disabled={arraysEqualUnordered(
+                    filters.disabilityTypes || DEFAULT_FILTERS.disabilityTypes,
+                    pendingDisabilityTypes || DEFAULT_FILTERS.disabilityTypes
+                  )}
+                  className={`flex-1 py-2 rounded-lg text-sm font-medium transition ${
+                    arraysEqualUnordered(
+                      filters.disabilityTypes ||
+                        DEFAULT_FILTERS.disabilityTypes,
+                      pendingDisabilityTypes || DEFAULT_FILTERS.disabilityTypes
+                    )
+                      ? "bg-gray-100 text-gray-400 cursor-not-allowed"
+                      : "bg-blue-600 text-white hover:bg-blue-700"
+                  }`}
+                >
+                  Terapkan Filter
+                </button>
+
+                <button
+                  onClick={() => resetFilters("disabilityType")}
+                  className="py-2 px-4 rounded-lg border border-gray-300 text-gray-700 hover:bg-gray-50 transition text-sm"
+                >
+                  Reset Filter
+                </button>
+              </div>
             </div>
           </div>
 
@@ -334,10 +479,13 @@ const JobPage = () => {
 
             {/* Job List*/}
             <div className="space-y-4">
-              {loading && <div className="text-center py-8">Memuat...</div>}
+              {loading &&
+                Array.from({ length: 5 }).map((_, i) => (
+                  <JobCardSkeleton key={i} />
+                ))}
               {!loading && jobs.length === 0 && (
                 <div className="text-center py-8 text-gray-600">
-                  Tidak ada lowongan untuk kriteria ini.
+                  Tidak ada apa-apa disini
                 </div>
               )}
               {!loading &&
@@ -345,7 +493,7 @@ const JobPage = () => {
             </div>
 
             {/* Pagination */}
-            <div className="flex items-center justify-between mt-6">
+            <div className="flex items-center justify-between mt-6 rounded-lg border border-gray-200 p-4 bg-blue-50">
               <div className="flex gap-1 items-center text-sm text-gray-600">
                 <span>Showing</span>
                 <select
@@ -359,20 +507,20 @@ const JobPage = () => {
                 </select>
                 <span>data from {meta.total}</span>
               </div>
-              <div className="flex gap-2">
+              <div className="flex gap-2 items-center">
                 <button
-                  className="px-3 py-1 border rounded disabled:opacity-50"
-                  onClick={() => goToPage(meta.page - 1)}
+                  className="px-3 py-1 border bg-gray-50 cursor-pointer rounded disabled:opacity-50"
+                  onClick={() => handlePageChange(meta.page - 1)}
                   disabled={meta.page <= 1 || loading}
                 >
                   Prev
                 </button>
-                <span className="px-3 py-1">
+                <span className="px-3 py-1 text-xs">
                   Page {meta.page} of {meta.totalPages || 1}
                 </span>
                 <button
-                  className="px-3 py-1 border rounded disabled:opacity-50"
-                  onClick={() => goToPage(meta.page + 1)}
+                  className="px-3 py-1 border bg-gray-50 cursor-pointer rounded disabled:opacity-50"
+                  onClick={() => handlePageChange(meta.page + 1)}
                   disabled={meta.page >= (meta.totalPages || 1) || loading}
                 >
                   Next
