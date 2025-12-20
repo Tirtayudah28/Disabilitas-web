@@ -19,6 +19,8 @@ import AppLoading from "./components/layout/AppLoading";
 import ProtectedRoute from "./components/auth/ProtectedRoute";
 import "./styles/globals.css";
 
+import { speechController } from "./utils/speechController";
+
 // Import semua pages
 import JobLandingPage from "./pages/JobLandingPage";
 import JobPage from "./pages/JobPage";
@@ -49,41 +51,38 @@ import ScrollToTop from "./scrollToTop";
 // Voice Navigation Provider Component - SIMPLIFIED
 const VoiceNavigationInitializer = ({ children }) => {
   const [isInitialized, setIsInitialized] = useState(false);
+  const location = useLocation(); 
 
+  /* ===============================
+      INISIALISASI VOICE SYSTEM
+  =============================== */
   useEffect(() => {
     const initializeVoiceNav = () => {
-      console.log("🚀 Initializing voice navigation with wake word...");
-
-      // Test microphone access first
       testMicrophoneAccess();
 
-      // Welcome message
+      // Welcome message (sekali saja)
       setTimeout(() => {
-        if ("speechSynthesis" in window) {
-          const welcomeMessage = new SpeechSynthesisUtterance(
-            'Selamat datang di Kerja Inklusif. Sistem wake word telah aktif. Katakan "Oke Inklusi" untuk memulai percakapan dengan asisten.'
-          );
-          welcomeMessage.lang = "id-ID";
-          welcomeMessage.rate = 0.9;
-          welcomeMessage.volume = 0.7;
+          if ("speechSynthesis" in window && !speechSynthesis.speaking) {
+            const welcomeMessage = new SpeechSynthesisUtterance(
+              'Selamat datang di Kerja Inklusif. ' +
+              'Untuk navigasi suara, katakan "bantuan" untuk mendengar semua perintah yang tersedia. ' +
+              'Atau coba katakan "baca halaman" untuk memulai.'
+            );
+            welcomeMessage.lang = "id-ID";
+            welcomeMessage.rate = 0.9;
+            welcomeMessage.volume = 0.7;
 
-          if (!speechSynthesis.speaking) {
             speechSynthesis.speak(welcomeMessage);
           }
-        }
-      }, 3000);
+        }, 3000);
 
       setIsInitialized(true);
     };
 
-    // Test microphone function
     const testMicrophoneAccess = async () => {
       try {
-        const stream = await navigator.mediaDevices.getUserMedia({
-          audio: true,
-        });
-        console.log("🎤 Microphone access granted");
-        stream.getTracks().forEach((track) => track.stop()); // Clean up
+        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        stream.getTracks().forEach((track) => track.stop());
       } catch (error) {
         console.error("❌ Microphone access denied:", error);
         alert(
@@ -95,6 +94,17 @@ const VoiceNavigationInitializer = ({ children }) => {
     const timer = setTimeout(initializeVoiceNav, 2000);
     return () => clearTimeout(timer);
   }, []);
+
+  /* ===============================
+      STOP BACAAN JIKA PINDAH HALAMAN MANUAL
+     (SOLUSI MASALAH UTAMA)
+  =============================== */
+  useEffect(() => {
+    // ❌ JANGAN BACA OTOMATIS
+    // ✅ HANYA STOP JIKA ADA BACAAN AKTIF
+    speechController.markManualNavigation();
+    speechController.stopIfManualNavigation();
+  }, [location.pathname]);
 
   return children;
 };
@@ -115,6 +125,12 @@ const AppContent = () => {
 
     return () => clearTimeout(timer);
   }, []);
+
+  // ⛔️ HENTIKAN SEMUA PEMBACAAN SAAT PINDAH HALAMAN
+  useEffect(() => {
+    speechController.stop();
+    speechController.markManualNavigation();
+  }, [location.pathname]);
 
   // Toggle debug panel dengan keyboard shortcut
   useEffect(() => {
@@ -200,7 +216,7 @@ const AppContent = () => {
       </main>
 
       <Footer />
-      {/* <AccessibilityWidget /> */}
+      <AccessibilityWidget />
     </div>
   );
 };
