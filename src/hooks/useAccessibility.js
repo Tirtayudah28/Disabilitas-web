@@ -1,20 +1,20 @@
-// src/hooks/useAccessibility.js - DIPERBAIKI untuk Mobile
-import { useState, useEffect } from 'react';
+// src/hooks/useAccessibility.js - VERSI SIMPLIFIED & BERGUNA
+import { useState, useEffect, useCallback } from 'react';
 
 export const useAccessibility = () => {
   const [accessibility, setAccessibility] = useState({
     highContrast: false,
-    textSize: 0,
+    textSize: 0, // 0: normal, 1: besar, 2: sangat besar
     readerMode: false,
     isSpeaking: false,
-    selectedVoice: null,
+    speechRate: 0.9, // Kecepatan bicara: 0.5 - 1.5
+    speechVolume: 0.8, // Volume: 0 - 1
   });
 
-  const [voices, setVoices] = useState([]);
-  const [isLoadingVoices, setIsLoadingVoices] = useState(true);
-  const [showVoiceMenu, setShowVoiceMenu] = useState(false);
+  const [hasIndonesianVoice, setHasIndonesianVoice] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
 
-  // Load settings from localStorage
+  // Load settings from localStorage saat pertama kali
   useEffect(() => {
     const saved = localStorage.getItem('accessibilitySettings');
     if (saved) {
@@ -23,176 +23,88 @@ export const useAccessibility = () => {
         setAccessibility(prev => ({
           ...prev,
           ...parsedSettings,
-          isSpeaking: false
+          isSpeaking: false // Reset speaking state
         }));
       } catch (error) {
         console.error('Error loading accessibility settings:', error);
       }
     }
+    setIsLoading(false);
   }, []);
 
-  // 🔥 PERBAIKAN UTAMA: Load available voices dengan filter untuk mobile
+  // Cek ketersediaan suara Indonesia
   useEffect(() => {
-    const loadVoices = () => {
+    const checkVoices = () => {
       if ('speechSynthesis' in window) {
         try {
-          const availableVoices = window.speechSynthesis.getVoices();
+          const voices = window.speechSynthesis.getVoices();
           
-          // Debug: log semua voice yang tersedia
-          console.log('🎯 Available voices:', availableVoices.map(v => ({
-            name: v.name,
-            lang: v.lang,
-            default: v.default,
-            localService: v.localService
+          // Debug: log semua voices yang tersedia
+          console.log('🔊 Available TTS voices:', voices.map(v => ({
+            name: v.name || 'Unnamed',
+            lang: v.lang || 'Unknown',
+            default: v.default
           })));
           
-          // Filter dan prioritaskan suara
-          const filteredVoices = filterAndPrioritizeVoices(availableVoices);
-          setVoices(filteredVoices);
-          setIsLoadingVoices(false);
+          // Cek apakah ada suara Indonesia
+          const indonesianVoice = voices.find(voice => {
+            const lang = voice.lang || '';
+            return lang.toLowerCase().includes('id') || 
+                   lang.toLowerCase().includes('indonesia') ||
+                   (voice.name && voice.name.toLowerCase().includes('indonesia'));
+          });
           
-          // Auto pilih voice Indonesia jika ada dan belum dipilih
-          if (!accessibility.selectedVoice && filteredVoices.length > 0) {
-            const indonesianVoice = filteredVoices.find(voice => 
-              voice.lang.toLowerCase().includes('id') || 
-              voice.lang.toLowerCase().includes('indonesia')
-            );
-            
-            if (indonesianVoice) {
-              console.log('🎯 Auto-selecting Indonesian voice:', indonesianVoice.name);
-              setAccessibility(prev => ({
-                ...prev,
-                selectedVoice: indonesianVoice
-              }));
-            } else {
-              // Pilih voice default jika tidak ada Indonesia
-              const defaultVoice = filteredVoices[0];
-              console.log('🎯 No Indonesian voice found, selecting default:', defaultVoice.name);
-              setAccessibility(prev => ({
-                ...prev,
-                selectedVoice: defaultVoice
-              }));
-            }
-          }
+          setHasIndonesianVoice(!!indonesianVoice);
           
-          // Fallback timeout untuk mobile
-          if (filteredVoices.length === 0) {
-            setTimeout(() => {
-              const fallbackVoices = window.speechSynthesis.getVoices();
-              if (fallbackVoices.length > 0 && fallbackVoices.length !== availableVoices.length) {
-                const reFiltered = filterAndPrioritizeVoices(fallbackVoices);
-                setVoices(reFiltered);
-                setIsLoadingVoices(false);
-              }
-            }, 2000);
+          if (indonesianVoice) {
+            console.log('✅ Indonesian voice found:', indonesianVoice.name, indonesianVoice.lang);
+          } else {
+            console.log('⚠️ No Indonesian voice found. Using browser default.');
           }
         } catch (error) {
-          console.error('Error loading voices:', error);
-          setIsLoadingVoices(false);
+          console.error('Error checking voices:', error);
         }
-      } else {
-        setIsLoadingVoices(false);
       }
-    };
-
-    const filterAndPrioritizeVoices = (voices) => {
-      if (!voices || voices.length === 0) return [];
-      
-      const voicePriorities = [
-        // Prioritas 1: Bahasa Indonesia
-        { pattern: /id-ID|id_ID|id\b/i, priority: 1 },
-        // Prioritas 2: Bahasa Melayu (mirip Indonesia)
-        { pattern: /ms-MY|ms_MY|ms\b/i, priority: 2 },
-        // Prioritas 3: Bahasa Inggris dengan aksen yang cocok
-        { pattern: /en-GB|en_GB|en-AU|en_AU/i, priority: 3 },
-        // Prioritas 4: Bahasa Inggris lainnya
-        { pattern: /en-US|en_US|en\b/i, priority: 4 },
-        // Prioritas 5: Bahasa lainnya
-        { pattern: /.*/, priority: 5 }
-      ];
-      
-      return voices
-        .map(voice => {
-          const lang = voice.lang || '';
-          let priority = 99;
-          
-          for (const { pattern, priority: p } of voicePriorities) {
-            if (pattern.test(lang)) {
-              priority = p;
-              break;
-            }
-          }
-          
-          return {
-            ...voice,
-            priority,
-            displayName: getVoiceDisplayName(voice)
-          };
-        })
-        .sort((a, b) => a.priority - b.priority);
-    };
-    
-    const getVoiceDisplayName = (voice) => {
-      const name = voice.name || 'Unknown Voice';
-      const lang = voice.lang || '';
-      
-      if (lang.toLowerCase().includes('id')) {
-        return `${name} (Bahasa Indonesia)`;
-      } else if (lang.toLowerCase().includes('ms')) {
-        return `${name} (Bahasa Melayu)`;
-      } else if (lang) {
-        return `${name} (${lang})`;
-      }
-      
-      return name;
     };
 
     if ('speechSynthesis' in window) {
-      // Set event listener untuk ketika voices berubah
-      window.speechSynthesis.onvoiceschanged = loadVoices;
+      // Event listener untuk ketika voices siap
+      window.speechSynthesis.onvoiceschanged = checkVoices;
       
-      // Initial load
-      loadVoices();
+      // Initial check
+      checkVoices();
       
-      // Timeout fallback untuk mobile (kadang voices butuh waktu lebih lama)
-      const timeoutId = setTimeout(() => {
-        if (voices.length === 0) {
-          const fallbackVoices = window.speechSynthesis.getVoices();
-          if (fallbackVoices.length > 0) {
-            const filtered = filterAndPrioritizeVoices(fallbackVoices);
-            setVoices(filtered);
-            setIsLoadingVoices(false);
-          }
-        }
-      }, 4000);
-
+      // Fallback check setelah 1 detik untuk mobile
+      const timeoutId = setTimeout(checkVoices, 1000);
+      
       return () => {
         clearTimeout(timeoutId);
-        if ('speechSynthesis' in window) {
-          window.speechSynthesis.onvoiceschanged = null;
-        }
+        window.speechSynthesis.onvoiceschanged = null;
       };
-    } else {
-      setIsLoadingVoices(false);
     }
-  }, [accessibility.selectedVoice]);
+  }, []);
 
-  // Save settings to localStorage
+  // Save settings to localStorage setiap kali ada perubahan
   useEffect(() => {
-    const { isSpeaking, ...settingsToSave } = accessibility;
-    localStorage.setItem('accessibilitySettings', JSON.stringify(settingsToSave));
-    applyAccessibilityStyles();
-  }, [accessibility]);
+    if (!isLoading) {
+      const { isSpeaking, ...settingsToSave } = accessibility;
+      localStorage.setItem('accessibilitySettings', JSON.stringify(settingsToSave));
+      applyAccessibilityStyles();
+    }
+  }, [accessibility, isLoading]);
 
+  // Terapkan styles ke body
   const applyAccessibilityStyles = () => {
     const body = document.body;
     
+    // Kontras tinggi
     if (accessibility.highContrast) {
       body.classList.add('high-contrast');
     } else {
       body.classList.remove('high-contrast');
     }
 
+    // Ukuran teks
     body.classList.remove('large-text', 'extra-large-text');
     if (accessibility.textSize === 1) {
       body.classList.add('large-text');
@@ -200,6 +112,7 @@ export const useAccessibility = () => {
       body.classList.add('extra-large-text');
     }
 
+    // Mode baca
     if (accessibility.readerMode) {
       body.classList.add('reader-mode');
     } else {
@@ -207,184 +120,297 @@ export const useAccessibility = () => {
     }
   };
 
-  // Fungsi untuk speak dengan voice terpilih
-  const speakText = (text, options = {}) => {
+  // Fungsi utama untuk text-to-speech - SELALU gunakan bahasa Indonesia
+  const speakText = useCallback((text, options = {}) => {
     if (!('speechSynthesis' in window)) {
-      alert('Browser tidak mendukung text-to-speech');
+      console.warn('Browser tidak mendukung text-to-speech');
       return;
     }
 
-    // Cancel any ongoing speech
+    // Hentikan speech yang sedang berjalan
     if (window.speechSynthesis.speaking) {
       window.speechSynthesis.cancel();
     }
 
     const utterance = new SpeechSynthesisUtterance(text);
     
-    // Gunakan voice yang dipilih
-    if (accessibility.selectedVoice) {
-      utterance.voice = accessibility.selectedVoice;
-      utterance.lang = accessibility.selectedVoice.lang;
-      console.log('🔊 Using selected voice:', accessibility.selectedVoice.name);
-    } else {
-      // Fallback: cari voice Indonesia
-      const availableVoices = window.speechSynthesis.getVoices();
-      const indonesianVoice = availableVoices.find(v => 
-        v.lang.toLowerCase().includes('id')
-      );
+    // SELALU set bahasa Indonesia
+    utterance.lang = 'id-ID';
+    
+    // Cari suara Indonesia jika ada
+    if (hasIndonesianVoice) {
+      const voices = window.speechSynthesis.getVoices();
+      const indonesianVoice = voices.find(voice => {
+        const lang = voice.lang || '';
+        return lang.toLowerCase().includes('id') || 
+               lang.toLowerCase().includes('indonesia');
+      });
+      
       if (indonesianVoice) {
         utterance.voice = indonesianVoice;
-        utterance.lang = indonesianVoice.lang;
-        console.log('🔊 Using auto-found Indonesian voice:', indonesianVoice.name);
-      } else {
-        // Fallback ke bahasa Indonesia default
-        utterance.lang = 'id-ID';
-        console.log('🔊 Using default Indonesian language');
       }
     }
-
-    utterance.rate = options.rate || 0.9;
+    
+    // Gunakan pengaturan dari state atau options
+    utterance.rate = options.rate || accessibility.speechRate || 0.9;
     utterance.pitch = options.pitch || 1;
-    utterance.volume = options.volume || 0.8;
+    utterance.volume = options.volume || accessibility.speechVolume || 0.8;
 
+    // Event handlers
     utterance.onstart = () => {
+      console.log('🔊 Speech started:', text.substring(0, 50) + '...');
       setAccessibility(prev => ({ ...prev, isSpeaking: true }));
     };
 
     utterance.onend = () => {
+      console.log('🔊 Speech ended');
       setAccessibility(prev => ({ ...prev, isSpeaking: false }));
     };
 
     utterance.onerror = (event) => {
-      console.error('Speech synthesis error:', event);
+      console.error('🔊 Speech error:', event);
       setAccessibility(prev => ({ ...prev, isSpeaking: false }));
     };
 
+    // Mulai berbicara
     window.speechSynthesis.speak(utterance);
-  };
-
-  // Fungsi untuk ganti voice
-  const selectVoice = (voice) => {
-    if (!voice) return;
     
-    setAccessibility(prev => ({
-      ...prev,
-      selectedVoice: voice
-    }));
-    setShowVoiceMenu(false);
-    showNotification(`Suara diubah ke: ${voice.name}`);
-    console.log('✅ Voice selected:', voice.name, voice.lang);
-  };
+  }, [hasIndonesianVoice, accessibility.speechRate, accessibility.speechVolume]);
 
-  // Toggle voice menu
-  const toggleVoiceMenu = () => {
-    setShowVoiceMenu(!showVoiceMenu);
-  };
-
-  // Fungsi baca halaman
-  const readPageContent = () => {
-    if (accessibility.isSpeaking) {
-      stopSpeaking();
-      return;
-    }
-
-    const mainHeading = document.querySelector('h1');
-    if (mainHeading) {
-      speakText(mainHeading.textContent);
-      showNotification('Membaca halaman...');
-    } else {
-      showNotification('Tidak ada konten untuk dibaca');
-    }
-  };
-
-  const stopSpeaking = () => {
+  // Hentikan pembicaraan
+  const stopSpeaking = useCallback(() => {
     if ('speechSynthesis' in window) {
       window.speechSynthesis.cancel();
+      setAccessibility(prev => ({ ...prev, isSpeaking: false }));
     }
-    setAccessibility(prev => ({ ...prev, isSpeaking: false }));
-  };
+  }, []);
 
-  const showNotification = (message) => {
-    const existingNotification = document.querySelector('.speech-notification');
-    if (existingNotification) {
-      existingNotification.remove();
+  // Pause pembicaraan
+  const pauseSpeaking = useCallback(() => {
+    if ('speechSynthesis' in window && window.speechSynthesis.speaking) {
+      window.speechSynthesis.pause();
     }
+  }, []);
 
-    const notification = document.createElement('div');
-    notification.className = 'fixed bottom-4 right-4 bg-primary-600 text-white p-3 rounded-lg shadow-lg z-50 speech-notification';
-    notification.textContent = message;
-    document.body.appendChild(notification);
+  // Resume pembicaraan
+  const resumeSpeaking = useCallback(() => {
+    if ('speechSynthesis' in window && window.speechSynthesis.paused) {
+      window.speechSynthesis.resume();
+    }
+  }, []);
 
-    setTimeout(() => {
-      if (notification.parentNode) {
-        notification.remove();
-      }
-    }, 3000);
-  };
+  // Toggle kontras tinggi
+  const toggleHighContrast = useCallback(() => {
+    setAccessibility(prev => ({ 
+      ...prev, 
+      highContrast: !prev.highContrast 
+    }));
+  }, []);
 
-  // Fungsi untuk toggle text size dengan parameter
-  const toggleTextSize = (direction) => {
+  // Ubah ukuran teks
+  const toggleTextSize = useCallback((direction) => {
     setAccessibility(prev => {
       let newSize = prev.textSize;
-      if (direction === 1) {
+      if (direction === 1 || direction === 'increase') {
         newSize = Math.min(2, prev.textSize + 1);
-      } else if (direction === -1) {
+      } else if (direction === -1 || direction === 'decrease') {
         newSize = Math.max(0, prev.textSize - 1);
       } else {
         newSize = (prev.textSize + 1) % 3;
       }
       return { ...prev, textSize: newSize };
     });
-  };
+  }, []);
 
-  const toggleHighContrast = () => {
-    setAccessibility(prev => ({ ...prev, highContrast: !prev.highContrast }));
-  };
+  // Toggle mode baca
+  const toggleReaderMode = useCallback(() => {
+    setAccessibility(prev => ({ 
+      ...prev, 
+      readerMode: !prev.readerMode 
+    }));
+  }, []);
 
-  const toggleReaderMode = () => {
-    setAccessibility(prev => ({ ...prev, readerMode: !prev.readerMode }));
-  };
+  // Atur kecepatan bicara
+  const setSpeechRate = useCallback((rate) => {
+    const newRate = Math.max(0.5, Math.min(1.5, rate));
+    setAccessibility(prev => ({ 
+      ...prev, 
+      speechRate: newRate 
+    }));
+  }, []);
+
+  // Atur volume
+  const setSpeechVolume = useCallback((volume) => {
+    const newVolume = Math.max(0, Math.min(1, volume));
+    setAccessibility(prev => ({ 
+      ...prev, 
+      speechVolume: newVolume 
+    }));
+  }, []);
+
+  // Reset semua pengaturan ke default
+  const resetSettings = useCallback(() => {
+    const defaultSettings = {
+      highContrast: false,
+      textSize: 0,
+      readerMode: false,
+      isSpeaking: false,
+      speechRate: 0.9,
+      speechVolume: 0.8,
+    };
+    
+    setAccessibility(defaultSettings);
+    localStorage.setItem('accessibilitySettings', JSON.stringify({
+      highContrast: false,
+      textSize: 0,
+      readerMode: false,
+      speechRate: 0.9,
+      speechVolume: 0.8,
+    }));
+    
+    // Hapus semua class dari body
+    const body = document.body;
+    body.classList.remove('high-contrast', 'large-text', 'extra-large-text', 'reader-mode');
+    
+    showNotification('Pengaturan direset ke default');
+  }, []);
+
+  // Notifikasi sederhana
+  const showNotification = useCallback((message) => {
+    // Hapus notifikasi lama jika ada
+    const oldNotification = document.querySelector('.accessibility-notification');
+    if (oldNotification) {
+      oldNotification.remove();
+    }
+
+    // Buat notifikasi baru
+    const notification = document.createElement('div');
+    notification.className = 'accessibility-notification fixed bottom-4 right-4 bg-blue-600 text-white px-4 py-3 rounded-lg shadow-lg z-[9999] animate-fade-in';
+    notification.textContent = message;
+    notification.style.maxWidth = '300px';
+    
+    document.body.appendChild(notification);
+
+    // Hapus setelah 3 detik
+    setTimeout(() => {
+      if (notification.parentNode) {
+        notification.remove();
+      }
+    }, 3000);
+  }, []);
+
+  // Baca halaman saat ini
+  const readCurrentPage = useCallback(() => {
+    if (accessibility.isSpeaking) {
+      stopSpeaking();
+      return;
+    }
+
+    // Ambil konten utama halaman
+    const mainContent = document.querySelector('main') || 
+                       document.querySelector('.main-content') || 
+                       document.querySelector('#main-content') ||
+                       document.querySelector('[role="main"]');
+    
+    let textToRead = '';
+    
+    if (mainContent) {
+      // Clone element untuk menghindari perubahan DOM
+      const clone = mainContent.cloneNode(true);
+      
+      // Hapus elemen yang tidak perlu dibaca
+      const elementsToRemove = clone.querySelectorAll('script, style, nav, footer, .hidden, [aria-hidden="true"]');
+      elementsToRemove.forEach(el => el.remove());
+      
+      // Ambil teks
+      textToRead = clone.textContent || clone.innerText;
+      
+      // Bersihkan teks (hapus spasi berlebih, dll)
+      textToRead = textToRead
+        .replace(/\s+/g, ' ')
+        .replace(/\n+/g, ' ')
+        .trim();
+        
+      // Batasi panjang teks (maks 1000 karakter)
+      if (textToRead.length > 1000) {
+        textToRead = textToRead.substring(0, 1000) + '...';
+      }
+    } else {
+      // Fallback: ambil judul halaman
+      const pageTitle = document.title || 'Halaman';
+      textToRead = `Halaman: ${pageTitle}. Silakan gunakan navigasi untuk menjelajahi konten.`;
+    }
+    
+    if (textToRead) {
+      speakText(textToRead);
+      showNotification('Membaca konten halaman...');
+    } else {
+      showNotification('Tidak ada konten yang bisa dibaca');
+    }
+  }, [accessibility.isSpeaking, speakText, stopSpeaking, showNotification]);
 
   return {
+    // State
     accessibility,
-    voices,
-    isLoadingVoices, // 🔥 TAMBAHKAN INI
-    showVoiceMenu,
+    hasIndonesianVoice,
+    isLoading,
+    
+    // Aksi untuk visual
     toggleHighContrast,
     toggleTextSize,
     toggleReaderMode,
+    
+    // Aksi untuk suara
     speakText,
     stopSpeaking,
-    readPageContent,
-    selectVoice,
-    toggleVoiceMenu,
+    pauseSpeaking,
+    resumeSpeaking,
+    setSpeechRate,
+    setSpeechVolume,
+    readCurrentPage,
+    
+    // Aksi lainnya
+    resetSettings,
+    showNotification,
+    
+    // Status
     isSpeaking: accessibility.isSpeaking,
+    speechRate: accessibility.speechRate,
+    speechVolume: accessibility.speechVolume,
   };
 };
 
-// Di src/hooks/useAccessibility.js - Tambahkan fungsi bantuan
+// Fungsi bantuan untuk perintah suara (export terpisah)
 export const speakHelpCommands = () => {
   if ('speechSynthesis' in window) {
     const helpText = `
       Daftar perintah navigasi suara: 
-      Katakan BERANDA untuk menuju halaman utama,
-      Katakan CARI LOWONGAN untuk mencari pekerjaan,
-      Katakan PROFIL untuk mengakses profil Anda,
-      Katakan RESUME untuk mengelola resume,
-      Katakan PERUSAHAAN untuk melihat perusahaan,
-      Katakan LAMARAN untuk melihat riwayat lamar,
-      Katakan KEMBALI untuk kembali ke halaman sebelumnya,
-      Katakan REFRESH untuk memuat ulang halaman,
-      Katakan BANTUAN untuk mendengar panduan ini lagi
+      Katakan "beranda" untuk menuju halaman utama,
+      Katakan "cari lowongan" untuk mencari pekerjaan,
+      Katakan "profil" untuk mengakses profil Anda,
+      Katakan "resume" untuk mengelola resume,
+      Katakan "perusahaan" untuk melihat perusahaan,
+      Katakan "lamaran" untuk melihat riwayat lamar,
+      Katakan "kembali" untuk kembali ke halaman sebelumnya,
+      Katakan "refresh" untuk memuat ulang halaman,
+      Katakan "baca halaman" untuk mendengar konten,
+      Katakan "bantuan" untuk mendengar panduan ini lagi
     `;
     
     const utterance = new SpeechSynthesisUtterance(helpText);
     utterance.lang = 'id-ID';
     utterance.rate = 0.8;
+    utterance.volume = 0.9;
     
+    // Cari suara Indonesia
     const voices = window.speechSynthesis.getVoices();
-    const indonesianVoice = voices.find(voice => voice.lang.includes('id'));
-    if (indonesianVoice) utterance.voice = indonesianVoice;
+    const indonesianVoice = voices.find(voice => 
+      (voice.lang || '').toLowerCase().includes('id')
+    );
+    
+    if (indonesianVoice) {
+      utterance.voice = indonesianVoice;
+    }
     
     window.speechSynthesis.speak(utterance);
   }

@@ -391,58 +391,6 @@ const AccessibilityWidget = () => {
                 </button>
               </div>
 
-              {/* Pemilihan Suara - DIPERBAIKI */}
-              <div>
-                <div className="font-medium mb-1">Pilih Suara</div>
-                
-                {isLoadingVoices ? (
-                  <div className="text-sm text-gray-500 py-2">
-                    <i className="fas fa-spinner fa-spin mr-2"></i>
-                    Memuat daftar suara...
-                  </div>
-                ) : voices.length === 0 ? (
-                  <div className="text-sm text-gray-500 py-2">
-                    <i className="fas fa-exclamation-triangle mr-2"></i>
-                    Tidak ada suara tersedia. Aplikasi akan menggunakan suara default.
-                  </div>
-                ) : (
-                  <>
-                    <select
-                      className="w-full border rounded-lg p-2 text-sm hover:border-blue-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition"
-                      value={accessibility?.selectedVoice?.name || ""}
-                      onChange={(e) => {
-                        const selectedVoice = voices.find((v) => v.name === e.target.value);
-                        if (selectedVoice) {
-                          selectVoice(selectedVoice);
-                        }
-                      }}
-                      aria-label="Pilih suara untuk text-to-speech"
-                    >
-                      <option value="" disabled>
-                        {voices.length === 1 ? "Hanya 1 suara tersedia" : "Pilih suara..."}
-                      </option>
-                      {voices.map((voice, i) => (
-                        <option key={i} value={voice.name}>
-                          {getVoiceDisplayName(voice)}
-                        </option>
-                      ))}
-                    </select>
-                    <div className="text-xs text-gray-500 mt-1">
-                      Suara aktif: {getVoiceDisplayName(accessibility?.selectedVoice) || "Default"}
-                    </div>
-                  </>
-                )}
-                
-                {/* Warning untuk mobile */}
-                {isMobile && voices.length > 0 && !voices.some(v => v.lang.toLowerCase().includes('id')) && (
-                  <div className="text-xs text-amber-600 bg-amber-50 p-2 rounded mt-2">
-                    <i className="fas fa-info-circle mr-1"></i>
-                    <strong>Tips:</strong> Browser mobile mungkin tidak memiliki suara Indonesia. 
-                    Coba gunakan browser Chrome/Edge versi terbaru untuk pengalaman terbaik.
-                  </div>
-                )}
-              </div>
-
               {/* TOMBOL BANTUAN DI BAWAH */}
               <div className="pt-4 border-t border-gray-200">
                 <button
