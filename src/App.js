@@ -10,6 +10,7 @@ import {
 import { Provider } from "react-redux";
 import { store } from "./store";
 import { SearchProvider } from "./contexts/SearchContext";
+import { ElevenLabsService } from './utils/elevenlabsService';
 
 // Import semua components
 import Header from "./components/layout/Header";
@@ -57,24 +58,61 @@ const VoiceNavigationInitializer = ({ children }) => {
       INISIALISASI VOICE SYSTEM
   =============================== */
   useEffect(() => {
-    const initializeVoiceNav = () => {
-      testMicrophoneAccess();
+    const initializeVoiceNav = async () => { // 🆕 Tambahkan async
+      await testMicrophoneAccess();
 
-      // Welcome message (sekali saja)
-      setTimeout(() => {
-          if ("speechSynthesis" in window && !speechSynthesis.speaking) {
-            const welcomeMessage = new SpeechSynthesisUtterance(
-              'Selamat datang di Kerja Inklusif. ' +
-              'Untuk navigasi suara, katakan "bantuan" untuk mendengar semua perintah yang tersedia. ' +
-              'Atau coba katakan "baca halaman" untuk memulai.'
-            );
-            welcomeMessage.lang = "id-ID";
-            welcomeMessage.rate = 0.9;
-            welcomeMessage.volume = 0.7;
-
-            speechSynthesis.speak(welcomeMessage);
-          }
-        }, 3000);
+      // Welcome message dengan ElevenLabs
+      // setTimeout(async () => { // 🆕 Tambahkan async
+      //   try {
+      //     // 🆕 Gunakan ElevenLabs untuk welcome message
+      //     const audioUrl = await ElevenLabsService.generateSpeech(
+      //       'Selamat datang di Kerja Inklusif. ' +
+      //       'Untuk navigasi suara, katakan "bantuan" untuk mendengar semua perintah yang tersedia. ' +
+      //       'Atau coba katakan "baca halaman" untuk memulai.',
+      //       {
+      //         voiceId: '21m00Tcm4TlvDq8ikWAM',
+      //         settings: {
+      //           stability: 0.5,
+      //           similarity_boost: 0.75,
+      //           language: 'id',
+      //           rate: 0.9
+      //         }
+      //       }
+      //     );
+          
+      //     const audio = new Audio(audioUrl);
+      //     audio.volume = 0.7;
+      //     audio.play();
+          
+      //   } catch (error) {
+      //     console.error('ElevenLabs welcome message failed:', error);
+      //     // 🆕 Fallback ke Web Speech API
+      //     if ("speechSynthesis" in window && !speechSynthesis.speaking) {
+      //       const welcomeMessage = new SpeechSynthesisUtterance(
+      //         'Selamat datang di Kerja Inklusif. ' +
+      //         'Untuk navigasi suara, katakan "bantuan" untuk mendengar semua perintah yang tersedia. ' +
+      //         'Atau coba katakan "baca halaman" untuk memulai.'
+      //       );
+      //       welcomeMessage.lang = "id-ID";
+      //       welcomeMessage.rate = 0.9;
+      //       welcomeMessage.volume = 0.7;
+      //       speechSynthesis.speak(welcomeMessage);
+      //     }
+      //   }
+      // }, 3000);
+      // setTimeout(() => {
+      //   // Langsung pakai Web Speech API tanpa coba ElevenLabs dulu
+      //   if ("speechSynthesis" in window && !speechSynthesis.speaking) {
+      //     const welcomeMessage = new SpeechSynthesisUtterance(
+      //       'Selamat datang di Kerja Inklusif. ' +
+      //       'Untuk navigasi suara, katakan "bantuan" untuk mendengar semua perintah yang tersedia.'
+      //     );
+      //     welcomeMessage.lang = "id-ID";
+      //     welcomeMessage.rate = 0.9;
+      //     welcomeMessage.volume = 0.7;
+      //     speechSynthesis.speak(welcomeMessage);
+      //   }
+      // }, 3000);
 
       setIsInitialized(true);
     };
@@ -91,17 +129,16 @@ const VoiceNavigationInitializer = ({ children }) => {
       }
     };
 
-    const timer = setTimeout(initializeVoiceNav, 2000);
+    const timer = setTimeout(() => {
+      initializeVoiceNav();
+    }, 2000);
     return () => clearTimeout(timer);
   }, []);
 
   /* ===============================
       STOP BACAAN JIKA PINDAH HALAMAN MANUAL
-     (SOLUSI MASALAH UTAMA)
   =============================== */
   useEffect(() => {
-    // ❌ JANGAN BACA OTOMATIS
-    // ✅ HANYA STOP JIKA ADA BACAAN AKTIF
     speechController.markManualNavigation();
     speechController.stopIfManualNavigation();
   }, [location.pathname]);
@@ -119,6 +156,17 @@ const AppContent = () => {
   const location = useLocation();
 
   useEffect(() => {
+     const preloadVoices = async () => {
+      try {
+        await ElevenLabsService.getVoices();
+        console.log('✅ ElevenLabs voices preloaded');
+      } catch (error) {
+        console.warn('⚠️ Failed to preload voices:', error);
+      }
+    };
+    
+    preloadVoices();
+
     const timer = setTimeout(() => {
       setIsLoading(false);
     }, 2000);

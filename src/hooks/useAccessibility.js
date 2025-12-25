@@ -1,5 +1,6 @@
-// src/hooks/useAccessibility.js - VERSI SIMPLIFIED & BERGUNA
+// src/hooks/useAccessibility.js - VERSI ELEVENLABS
 import { useState, useEffect, useCallback } from 'react';
+import { ElevenLabsService } from '../utils/elevenlabsService';
 
 export const useAccessibility = () => {
   const [accessibility, setAccessibility] = useState({
@@ -9,12 +10,17 @@ export const useAccessibility = () => {
     isSpeaking: false,
     speechRate: 0.9, // Kecepatan bicara: 0.5 - 1.5
     speechVolume: 0.8, // Volume: 0 - 1
+    selectedVoice: '21m00Tcm4TlvDq8ikWAM', 
   });
 
-  const [hasIndonesianVoice, setHasIndonesianVoice] = useState(false);
+  // State untuk loading
   const [isLoading, setIsLoading] = useState(true);
+  
+  // State untuk voices dari ElevenLabs
+  const [availableVoices, setAvailableVoices] = useState([]);
+  const [isLoadingVoices, setIsLoadingVoices] = useState(false);
 
-  // Load settings from localStorage saat pertama kali
+  // Load settings dari localStorage saat pertama kali
   useEffect(() => {
     const saved = localStorage.getItem('accessibilitySettings');
     if (saved) {
@@ -23,64 +29,42 @@ export const useAccessibility = () => {
         setAccessibility(prev => ({
           ...prev,
           ...parsedSettings,
-          isSpeaking: false // Reset speaking state
+          isSpeaking: false,
+          selectedVoice: parsedSettings.selectedVoice || '21m00Tcm4TlvDq8ikWAM'
         }));
       } catch (error) {
         console.error('Error loading accessibility settings:', error);
       }
     }
     setIsLoading(false);
+    
+    // Load voices dari ElevenLabs
+    loadElevenLabsVoices();
   }, []);
 
-  // Cek ketersediaan suara Indonesia
-  useEffect(() => {
-    const checkVoices = () => {
-      if ('speechSynthesis' in window) {
-        try {
-          const voices = window.speechSynthesis.getVoices();
-          
-          // Debug: log semua voices yang tersedia
-          console.log('🔊 Available TTS voices:', voices.map(v => ({
-            name: v.name || 'Unnamed',
-            lang: v.lang || 'Unknown',
-            default: v.default
-          })));
-          
-          // Cek apakah ada suara Indonesia
-          const indonesianVoice = voices.find(voice => {
-            const lang = voice.lang || '';
-            return lang.toLowerCase().includes('id') || 
-                   lang.toLowerCase().includes('indonesia') ||
-                   (voice.name && voice.name.toLowerCase().includes('indonesia'));
-          });
-          
-          setHasIndonesianVoice(!!indonesianVoice);
-          
-          if (indonesianVoice) {
-            console.log('✅ Indonesian voice found:', indonesianVoice.name, indonesianVoice.lang);
-          } else {
-            console.log('⚠️ No Indonesian voice found. Using browser default.');
-          }
-        } catch (error) {
-          console.error('Error checking voices:', error);
+  // Fungsi untuk load voices dari ElevenLabs
+  const loadElevenLabsVoices = useCallback(async () => {
+    setIsLoadingVoices(true);
+    try {
+      const voicesData = await ElevenLabsService.getVoices();
+      setAvailableVoices(voicesData.recommendedVoices || []);
+    } catch (error) {
+      console.error('Error loading ElevenLabs voices:', error);
+      // Fallback voices
+      setAvailableVoices([
+        {
+          voice_id: '21m00Tcm4TlvDq8ikWAM',
+          name: 'Rachel',
+          description: 'Suara default (English)'
+        },
+        {
+          voice_id: 'EXAVITQu4vr4xnSDxMaL',
+          name: 'Bella',
+          description: 'Suara natural (English)'
         }
-      }
-    };
-
-    if ('speechSynthesis' in window) {
-      // Event listener untuk ketika voices siap
-      window.speechSynthesis.onvoiceschanged = checkVoices;
-      
-      // Initial check
-      checkVoices();
-      
-      // Fallback check setelah 1 detik untuk mobile
-      const timeoutId = setTimeout(checkVoices, 1000);
-      
-      return () => {
-        clearTimeout(timeoutId);
-        window.speechSynthesis.onvoiceschanged = null;
-      };
+      ]);
+    } finally {
+      setIsLoadingVoices(false);
     }
   }, []);
 
@@ -120,10 +104,53 @@ export const useAccessibility = () => {
     }
   };
 
-  // Fungsi utama untuk text-to-speech - SELALU gunakan bahasa Indonesia
-  const speakText = useCallback((text, options = {}) => {
+  // Update speakText function:
+const speakText = useCallback(async (text, options = {}) => {
+  setAccessibility(prev => ({ ...prev, isSpeaking: true }));
+
+  try {
+    const audioUrl = await ElevenLabsService.generateSpeech(text, {
+      voiceId: accessibility.selectedVoice || '21m00Tcm4TlvDq8ikWAM',
+      stability: options.stability || 0.5,
+      similarityBoost: options.similarityBoost || 0.75
+    });
+    
+    // Cek jika fallback ke Web Speech
+    if (audioUrl === 'web-speech-fallback') {
+      fallbackToWebSpeech(text);
+      return;
+    }
+    
+    const audio = new Audio(audioUrl);
+    
+    audio.onplay = () => {
+      console.log('🔊 ElevenLabs speech started');
+    };
+    
+    audio.onended = () => {
+      console.log('🔊 Speech ended');
+      setAccessibility(prev => ({ ...prev, isSpeaking: false }));
+    };
+    
+    audio.onerror = (error) => {
+      console.error('🔊 Audio error:', error);
+      setAccessibility(prev => ({ ...prev, isSpeaking: false }));
+      fallbackToWebSpeech(text);
+    };
+    
+    audio.play();
+    
+  } catch (error) {
+    console.error('ElevenLabs failed, using fallback:', error);
+    fallbackToWebSpeech(text);
+  }
+}, [accessibility.selectedVoice]);
+
+  // Fungsi fallback ke Web Speech API
+  const fallbackToWebSpeech = useCallback((text) => {
     if (!('speechSynthesis' in window)) {
       console.warn('Browser tidak mendukung text-to-speech');
+      setAccessibility(prev => ({ ...prev, isSpeaking: false }));
       return;
     }
 
@@ -133,56 +160,33 @@ export const useAccessibility = () => {
     }
 
     const utterance = new SpeechSynthesisUtterance(text);
-    
-    // SELALU set bahasa Indonesia
     utterance.lang = 'id-ID';
-    
-    // Cari suara Indonesia jika ada
-    if (hasIndonesianVoice) {
-      const voices = window.speechSynthesis.getVoices();
-      const indonesianVoice = voices.find(voice => {
-        const lang = voice.lang || '';
-        return lang.toLowerCase().includes('id') || 
-               lang.toLowerCase().includes('indonesia');
-      });
-      
-      if (indonesianVoice) {
-        utterance.voice = indonesianVoice;
-      }
-    }
-    
-    // Gunakan pengaturan dari state atau options
-    utterance.rate = options.rate || accessibility.speechRate || 0.9;
-    utterance.pitch = options.pitch || 1;
-    utterance.volume = options.volume || accessibility.speechVolume || 0.8;
+    utterance.rate = accessibility.speechRate || 0.9;
+    utterance.volume = accessibility.speechVolume || 0.8;
 
-    // Event handlers
     utterance.onstart = () => {
-      console.log('🔊 Speech started:', text.substring(0, 50) + '...');
-      setAccessibility(prev => ({ ...prev, isSpeaking: true }));
+      console.log('🔊 Web Speech fallback started');
     };
 
     utterance.onend = () => {
-      console.log('🔊 Speech ended');
       setAccessibility(prev => ({ ...prev, isSpeaking: false }));
     };
 
-    utterance.onerror = (event) => {
-      console.error('🔊 Speech error:', event);
+    utterance.onerror = () => {
       setAccessibility(prev => ({ ...prev, isSpeaking: false }));
     };
 
-    // Mulai berbicara
     window.speechSynthesis.speak(utterance);
-    
-  }, [hasIndonesianVoice, accessibility.speechRate, accessibility.speechVolume]);
+  }, [accessibility.speechRate, accessibility.speechVolume]);
 
   // Hentikan pembicaraan
   const stopSpeaking = useCallback(() => {
+    // Hentikan audio dari ElevenLabs (akan dihandle oleh speechController)
+    // Web Speech API fallback
     if ('speechSynthesis' in window) {
       window.speechSynthesis.cancel();
-      setAccessibility(prev => ({ ...prev, isSpeaking: false }));
     }
+    setAccessibility(prev => ({ ...prev, isSpeaking: false }));
   }, []);
 
   // Pause pembicaraan
@@ -248,6 +252,20 @@ export const useAccessibility = () => {
     }));
   }, []);
 
+  // Fungsi untuk memilih voice ElevenLabs
+  const selectVoice = useCallback((voiceId) => {
+    setAccessibility(prev => ({ 
+      ...prev, 
+      selectedVoice: voiceId 
+    }));
+    
+    // Cari nama voice untuk notifikasi
+    const selectedVoice = availableVoices.find(v => v.voice_id === voiceId);
+    if (selectedVoice) {
+      showNotification(`Suara diubah ke ${selectedVoice.name}`);
+    }
+  }, [availableVoices]);
+
   // Reset semua pengaturan ke default
   const resetSettings = useCallback(() => {
     const defaultSettings = {
@@ -257,6 +275,7 @@ export const useAccessibility = () => {
       isSpeaking: false,
       speechRate: 0.9,
       speechVolume: 0.8,
+      selectedVoice: '21m00Tcm4TlvDq8ikWAM',
     };
     
     setAccessibility(defaultSettings);
@@ -266,6 +285,7 @@ export const useAccessibility = () => {
       readerMode: false,
       speechRate: 0.9,
       speechVolume: 0.8,
+      selectedVoice: '21m00Tcm4TlvDq8ikWAM',
     }));
     
     // Hapus semua class dari body
@@ -352,13 +372,17 @@ export const useAccessibility = () => {
   return {
     // State
     accessibility,
-    hasIndonesianVoice,
+    voices: availableVoices,
+    isLoadingVoices,
     isLoading,
     
     // Aksi untuk visual
     toggleHighContrast,
     toggleTextSize,
     toggleReaderMode,
+    
+    // Aksi untuk voice selection
+    selectVoice,
     
     // Aksi untuk suara
     speakText,
@@ -377,41 +401,39 @@ export const useAccessibility = () => {
     isSpeaking: accessibility.isSpeaking,
     speechRate: accessibility.speechRate,
     speechVolume: accessibility.speechVolume,
+    selectedVoice: accessibility.selectedVoice,
   };
 };
 
 // Fungsi bantuan untuk perintah suara (export terpisah)
-export const speakHelpCommands = () => {
-  if ('speechSynthesis' in window) {
-    const helpText = `
-      Daftar perintah navigasi suara: 
-      Katakan "beranda" untuk menuju halaman utama,
-      Katakan "cari lowongan" untuk mencari pekerjaan,
-      Katakan "profil" untuk mengakses profil Anda,
-      Katakan "resume" untuk mengelola resume,
-      Katakan "perusahaan" untuk melihat perusahaan,
-      Katakan "lamaran" untuk melihat riwayat lamar,
-      Katakan "kembali" untuk kembali ke halaman sebelumnya,
-      Katakan "refresh" untuk memuat ulang halaman,
-      Katakan "baca halaman" untuk mendengar konten,
-      Katakan "bantuan" untuk mendengar panduan ini lagi
-    `;
-    
-    const utterance = new SpeechSynthesisUtterance(helpText);
-    utterance.lang = 'id-ID';
-    utterance.rate = 0.8;
-    utterance.volume = 0.9;
-    
-    // Cari suara Indonesia
-    const voices = window.speechSynthesis.getVoices();
-    const indonesianVoice = voices.find(voice => 
-      (voice.lang || '').toLowerCase().includes('id')
-    );
-    
-    if (indonesianVoice) {
-      utterance.voice = indonesianVoice;
+export const speakHelpCommands = async () => {
+  const helpText = `
+    Daftar perintah navigasi suara: 
+    Katakan "beranda" untuk menuju halaman utama,
+    Katakan "cari lowongan" untuk mencari pekerjaan,
+    Katakan "profil" untuk mengakses profil Anda,
+    Katakan "perusahaan" untuk melihat perusahaan,
+    Katakan "lamaran" untuk melihat riwayat lamar,
+    Katakan "kembali" untuk kembali ke halaman sebelumnya,
+    Katakan "refresh" untuk memuat ulang halaman,
+    Katakan "baca halaman" untuk mendengar konten,
+    Katakan "bantuan" untuk mendengar panduan ini lagi
+  `;
+  
+  try {
+    const audioUrl = await ElevenLabsService.generateSpeech(helpText, {
+      voiceId: '21m00Tcm4TlvDq8ikWAM'
+    });
+    const audio = new Audio(audioUrl);
+    audio.play();
+  } catch (error) {
+    // Fallback ke Web Speech API
+    if ('speechSynthesis' in window) {
+      const utterance = new SpeechSynthesisUtterance(helpText);
+      utterance.lang = 'id-ID';
+      utterance.rate = 0.8;
+      utterance.volume = 0.9;
+      window.speechSynthesis.speak(utterance);
     }
-    
-    window.speechSynthesis.speak(utterance);
   }
 };

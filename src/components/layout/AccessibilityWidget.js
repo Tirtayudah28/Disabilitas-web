@@ -2,17 +2,19 @@ import React, { useState, useEffect } from "react";
 import { useAccessibility } from "../../hooks/useAccessibility";
 import { useVoiceNavigation } from "../../hooks/useVoiceNavigation";
 import { speechController } from "../../utils/speechController";
+import { ElevenLabsService } from "../../utils/elevenlabsService";
 
 const AccessibilityWidget = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [showHelpModal, setShowHelpModal] = useState(false);
   const [forceUpdate, setForceUpdate] = useState(0);
-  const [voicesLoaded, setVoicesLoaded] = useState(false);
+  const [availableVoices, setAvailableVoices] = useState([]);
+  const [isLoadingVoices, setIsLoadingVoices] = useState(false);
 
   const {
     accessibility,
     voices = [],
-    isLoadingVoices,
+    isLoadingVoices: isLoadingHookVoices,
     toggleHighContrast,
     toggleTextSize,
     toggleReaderMode,
@@ -33,13 +35,41 @@ const AccessibilityWidget = () => {
     setShowHelpModal(!showHelpModal);
   };
 
+  // Load voices dari backend saat widget dibuka
   useEffect(() => {
+    const loadVoices = async () => {
+      if (!isOpen) return;
+      
+      setIsLoadingVoices(true);
+      try {
+        const voicesData = await ElevenLabsService.getVoices();
+        setAvailableVoices(voicesData.recommendedVoices || []);
+      } catch (error) {
+        console.error("Failed to load voices:", error);
+        // Fallback voices
+        setAvailableVoices([
+          { voice_id: '21m00Tcm4TlvDq8ikWAM', name: 'Rachel', description: 'Suara default' },
+          { voice_id: 'EXAVITQu4vr4xnSDxMaL', name: 'Bella', description: 'Suara natural' }
+        ]);
+      } finally {
+        setIsLoadingVoices(false);
+      }
+    };
+
+    loadVoices();
+  }, [isOpen]);
+
+  // Update status pembacaan
+  useEffect(() => {
+    let interval;
     if (speechController.isReading()) {
-      const interval = setInterval(() => {
+      interval = setInterval(() => {
         setForceUpdate(prev => prev + 1);
       }, 500);
-      return () => clearInterval(interval);
     }
+    return () => {
+      if (interval) clearInterval(interval);
+    };
   }, [speechController.isReading()]);
 
   const handlePauseResume = () => {
@@ -54,7 +84,7 @@ const AccessibilityWidget = () => {
   };
 
   const getPauseResumeInfo = () => {
-    const isPaused = window.speechSynthesis.paused;
+    const isPaused = speechController.isPaused();
     return {
       icon: isPaused ? "fa-play" : "fa-pause",
       label: isPaused ? "Lanjut" : "Pause",
@@ -64,11 +94,23 @@ const AccessibilityWidget = () => {
 
   const pauseResumeInfo = getPauseResumeInfo();
 
-  const handleVoiceCommand = (commandText) => {
-    const feedback = new SpeechSynthesisUtterance(`Menggunakan perintah: ${commandText}`);
-    feedback.lang = "id-ID";
-    window.speechSynthesis.speak(feedback);
+  const handleVoiceCommand = async (commandText) => {
+    // Feedback suara menggunakan ElevenLabs
+    try {
+      const audioUrl = await ElevenLabsService.generateSpeech(
+        `Menggunakan perintah: ${commandText}`,
+        { voiceId: '21m00Tcm4TlvDq8ikWAM' }
+      );
+      const audio = new Audio(audioUrl);
+      audio.play();
+    } catch (error) {
+      // Fallback ke Web Speech API
+      const feedback = new SpeechSynthesisUtterance(`Menggunakan perintah: ${commandText}`);
+      feedback.lang = "id-ID";
+      window.speechSynthesis.speak(feedback);
+    }
     
+    // Eksekusi perintah
     if (commandText.includes('baca halaman') || commandText.includes('baca semua')) {
       speechController.readPage();
     } else if (commandText.includes('baca penting') || commandText.includes('intinya')) {
@@ -102,21 +144,14 @@ const AccessibilityWidget = () => {
 
   const getCurrentVoiceName = () => {
     if (!accessibility?.selectedVoice) return "Default";
-    return accessibility.selectedVoice.name?.split(" - ")[0] || accessibility.selectedVoice.name;
+    const selectedVoice = availableVoices.find(v => v.voice_id === accessibility.selectedVoice);
+    return selectedVoice?.name || "Default";
   };
 
   // Format nama suara untuk ditampilkan
   const getVoiceDisplayName = (voice) => {
     if (!voice) return "";
-    
-    const name = voice.name || 'Unknown Voice';
-    const lang = voice.lang || 'Unknown Language';
-    
-    if (lang.toLowerCase().includes('id')) {
-      return `${name} (Bahasa Indonesia)`;
-    }
-    
-    return `${name} (${lang})`;
+    return `${voice.name}${voice.description ? ` - ${voice.description}` : ''}`;
   };
 
   // Deteksi apakah mobile
@@ -238,13 +273,13 @@ const AccessibilityWidget = () => {
                 <div className="text-sm font-semibold text-gray-700 mb-2 flex items-center gap-2">
                   <i className="fas fa-volume-up"></i>
                   Kontrol Bacaan
-                  {window.speechSynthesis.speaking && (
+                  {speechController.isReading() && (
                     <span className={`text-xs px-2 py-1 rounded-full ${
-                      window.speechSynthesis.paused 
+                      speechController.isPaused() 
                         ? 'bg-yellow-100 text-yellow-800' 
                         : 'bg-green-100 text-green-800'
                     }`}>
-                      {window.speechSynthesis.paused ? '⏸️ Dijeda' : '🔊 Membaca'}
+                      {speechController.isPaused() ? '⏸️ Dijeda' : '🔊 Membaca'}
                     </span>
                   )}
                 </div>
@@ -389,6 +424,35 @@ const AccessibilityWidget = () => {
                     }`}
                   />
                 </button>
+              </div>
+
+              {/* Pemilih Suara */}
+              <div className="flex items-center justify-between">
+                <div>
+                  <div className="font-medium">Pilih Suara</div>
+                  <div className="text-xs text-gray-500">
+                    {getCurrentVoiceName()}
+                  </div>
+                </div>
+                <select
+                  value={accessibility?.selectedVoice || '21m00Tcm4TlvDq8ikWAM'}
+                  onChange={(e) => selectVoice(e.target.value)}
+                  className="border rounded-lg px-3 py-1 text-sm min-w-[150px]"
+                  aria-label="Pilih suara untuk text-to-speech"
+                  disabled={isLoadingVoices || availableVoices.length === 0}
+                >
+                  {isLoadingVoices ? (
+                    <option>Memuat suara...</option>
+                  ) : availableVoices.length > 0 ? (
+                    availableVoices.map((voice) => (
+                      <option key={voice.voice_id} value={voice.voice_id}>
+                        {getVoiceDisplayName(voice)}
+                      </option>
+                    ))
+                  ) : (
+                    <option value="21m00Tcm4TlvDq8ikWAM">Rachel (Default)</option>
+                  )}
+                </select>
               </div>
 
               {/* TOMBOL BANTUAN DI BAWAH */}
@@ -562,6 +626,12 @@ const AccessibilityWidget = () => {
                           Ideal untuk membaca panjang.
                         </p>
                       </div>
+                      <div>
+                        <h4 className="font-medium text-gray-700 mb-2">Pemilih Suara</h4>
+                        <p className="text-sm text-gray-600">
+                          Pilih suara favorit Anda dari dropdown untuk pengalaman mendengarkan yang lebih personal.
+                        </p>
+                      </div>
                     </div>
                   </div>
                 </section>
@@ -587,7 +657,11 @@ const AccessibilityWidget = () => {
                     </li>
                     <li className="flex items-start gap-2">
                       <i className="fas fa-check text-green-500 mt-1"></i>
-                      Pilih suara favorit Anda dari dropdown "Pilih Suara"
+                      Pilih suara favorit Anda dari dropdown "Pilih Suara" untuk pengalaman terbaik
+                    </li>
+                    <li className="flex items-start gap-2">
+                      <i className="fas fa-check text-green-500 mt-1"></i>
+                      ElevenLabs memberikan kualitas suara yang lebih natural dibanding Web Speech API
                     </li>
                   </ul>
                 </section>

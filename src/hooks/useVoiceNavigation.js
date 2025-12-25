@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { createSpeechRecognition } from '../voice/speechRecognition';
 import { speechController } from '../utils/speechController';
 import { parseVoiceCommand, getCommandSuggestions } from '../utils/voiceCommandParser';
+import { ElevenLabsService } from '../utils/elevenlabsService';
 
 export const useVoiceNavigation = () => {
   const navigate = useNavigate();
@@ -14,7 +15,7 @@ export const useVoiceNavigation = () => {
   const [lastCommand, setLastCommand] = useState(null);
   const [suggestions, setSuggestions] = useState([]);
 
-  const handleCommand = (rawText) => {
+  const handleCommand = async (rawText) => {  // 🆕 Tambahkan async
     setTranscript(rawText);
     
     const command = parseVoiceCommand(rawText);
@@ -24,17 +25,17 @@ export const useVoiceNavigation = () => {
       case 'readAll':
       case 'readPage':
         speechController.stop();
-        setTimeout(() => {
+        setTimeout(async () => {  // 🆕 Tambahkan async
           speechController.readPage();
-          speakFeedback("Membacakan seluruh halaman");
+          await speakFeedback("Membacakan seluruh halaman");  // 🆕 Tambahkan await
         }, 300);
         break;
         
       case 'readImportant':
         speechController.stop();
-        setTimeout(() => {
+        setTimeout(async () => {
           speechController.readImportantContent();
-          speakFeedback("Membacakan konten penting");
+          await speakFeedback("Membacakan konten penting");
         }, 300);
         break;
         
@@ -49,14 +50,14 @@ export const useVoiceNavigation = () => {
       case 'pause':
         if (speechController.isReading()) {
           speechController.pause();
-          speakFeedback("Bacaan dijeda");
+          await speakFeedback("Bacaan dijeda");
         }
         break;
         
       case 'resume':
         if (speechController.isReading() && speechController.isPaused()) {
           speechController.resume();
-          speakFeedback("Melanjutkan bacaan");
+          await speakFeedback("Melanjutkan bacaan");
         }
         break;
         
@@ -71,31 +72,31 @@ export const useVoiceNavigation = () => {
       case 'navigateHome':
         speechController.stop();
         navigate("/");
-        speakFeedback("Membuka beranda");
+        await speakFeedback("Membuka beranda");
         break;
 
       case 'navigateProfile':
         speechController.stop();
         navigate("/profile");
-        speakFeedback("Membuka Profile");
+        await speakFeedback("Membuka Profile");
         break;
         
       case 'navigateJobs':
         speechController.stop();
         navigate("/jobs");
-        speakFeedback("Membuka halaman pekerjaan");
+        await speakFeedback("Membuka halaman pekerjaan");
         break;
         
       case 'navigateCompanies':
         speechController.stop();
         navigate("/companies");
-        speakFeedback("Membuka halaman perusahaan");
+        await speakFeedback("Membuka halaman perusahaan");
         break;
         
       case 'navigateCandidates':
         speechController.stop();
         navigate("/candidates");
-        speakFeedback("Membuka halaman kandidat");
+        await speakFeedback("Membuka halaman kandidat");
         break;
 
       case 'help':
@@ -110,30 +111,48 @@ export const useVoiceNavigation = () => {
         break;
         
       case 'unknown':
-      default:
-        const newSuggestions = getCommandSuggestions(rawText);
-        setSuggestions(newSuggestions);
-        
-        let feedback = "Perintah tidak dikenali";
-        if (newSuggestions.length > 0) {
-          feedback += `. Mungkin maksud Anda: ${newSuggestions[0]}?`;
-        }
-        speakFeedback(feedback);
-        break;
+        default:
+          const newSuggestions = getCommandSuggestions(rawText);
+          setSuggestions(newSuggestions);
+          
+          let feedback = "Perintah tidak dikenali";
+          if (newSuggestions.length > 0) {
+            feedback += `. Mungkin maksud Anda: ${newSuggestions[0]}?`;
+          }
+          await speakFeedback(feedback);  // 🆕 Tambahkan await
+          break;
     }
   };
   
-  const speakFeedback = (text) => {
-    const feedback = new SpeechSynthesisUtterance(text);
-    feedback.lang = "id-ID";
-    feedback.rate = 1.0;
-    feedback.volume = 0.8;
-    window.speechSynthesis.speak(feedback);
+  const speakFeedback = async (text) => {
+    try {
+      // 🆕 Gunakan ElevenLabs
+      const audioUrl = await ElevenLabsService.generateSpeech(text, {
+        voiceId: '21m00Tcm4TlvDq8ikWAM', // Default voice
+        settings: {
+          stability: 0.6,
+          similarity_boost: 0.8,
+          language: 'id'
+        }
+      });
+      
+      const audio = new Audio(audioUrl);
+      audio.play();
+      
+    } catch (error) {
+      console.error('ElevenLabs feedback failed, using fallback:', error);
+      // 🆕 Fallback ke Web Speech API
+      const feedback = new SpeechSynthesisUtterance(text);
+      feedback.lang = "id-ID";
+      feedback.rate = 1.0;
+      feedback.volume = 0.8;
+      window.speechSynthesis.speak(feedback);
+  }
   };
   
-  const handleSearch = (term) => {
+  const handleSearch = async (term) => {
     navigate(`/jobs?search=${encodeURIComponent(term)}`);
-    speakFeedback(`Mencari ${term}`);
+    await speakFeedback(`Mencari ${term}`);  // 🆕 Tambahkan await
     
     setTimeout(() => {
       const searchInput = document.querySelector('input[type="search"], input[placeholder*="cari"]');
@@ -194,40 +213,82 @@ export const useVoiceNavigation = () => {
   /**
    * Membacakan semua perintah yang tersedia
    */
-  const showHelpGuide = () => {
-    // Hentikan pembacaan apapun yang sedang berjalan
+  const showHelpGuide = async () => {
     speechController.stop();
     
-    // Beri jeda sebelum mulai panduan
-    setTimeout(() => {
-      // Daftar semua perintah yang tersedia
-      const helpCommands = [
-        "PERINTAH BACA KONTEN:",
-        "1. 'baca halaman' - untuk membaca seluruh konten",
-        "2. 'baca penting' - untuk membaca inti konten saja",
-        "3. 'ringkasan' - untuk ringkasan singkat",
-        "",
-        "⏯PERINTAH KONTROL:",
-        "4. 'berhenti' atau 'jeda' - untuk menghentikan sementara",
-        "5. 'lanjut' - untuk melanjutkan pembacaan",
-        "6. 'ulangi' - untuk mengulang bacaan terakhir",
-        "",
-        "PERINTAH NAVIGASI:",
-        "7. 'beranda' - ke halaman utama",
-        "8. 'profile' - ke halaman profile",
-        "9. 'kerja' - ke halaman pekerjaan",
-        "10. 'perusahaan' - ke halaman perusahaan",
-        "11. 'kandidat' - ke halaman pelamar kerja",
-        "",
-        "PERINTAH LAINNYA:",
-        "12. 'bantuan' - untuk mendengar panduan ini lagi",
-        "13. 'cari [kata kunci]' - untuk mencari pekerjaan"
-      ];
+    const helpText = `
+      PERINTAH BACA KONTEN:
+      1. 'baca halaman' - untuk membaca seluruh konten
+      2. 'baca penting' - untuk membaca inti konten saja
+      3. 'ringkasan' - untuk ringkasan singkat
       
-      // Baca panduan secara bertahap
-      readHelpStepByStep(helpCommands);
-    }, 300);
+      PERINTAH KONTROL:
+      4. 'berhenti' atau 'jeda' - untuk menghentikan sementara
+      5. 'lanjut' - untuk melanjutkan pembacaan
+      6. 'ulangi' - untuk mengulang bacaan terakhir
+      
+      PERINTAH NAVIGASI:
+      7. 'beranda' - ke halaman utama
+      8. 'profile' - ke halaman profile
+      9. 'kerja' - ke halaman pekerjaan
+      10. 'perusahaan' - ke halaman perusahaan
+      11. 'kandidat' - ke halaman pelamar kerja
+      
+      PERINTAH LAINNYA:
+      12. 'bantuan' - untuk mendengar panduan ini lagi
+      13. 'cari [kata kunci]' - untuk mencari pekerjaan
+      
+      Itulah semua perintah yang tersedia. Silakan coba perintah yang Anda inginkan.
+    `;
+    
+    try {
+      const audioUrl = await ElevenLabsService.generateSpeech(helpText, {
+        voiceId: '21m00Tcm4TlvDq8ikWAM',
+        settings: {
+          stability: 0.7,
+          similarity_boost: 0.8,
+          language: 'id',
+          rate: 1.1  // Sedikit lebih lambat untuk panduan
+        }
+      });
+      
+      const audio = new Audio(audioUrl);
+      audio.play();
+      
+    } catch (error) {
+      console.error('ElevenLabs help guide failed, using fallback:', error);
+      // 🆕 Fallback ke fungsi lama
+      fallbackHelpGuide();
+    }
   };
+
+// 🆕 Fungsi fallback untuk Web Speech API
+const fallbackHelpGuide = () => {
+  const helpCommands = [
+    "PERINTAH BACA KONTEN:",
+    "1. 'baca halaman' - untuk membaca seluruh konten",
+    "2. 'baca penting' - untuk membaca inti konten saja",
+    "3. 'ringkasan' - untuk ringkasan singkat",
+    "",
+    "⏯PERINTAH KONTROL:",
+    "4. 'berhenti' atau 'jeda' - untuk menghentikan sementara",
+    "5. 'lanjut' - untuk melanjutkan pembacaan",
+    "6. 'ulangi' - untuk mengulang bacaan terakhir",
+    "",
+    "PERINTAH NAVIGASI:",
+    "7. 'beranda' - ke halaman utama",
+    "8. 'profile' - ke halaman profile",
+    "9. 'kerja' - ke halaman pekerjaan",
+    "10. 'perusahaan' - ke halaman perusahaan",
+    "11. 'kandidat' - ke halaman pelamar kerja",
+    "",
+    "PERINTAH LAINNYA:",
+    "12. 'bantuan' - untuk mendengar panduan ini lagi",
+    "13. 'cari [kata kunci]' - untuk mencari pekerjaan"
+  ];
+  
+  readHelpStepByStep(helpCommands);
+};
 
   /**
    * Membaca panduan perintah secara bertahap dengan jeda
@@ -295,15 +356,28 @@ export const useVoiceNavigation = () => {
   /**
    * Versi singkat panduan untuk first-time users
    */
-  const showQuickHelp = () => {
-    const quickHelp = new SpeechSynthesisUtterance(
+  const showQuickHelp = async () => {
+    const quickHelpText = 
       "Untuk navigasi, katakan: beranda, profile, kerja, perusahaan, atau kandidat. " +
       "Untuk membaca halaman, katakan: baca halaman, baca penting, atau ringkasan. " +
-      "Katakan 'bantuan' untuk panduan lengkap."
-    );
-    quickHelp.lang = "id-ID";
-    quickHelp.rate = 1.0;
-    window.speechSynthesis.speak(quickHelp);
+      "Katakan 'bantuan' untuk panduan lengkap.";
+    
+    try {
+      const audioUrl = await ElevenLabsService.generateSpeech(quickHelpText, {
+        voiceId: '21m00Tcm4TlvDq8ikWAM',
+        settings: { language: 'id' }
+      });
+      
+      const audio = new Audio(audioUrl);
+      audio.play();
+      
+    } catch (error) {
+      // 🆕 Fallback ke Web Speech API
+      const quickHelp = new SpeechSynthesisUtterance(quickHelpText);
+      quickHelp.lang = "id-ID";
+      quickHelp.rate = 1.0;
+      window.speechSynthesis.speak(quickHelp);
+    }
   };
 
   return {
