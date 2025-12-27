@@ -124,293 +124,302 @@ const AccessibilityWidget = () => {
 
   return (
     <>
-      {/* Tombol Mengambang */}
+      {/* Tombol Mengambang dengan Smooth Animation */}
       <button
         onClick={toggleWidget}
         className={`
           fixed right-6 z-50
           w-14 h-14 rounded-full
           bg-gradient-to-r from-blue-500 to-purple-500
-          shadow-lg hover:scale-110 transition
+          shadow-lg transition-all duration-300 ease-out
           flex items-center justify-center
           border-2 border-white
-          ${isOpen ? "bottom-32" : "bottom-6"}
+          ${isOpen ? "bottom-20 rotate-45" : "bottom-6 hover:scale-110"}
           ${isListening ? "animate-pulse ring-4 ring-green-400" : ""}
         `}
         aria-label="Buka panel aksesibilitas"
       >
-        <i className="fas fa-universal-access text-white text-xl"></i>
+        <i className="fas fa-universal-access text-white text-xl transition-transform duration-300"></i>
       </button>
 
-      {/* Panel Aksesibilitas */}
-      {isOpen && (
-        <div className="fixed right-6 bottom-28 z-40 w-80 max-w-[90vw]">
-          <div className="bg-white rounded-2xl shadow-2xl border border-gray-200">
-
-            {/* Header Panel */}
-            <div className="bg-gradient-to-r from-blue-500 to-purple-500 text-white rounded-t-2xl p-4">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <i className="fas fa-universal-access"></i>
-                  <h3 className="font-semibold">Aksesibilitas</h3>
-                </div>
-                <button 
-                  onClick={toggleWidget}
-                  aria-label="Tutup panel"
-                >
-                  <i className="fas fa-times"></i>
-                </button>
+      {/* Panel Aksesibilitas dengan Smooth Animation */}
+      <div className={`
+        fixed right-6 z-40 w-80 max-w-[90vw]
+        transition-all duration-300 ease-out
+        ${isOpen 
+          ? "bottom-28 opacity-100 translate-y-0" 
+          : "bottom-20 opacity-0 translate-y-10 pointer-events-none"
+        }
+      `}>
+        <div className={`
+          bg-white rounded-2xl shadow-2xl border border-gray-200
+          transition-all duration-300
+          ${isOpen ? "scale-100" : "scale-95"}
+        `}>
+          {/* Header Panel */}
+          <div className="bg-gradient-to-r from-blue-500 to-purple-500 text-white rounded-t-2xl p-4">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <i className="fas fa-universal-access"></i>
+                <h3 className="font-semibold">Aksesibilitas</h3>
               </div>
-              <p className="text-sm opacity-90 mt-1">
-                Kontrol aksesibilitas & perintah suara
-              </p>
+              <button 
+                onClick={toggleWidget}
+                className="w-8 h-8 rounded-full hover:bg-white/20 flex items-center justify-center transition-all duration-200"
+                aria-label="Tutup panel"
+              >
+                <i className="fas fa-times"></i>
+              </button>
+            </div>
+            <p className="text-sm opacity-90 mt-1">
+              Kontrol aksesibilitas & perintah suara
+            </p>
+          </div>
+
+          {/* Konten Panel */}
+          <div className="p-4 space-y-4 max-h-96 overflow-y-auto">
+
+            {/* 🎙️ BAGIAN PERINTAH SUARA */}
+            <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
+              <button
+                onClick={startListening}
+                className={`
+                  w-full py-3 rounded-lg font-medium
+                  flex items-center justify-center gap-2
+                  transition-all duration-200 mb-2
+                  ${isListening
+                    ? "bg-green-500 text-white animate-pulse scale-105"
+                    : "bg-blue-500 text-white hover:bg-blue-600 hover:scale-105"
+                  }
+                `}
+                aria-label={isListening ? "Sedang mendengarkan" : "Aktifkan perintah suara"}
+              >
+                <i className="fas fa-microphone"></i>
+                {isListening ? "Mendengarkan..." : "Aktifkan Perintah Suara"}
+              </button>
+
+              {/* Transcript dari User */}
+              {transcript && (
+                <div className="text-xs text-gray-700 mt-2">
+                  <div className="font-semibold">Anda berkata:</div>
+                  <div className="bg-white p-2 rounded border mt-1">"{transcript}"</div>
+                </div>
+              )}
+
+              {/* Status Command Terakhir */}
+              {lastCommand && (
+                <div className={`text-xs mt-2 p-2 rounded ${
+                  lastCommand.action === 'unknown' 
+                    ? 'bg-yellow-100 text-yellow-800' 
+                    : 'bg-green-100 text-green-800'
+                }`}>
+                  <div className="font-semibold">
+                    {lastCommand.action === 'unknown' ? '⚠️ Tidak dikenali' : '✅ Dikenali'}
+                  </div>
+                  <div className="text-xs opacity-75">
+                    Aksi: {lastCommand.action} | 
+                    Confidence: {lastCommand.confidence ? (lastCommand.confidence * 100).toFixed(0) : '0'}%
+                  </div>
+                </div>
+              )}
+
+              {/* Saran Perintah */}
+              {suggestions && suggestions.length > 0 && (
+                <div className="mt-2">
+                  <div className="text-xs font-semibold text-gray-700">Mungkin maksud Anda:</div>
+                  <div className="flex flex-wrap gap-1 mt-1">
+                    {suggestions.slice(0, 3).map((suggestion, idx) => (
+                      <button
+                        key={idx}
+                        onClick={() => handleVoiceCommand(suggestion)}
+                        className="text-xs bg-gray-100 hover:bg-gray-200 text-gray-800 px-2 py-1 rounded transition-all duration-150 hover:scale-105"
+                        aria-label={`Coba perintah: ${suggestion}`}
+                      >
+                        {suggestion}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
 
-            {/* Konten Panel */}
-            <div className="p-4 space-y-4 max-h-96 overflow-y-auto">
-
-              {/* 🎙️ BAGIAN PERINTAH SUARA */}
-              <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
-                <button
-                  onClick={startListening}
-                  className={`
-                    w-full py-3 rounded-lg font-medium
-                    flex items-center justify-center gap-2
-                    transition mb-2
-                    ${isListening
-                      ? "bg-green-500 text-white animate-pulse"
-                      : "bg-blue-500 text-white hover:bg-blue-600"
-                    }
-                  `}
-                  aria-label={isListening ? "Sedang mendengarkan" : "Aktifkan perintah suara"}
-                >
-                  <i className="fas fa-microphone"></i>
-                  {isListening ? "Mendengarkan..." : "Aktifkan Perintah Suara"}
-                </button>
-
-                {/* Transcript dari User */}
-                {transcript && (
-                  <div className="text-xs text-gray-700 mt-2">
-                    <div className="font-semibold">Anda berkata:</div>
-                    <div className="bg-white p-2 rounded border mt-1">"{transcript}"</div>
-                  </div>
-                )}
-
-                {/* Status Command Terakhir */}
-                {lastCommand && (
-                  <div className={`text-xs mt-2 p-2 rounded ${
-                    lastCommand.action === 'unknown' 
+            {/* 🔊 BAGIAN KONTROL BACAAN */}
+            <div className="border-t border-gray-200 pt-3">
+              <div className="text-sm font-semibold text-gray-700 mb-2 flex items-center gap-2">
+                <i className="fas fa-volume-up"></i>
+                Kontrol Bacaan
+                {window.speechSynthesis.speaking && (
+                  <span className={`text-xs px-2 py-1 rounded-full ${
+                    window.speechSynthesis.paused 
                       ? 'bg-yellow-100 text-yellow-800' 
                       : 'bg-green-100 text-green-800'
                   }`}>
-                    <div className="font-semibold">
-                      {lastCommand.action === 'unknown' ? '⚠️ Tidak dikenali' : '✅ Dikenali'}
-                    </div>
-                    <div className="text-xs opacity-75">
-                      Aksi: {lastCommand.action} | 
-                      Confidence: {lastCommand.confidence ? (lastCommand.confidence * 100).toFixed(0) : '0'}%
-                    </div>
-                  </div>
-                )}
-
-                {/* Saran Perintah */}
-                {suggestions && suggestions.length > 0 && (
-                  <div className="mt-2">
-                    <div className="text-xs font-semibold text-gray-700">Mungkin maksud Anda:</div>
-                    <div className="flex flex-wrap gap-1 mt-1">
-                      {suggestions.slice(0, 3).map((suggestion, idx) => (
-                        <button
-                          key={idx}
-                          onClick={() => handleVoiceCommand(suggestion)}
-                          className="text-xs bg-gray-100 hover:bg-gray-200 text-gray-800 px-2 py-1 rounded transition"
-                          aria-label={`Coba perintah: ${suggestion}`}
-                        >
-                          {suggestion}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
+                    {window.speechSynthesis.paused ? '⏸️ Dijeda' : '🔊 Membaca'}
+                  </span>
                 )}
               </div>
 
-              {/* 🔊 BAGIAN KONTROL BACAAN */}
-              <div className="border-t border-gray-200 pt-3">
-                <div className="text-sm font-semibold text-gray-700 mb-2 flex items-center gap-2">
-                  <i className="fas fa-volume-up"></i>
-                  Kontrol Bacaan
-                  {window.speechSynthesis.speaking && (
-                    <span className={`text-xs px-2 py-1 rounded-full ${
-                      window.speechSynthesis.paused 
-                        ? 'bg-yellow-100 text-yellow-800' 
-                        : 'bg-green-100 text-green-800'
-                    }`}>
-                      {window.speechSynthesis.paused ? '⏸️ Dijeda' : '🔊 Membaca'}
-                    </span>
-                  )}
-                </div>
-
-                {/* Baris 1: Pilihan Mode Baca */}
-                <div className="grid grid-cols-2 gap-2 mb-2">
-                  <button
-                    onClick={() => {
+              {/* Baris 1: Pilihan Mode Baca */}
+              <div className="grid grid-cols-2 gap-2 mb-2">
+                <button
+                  onClick={() => {
+                    speechController.readPage();
+                    setForceUpdate(prev => prev + 1);
+                  }}
+                  className="py-2 rounded-lg bg-blue-500 text-white hover:bg-blue-600 transition-all duration-200 hover:scale-105 flex items-center justify-center gap-1 disabled:opacity-50 disabled:cursor-not-allowed"
+                  disabled={speechController.isReading() && !pauseResumeInfo.isPaused}
+                  aria-label="Baca semua konten halaman"
+                >
+                  <i className="fas fa-book"></i>
+                  Baca Semua
+                </button>
+                
+                <button
+                  onClick={() => {
+                    if (speechController.readImportantContent) {
+                      speechController.readImportantContent();
+                    } else {
                       speechController.readPage();
-                      setForceUpdate(prev => prev + 1);
-                    }}
-                    className="py-2 rounded-lg bg-blue-500 text-white hover:bg-blue-600 transition flex items-center justify-center gap-1 disabled:opacity-50 disabled:cursor-not-allowed"
-                    disabled={speechController.isReading() && !pauseResumeInfo.isPaused}
-                    aria-label="Baca semua konten halaman"
-                  >
-                    <i className="fas fa-book"></i>
-                    Baca Semua
-                  </button>
-                  
-                  <button
-                    onClick={() => {
-                      if (speechController.readImportantContent) {
-                        speechController.readImportantContent();
-                      } else {
-                        speechController.readPage();
-                      }
-                      setForceUpdate(prev => prev + 1);
-                    }}
-                    className="py-2 rounded-lg bg-purple-500 text-white hover:bg-purple-600 transition flex items-center justify-center gap-1 disabled:opacity-50 disabled:cursor-not-allowed"
-                    disabled={speechController.isReading() && !pauseResumeInfo.isPaused}
-                    aria-label="Baca hanya konten penting"
-                  >
-                    <i className="fas fa-star"></i>
-                    Baca Penting
-                  </button>
-                </div>
-
-                {/* Baris 2: Kontrol Playback */}
-                <div className="grid grid-cols-2 gap-2">
-                  <button
-                    onClick={handlePauseResume}
-                    className="py-2 rounded-lg bg-yellow-500 text-white hover:bg-yellow-600 transition flex items-center justify-center gap-1 disabled:opacity-50 disabled:cursor-not-allowed"
-                    disabled={!speechController.isReading()}
-                    aria-label={pauseResumeInfo.label + " pembacaan"}
-                  >
-                    <i className={`fas ${pauseResumeInfo.icon}`}></i>
-                    {pauseResumeInfo.label}
-                  </button>
-
-                  <button
-                    onClick={() => {
-                      speechController.stop();
-                      setForceUpdate(prev => prev + 1);
-                    }}
-                    className="py-2 rounded-lg bg-red-500 text-white hover:bg-red-600 transition flex items-center justify-center gap-1 disabled:opacity-50 disabled:cursor-not-allowed"
-                    disabled={!speechController.isReading()}
-                    aria-label="Hentikan pembacaan"
-                  >
-                    <i className="fas fa-stop"></i>
-                    Stop
-                  </button>
-                </div>
-              </div>
-
-              {/* 🎨 BAGIAN AKSESIBILITAS VISUAL */}
-              
-              {/* Toggle Kontras Tinggi */}
-              <div className="flex items-center justify-between">
-                <div>
-                  <div className="font-medium">Kontras Tinggi</div>
-                  <div className="text-xs text-gray-500">
-                    Tingkatkan visibilitas teks
-                  </div>
-                </div>
-                <button
-                  onClick={toggleHighContrast}
-                  className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-                    accessibility?.highContrast ? "bg-blue-500" : "bg-gray-200"
-                  }`}
-                  aria-label={`${accessibility?.highContrast ? 'Nonaktifkan' : 'Aktifkan'} kontras tinggi`}
-                  aria-checked={accessibility?.highContrast || false}
-                  role="switch"
+                    }
+                    setForceUpdate(prev => prev + 1);
+                  }}
+                  className="py-2 rounded-lg bg-purple-500 text-white hover:bg-purple-600 transition-all duration-200 hover:scale-105 flex items-center justify-center gap-1 disabled:opacity-50 disabled:cursor-not-allowed"
+                  disabled={speechController.isReading() && !pauseResumeInfo.isPaused}
+                  aria-label="Baca hanya konten penting"
                 >
-                  <span
-                    className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
-                      accessibility?.highContrast
-                        ? "translate-x-6"
-                        : "translate-x-1"
-                    }`}
-                  />
+                  <i className="fas fa-star"></i>
+                  Baca Penting
                 </button>
               </div>
 
-              {/* Ukuran Teks */}
-              <div className="flex items-center justify-between">
-                <div>
-                  <div className="font-medium">Ukuran Teks</div>
-                  <div className="text-xs text-gray-500">
-                    {getTextSizeLabel()}
-                  </div>
-                </div>
-                <div className="flex gap-1">
-                  <button
-                    onClick={() => toggleTextSize(-1)}
-                    disabled={accessibility?.textSize === 0}
-                    className="w-8 h-8 border rounded hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
-                    aria-label="Perkecil teks"
-                  >
-                    A-
-                  </button>
-                  <button
-                    onClick={() => toggleTextSize(1)}
-                    disabled={accessibility?.textSize === 2}
-                    className="w-8 h-8 border rounded hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
-                    aria-label="Perbesar teks"
-                  >
-                    A+
-                  </button>
-                </div>
-              </div>
-
-              {/* Mode Baca */}
-              <div className="flex items-center justify-between">
-                <div>
-                  <div className="font-medium">Mode Baca</div>
-                  <div className="text-xs text-gray-500">Fokus pada konten</div>
-                </div>
+              {/* Baris 2: Kontrol Playback */}
+              <div className="grid grid-cols-2 gap-2">
                 <button
-                  onClick={toggleReaderMode}
-                  className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-                    accessibility?.readerMode ? "bg-blue-500" : "bg-gray-200"
-                  }`}
-                  aria-label={`${accessibility?.readerMode ? 'Nonaktifkan' : 'Aktifkan'} mode baca`}
-                  aria-checked={accessibility?.readerMode || false}
-                  role="switch"
+                  onClick={handlePauseResume}
+                  className="py-2 rounded-lg bg-yellow-500 text-white hover:bg-yellow-600 transition-all duration-200 hover:scale-105 flex items-center justify-center gap-1 disabled:opacity-50 disabled:cursor-not-allowed"
+                  disabled={!speechController.isReading()}
+                  aria-label={pauseResumeInfo.label + " pembacaan"}
                 >
-                  <span
-                    className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
-                      accessibility?.readerMode
-                        ? "translate-x-6"
-                        : "translate-x-1"
-                    }`}
-                  />
+                  <i className={`fas ${pauseResumeInfo.icon}`}></i>
+                  {pauseResumeInfo.label}
                 </button>
-              </div>
 
-              {/* TOMBOL BANTUAN DI BAWAH */}
-              <div className="pt-4 border-t border-gray-200">
                 <button
-                  onClick={toggleHelpModal}
-                  className="w-full py-3 rounded-lg bg-white text-gray-800 hover:bg-gray-50 transition flex items-center justify-center gap-2 border border-gray-300 hover:border-gray-400"
-                  aria-label="Buka panduan penggunaan fitur"
+                  onClick={() => {
+                    speechController.stop();
+                    setForceUpdate(prev => prev + 1);
+                  }}
+                  className="py-2 rounded-lg bg-red-500 text-white hover:bg-red-600 transition-all duration-200 hover:scale-105 flex items-center justify-center gap-1 disabled:opacity-50 disabled:cursor-not-allowed"
+                  disabled={!speechController.isReading()}
+                  aria-label="Hentikan pembacaan"
                 >
-                  <i className="fas fa-question-circle text-gray-600"></i>
-                  Panduan Penggunaan
+                  <i className="fas fa-stop"></i>
+                  Stop
                 </button>
               </div>
             </div>
-          </div>
 
-          {/* Arrow Indikator */}
-          <div className="flex justify-end">
-            <div className="w-4 h-4 bg-white rotate-45 -mt-2 mr-5 border-r border-b border-gray-200"></div>
+            {/* 🎨 BAGIAN AKSESIBILITAS VISUAL */}
+            
+            {/* Toggle Kontras Tinggi */}
+            <div className="flex items-center justify-between">
+              <div>
+                <div className="font-medium">Kontras Tinggi</div>
+                <div className="text-xs text-gray-500">
+                  Tingkatkan visibilitas teks
+                </div>
+              </div>
+              <button
+                onClick={toggleHighContrast}
+                className={`relative inline-flex h-6 w-11 items-center rounded-full transition-all duration-300 ${
+                  accessibility?.highContrast ? "bg-blue-500" : "bg-gray-200"
+                }`}
+                aria-label={`${accessibility?.highContrast ? 'Nonaktifkan' : 'Aktifkan'} kontras tinggi`}
+                aria-checked={accessibility?.highContrast || false}
+                role="switch"
+              >
+                <span
+                  className={`inline-block h-4 w-4 transform rounded-full bg-white transition-all duration-300 ${
+                    accessibility?.highContrast
+                      ? "translate-x-6"
+                      : "translate-x-1"
+                  }`}
+                />
+              </button>
+            </div>
+
+            {/* Ukuran Teks */}
+            <div className="flex items-center justify-between">
+              <div>
+                <div className="font-medium">Ukuran Teks</div>
+                <div className="text-xs text-gray-500">
+                  {getTextSizeLabel()}
+                </div>
+              </div>
+              <div className="flex gap-1">
+                <button
+                  onClick={() => toggleTextSize(-1)}
+                  disabled={accessibility?.textSize === 0}
+                  className="w-8 h-8 border rounded hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-150 hover:scale-110"
+                  aria-label="Perkecil teks"
+                >
+                  A-
+                </button>
+                <button
+                  onClick={() => toggleTextSize(1)}
+                  disabled={accessibility?.textSize === 2}
+                  className="w-8 h-8 border rounded hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-150 hover:scale-110"
+                  aria-label="Perbesar teks"
+                >
+                  A+
+                </button>
+              </div>
+            </div>
+
+            {/* Mode Baca */}
+            <div className="flex items-center justify-between">
+              <div>
+                <div className="font-medium">Mode Baca</div>
+                <div className="text-xs text-gray-500">Fokus pada konten</div>
+              </div>
+              <button
+                onClick={toggleReaderMode}
+                className={`relative inline-flex h-6 w-11 items-center rounded-full transition-all duration-300 ${
+                  accessibility?.readerMode ? "bg-blue-500" : "bg-gray-200"
+                }`}
+                aria-label={`${accessibility?.readerMode ? 'Nonaktifkan' : 'Aktifkan'} mode baca`}
+                aria-checked={accessibility?.readerMode || false}
+                role="switch"
+              >
+                <span
+                  className={`inline-block h-4 w-4 transform rounded-full bg-white transition-all duration-300 ${
+                    accessibility?.readerMode
+                      ? "translate-x-6"
+                      : "translate-x-1"
+                  }`}
+                />
+              </button>
+            </div>
+
+            {/* TOMBOL BANTUAN DI BAWAH */}
+            <div className="pt-4 border-t border-gray-200">
+              <button
+                onClick={toggleHelpModal}
+                className="w-full py-3 rounded-lg bg-white text-gray-800 hover:bg-gray-50 transition-all duration-200 flex items-center justify-center gap-2 border border-gray-300 hover:border-gray-400 hover:scale-105"
+                aria-label="Buka panduan penggunaan fitur"
+              >
+                <i className="fas fa-question-circle text-gray-600"></i>
+                Panduan Penggunaan
+              </button>
+            </div>
           </div>
         </div>
-      )}
+
+        {/* Arrow Indikator */}
+        <div className="flex justify-end">
+          <div className="w-4 h-4 bg-white rotate-45 -mt-2 mr-5 border-r border-b border-gray-200"></div>
+        </div>
+      </div>
 
       {/* MODAL BANTUAN */}
       {showHelpModal && (

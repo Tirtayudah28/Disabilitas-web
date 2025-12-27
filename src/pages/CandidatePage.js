@@ -1,6 +1,6 @@
-// src/pages/CompaniesPage.js
+// src/pages/CandidatePage.js
 import React, { useState, useEffect } from "react";
-import { Link, useLocation, useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContext";
 import axios from "axios";
 
@@ -178,271 +178,447 @@ const CandidatePage = () => {
   };
 
   return (
-    <div className="min-h-screen container mx-auto lg:px-32 xl:px-36 py-8 mb-32">
-      {/* Header Section */}
-      {token ? null : (
-        <div className="container mx-auto px-4 py-8">
-          <div className="text-center mb-8">
-            <h1 className="text-4xl font-bold text-gray-900 mb-4">
-              Lebih dekat dengan{" "}
-              <span className="text-blue-600">Talenta Inklusif</span>
-            </h1>
-            <p className="text-lg text-gray-600 max-w-2xl mx-auto">
+    <div className="min-h-screen bg-gray-50">
+      <div className="container mx-auto px-4 sm:px-6 lg:px-8 xl:px-12 2xl:px-16 py-6 sm:py-8 lg:py-10">
+        {/* Header Section */}
+        {!token && (
+          <div className="text-center mb-8 sm:mb-10 lg:mb-12">
+            <div className="inline-block mb-4 sm:mb-6">
+              <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-gray-900 mb-2">
+                Lebih dekat dengan{" "}
+                <span className="text-primary-600">Talenta Inklusif</span>
+              </h1>
+              <div className="h-1 w-32 sm:w-40 bg-gradient-to-r from-primary-500 to-secondary-500 rounded-full mx-auto"></div>
+            </div>
+            <p className="text-base sm:text-lg text-gray-600 max-w-3xl mx-auto px-4">
               Jelajahi profil kandidat dari berbagai latar belakang disabilitas,
               dengan keterampilan dan pengalaman yang siap berkontribusi dalam
               lingkungan kerja yang inklusif dan setara.
             </p>
           </div>
-        </div>
-      )}
+        )}
 
-      {/* Search & Filter */}
-      <div className="flex w-full justify-center mb-8">
-        <div className="max-w-5xl w-full flex gap-4">
-          {/* Search */}
-          <div className="flex-1">
-            <div className="flex items-center gap-3 bg-white border border-gray-300 rounded-xl p-4 shadow-sm focus-within:ring-2 focus-within:ring-blue-500">
-              <i className="fa-solid fa-magnifying-glass text-gray-400" />
-              <input
-                type="search"
-                placeholder="Cari nama kandidat..."
-                value={searchInput}
-                onChange={(e) => setSearchInput(e.target.value)}
-                onKeyDown={(e) => e.key === "Enter" && handleSearch()}
-                className="flex-1 outline-none bg-transparent"
-              />
-            </div>
-          </div>
+        {/* Search & Filter */}
+        <div className="mb-8 sm:mb-10">
+          <div className="flex flex-col lg:flex-row gap-4 lg:items-end">
+            {/* Search and Filter Container */}
+            <div className="flex-1 grid grid-cols-1 sm:grid-cols-2 lg:flex lg:items-end gap-4">
+              {/* Search Input */}
+              <div className="lg:flex-1">
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Cari Kandidat
+                </label>
+                <div className="relative">
+                  <i className="fas fa-search absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
+                  <input
+                    type="search"
+                    placeholder="Nama kandidat, keahlian..."
+                    value={searchInput}
+                    onChange={(e) => setSearchInput(e.target.value)}
+                    onKeyDown={(e) => e.key === "Enter" && handleSearch()}
+                    className="w-full pl-12 pr-4 py-3 sm:py-4 border border-gray-300 rounded-xl shadow-sm focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-colors"
+                  />
+                </div>
+              </div>
 
-          {/* Country */}
-          <div className="relative">
-            <div className="relative">
-              <i className="fas fa-globe absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" />
-              <input
-                type="text"
-                value={countryInput}
-                placeholder="Negara"
-                onChange={(e) => {
-                  const value = e.target.value;
-                  setCountryInput(value);
+              {/* Country Input */}
+              <div className="lg:flex-1">
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Filter Negara
+                </label>
+                <div className="relative">
+                  <i className="fas fa-globe absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
+                  <input
+                    type="text"
+                    value={countryInput}
+                    placeholder="Masukkan negara..."
+                    onChange={(e) => {
+                      const value = e.target.value;
+                      setCountryInput(value);
 
-                  if (!value.trim()) {
-                    setFilteredCountries([]);
-                    setShowDropdown(false);
-                    return;
-                  }
+                      if (!value.trim()) {
+                        setFilteredCountries([]);
+                        setShowDropdown(false);
+                        return;
+                      }
 
-                  const filtered = countries.filter((name) =>
-                    name.toLowerCase().includes(value.toLowerCase())
-                  );
+                      const filtered = countries.filter((name) =>
+                        name.toLowerCase().includes(value.toLowerCase())
+                      );
 
-                  setFilteredCountries(filtered);
-                  setShowDropdown(true);
-                }}
-                className="w-full pl-12 pr-4 py-4 border border-gray-300 rounded-xl shadow-sm focus:ring-2 focus:ring-green-500 focus:border-green-500"
-              />
-            </div>
-
-            {showDropdown && filteredCountries.length > 0 && (
-              <ul className="absolute z-20 mt-2 w-full max-h-60 overflow-y-auto rounded-xl border border-gray-200 bg-white shadow-lg">
-                {filteredCountries.slice(0, 10).map((name) => (
-                  <li
-                    key={name}
-                    className="px-4 py-3 text-sm hover:bg-green-50 cursor-pointer transition"
-                    onClick={() => {
-                      setCountryInput(name);
-                      setShowDropdown(false);
+                      setFilteredCountries(filtered);
+                      setShowDropdown(true);
                     }}
-                  >
-                    {name}
-                  </li>
-                ))}
-              </ul>
-            )}
-          </div>
-        </div>
-
-        {/* Action */}
-        <div className="flex items-center gap-2 ml-4">
-          <button
-            onClick={handleSearch}
-            className="w-full px-10 py-3 rounded-xl bg-blue-600 text-white text-sm font-medium hover:bg-blue-700 transition"
-          >
-            <i class="fa-solid fa-magnifying-glass"></i> Cari
-          </button>
-        </div>
-      </div>
-
-      <main className="flex flex-col gap-6">
-        {/* Results Header */}
-        <div className="flex gap-6 items-center">
-          <h2 className="text-xl font-semibold text-gray-800">
-            {meta?.total || 0} Kandidat Ditemukan
-          </h2>
-          <div className="flex gap-4 mt-1 text-sm text-gray-600">
-            {filters.search && (
-              <span className="rounded-full px-5 py-1 bg-white text-blue-800 border border-blue-200 font-medium">
-                "{filters.search}"{" "}
-                <button onClick={() => resetFilters("search")} className="ml-2">
-                  <i className="fas fa-x text-xs"></i>
-                </button>
-              </span>
-            )}
-            {filters.country && (
-              <span className="rounded-full px-5 py-1 bg-white text-blue-800 border border-blue-200 font-medium">
-                {filters.country}{" "}
-                <button
-                  onClick={() => resetFilters("country")}
-                  className="ml-2"
-                >
-                  <i className="fas fa-x text-xs"></i>
-                </button>
-              </span>
-            )}
-          </div>
-        </div>
-        {/* Grid Candidate */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
-          {loading &&
-            Array.from({ length: 9 }).map((_, i) => (
-              <CandidateCardSkeleton key={i} />
-            ))}
-          {!loading && jobSeekers.length === 0 && (
-            <div className="text-center py-8 text-gray-600 col-span-3">
-              Tidak ada apa-apa disini
-            </div>
-          )}
-
-          {!loading && jobSeekers.map((js) => {
-            const skillsPreview = js.UserSkills?.slice(0, 2) || [];
-            const extraSkills =
-              js.UserSkills?.length > 2 ? js.UserSkills.length - 2 : 0;
-
-            const disabilityPreview = js.UserDisabilities?.slice(0, 2) || [];
-            const extraDisability =
-              js.UserDisabilities?.length > 2
-                ? js.UserDisabilities.length - 2
-                : 0;
-
-            return (
-              <div
-                key={js.id}
-                onClick={() => navigate(`/js/${js.id}`)}
-                className="group cursor-pointer bg-white border border-gray-200 rounded-2xl p-5 shadow-sm hover:shadow-lg transition-all"
-                role="button"
-              >
-                {/* Header */}
-                <div className="flex items-center gap-4 mb-3">
-                  {/* Avatar */}
-                  <img
-                    src={js.profilePicture || defaultPfp}
-                    alt={js.UserProfile?.fullName}
-                    className="w-16 h-16 object-cover aspect-square rounded-full"
+                    onFocus={() => {
+                      if (countryInput.trim() && countries.length > 0) {
+                        const filtered = countries.filter((name) =>
+                          name.toLowerCase().includes(countryInput.toLowerCase())
+                        );
+                        setFilteredCountries(filtered);
+                        setShowDropdown(true);
+                      }
+                    }}
+                    className="w-full pl-12 pr-4 py-3 sm:py-4 border border-gray-300 rounded-xl shadow-sm focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-colors"
                   />
 
-                  {/* Name & meta */}
-                  <div className="flex-1 min-w-0">
-                    <h3 className="font-semibold text-gray-800 group-hover:text-blue-600 transition truncate text-lg">
-                      {js.UserProfile?.fullName}
-                    </h3>
-                    <p className="text-xs text-blue-600 truncate">
-                      @{js.username}
-                    </p>
-                    <p className="text-xs text-gray-600 mt-1 truncate capitalize flex items-center gap-2">
-                      <i className="fas fa-location-dot text-xs" />{" "}
-                      {js.UserProfile?.city}, {js.UserProfile?.country}
-                    </p>
+                  {showDropdown && filteredCountries.length > 0 && (
+                    <div className="absolute z-20 mt-1 w-full max-h-60 overflow-y-auto rounded-xl border border-gray-200 bg-white shadow-lg">
+                      {filteredCountries.slice(0, 10).map((name) => (
+                        <div
+                          key={name}
+                          className="px-4 py-3 text-sm hover:bg-primary-50 cursor-pointer transition-colors border-b border-gray-100 last:border-b-0"
+                          onClick={() => {
+                            setCountryInput(name);
+                            setShowDropdown(false);
+                          }}
+                        >
+                          {name}
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Action Buttons */}
+              <div className="sm:col-span-2 lg:flex lg:items-end lg:gap-2">
+                <div className="flex gap-3">
+                  <button
+                    onClick={handleSearch}
+                    disabled={loading}
+                    className="flex-1 lg:flex-none bg-primary-600 hover:bg-primary-700 text-white px-6 sm:px-8 py-3 sm:py-4 rounded-xl font-medium transition-all duration-300 shadow-lg hover:shadow-xl disabled:opacity-50 flex items-center justify-center gap-2 min-w-[140px]"
+                  >
+                    {loading ? (
+                      <>
+                        <i className="fas fa-spinner animate-spin"></i>
+                        <span className="hidden sm:inline">Mencari...</span>
+                      </>
+                    ) : (
+                      <>
+                        <i className="fas fa-search"></i>
+                        <span className="hidden sm:inline">Cari Kandidat</span>
+                        <span className="sm:hidden">Cari</span>
+                      </>
+                    )}
+                  </button>
+
+                  <button
+                    onClick={() => resetFilters("all")}
+                    className="px-4 sm:px-6 py-3 sm:py-4 border-2 border-gray-300 text-gray-700 hover:bg-gray-50 rounded-xl font-medium transition-colors flex items-center gap-2"
+                  >
+                    <i className="fas fa-redo"></i>
+                    <span className="hidden sm:inline">Reset</span>
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <main className="flex flex-col gap-6">
+          {/* Results Header */}
+          <div className="bg-white rounded-2xl shadow-sm p-4 sm:p-6">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+              <div>
+                <h2 className="text-lg sm:text-xl font-bold text-gray-900">
+                  {meta?.total || 0} Kandidat Ditemukan
+                </h2>
+                
+                {/* Filter Tags */}
+                <div className="flex flex-wrap gap-2 mt-2">
+                  {filters.search && (
+                    <div className="inline-flex items-center gap-2 bg-primary-50 text-primary-700 px-3 py-1.5 rounded-full text-sm font-medium">
+                      <span>"{filters.search}"</span>
+                      <button
+                        onClick={() => resetFilters("search")}
+                        className="hover:bg-primary-100 rounded-full w-5 h-5 flex items-center justify-center"
+                        aria-label="Hapus filter pencarian"
+                      >
+                        <i className="fas fa-times text-xs"></i>
+                      </button>
+                    </div>
+                  )}
+                  {filters.country && (
+                    <div className="inline-flex items-center gap-2 bg-secondary-50 text-secondary-700 px-3 py-1.5 rounded-full text-sm font-medium">
+                      <span>{filters.country}</span>
+                      <button
+                        onClick={() => resetFilters("country")}
+                        className="hover:bg-secondary-100 rounded-full w-5 h-5 flex items-center justify-center"
+                        aria-label="Hapus filter negara"
+                      >
+                        <i className="fas fa-times text-xs"></i>
+                      </button>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Results per page for mobile */}
+              <div className="lg:hidden flex items-center gap-2 text-sm text-gray-600">
+                <span>Per halaman:</span>
+                <select
+                  className="border border-gray-300 bg-white rounded-lg px-2 py-1 text-sm"
+                  value={filters.limit}
+                  onChange={(e) => handleLimitChange(e.target.value)}
+                >
+                  <option value={30}>30</option>
+                  <option value={50}>50</option>
+                  <option value={80}>80</option>
+                </select>
+              </div>
+            </div>
+          </div>
+
+          {/* Grid Candidate */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
+            {loading &&
+              Array.from({ length: 6 }).map((_, i) => (
+                <CandidateCardSkeleton key={i} />
+              ))}
+            
+            {!loading && jobSeekers.length === 0 && (
+              <div className="col-span-3 bg-white rounded-2xl shadow-sm p-8 sm:p-12 text-center">
+                <div className="w-16 h-16 sm:w-20 sm:h-20 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <i className="fas fa-user text-gray-400 text-2xl"></i>
+                </div>
+                <h3 className="text-lg sm:text-xl font-semibold text-gray-900 mb-2">
+                  Tidak ada kandidat ditemukan
+                </h3>
+                <p className="text-gray-600 mb-4 max-w-md mx-auto">
+                  Coba ubah kata kunci pencarian atau filter negara untuk menemukan kandidat yang sesuai.
+                </p>
+                <button
+                  onClick={() => resetFilters("all")}
+                  className="inline-flex items-center gap-2 text-primary-600 hover:text-primary-700 font-medium"
+                >
+                  <i className="fas fa-redo"></i>
+                  Reset semua filter
+                </button>
+              </div>
+            )}
+            
+            {!loading && jobSeekers.map((js) => {
+              const skillsPreview = js.UserSkills?.slice(0, 2) || [];
+              const extraSkills =
+                js.UserSkills?.length > 2 ? js.UserSkills.length - 2 : 0;
+
+              const disabilityPreview = js.UserDisabilities?.slice(0, 2) || [];
+              const extraDisability =
+                js.UserDisabilities?.length > 2
+                  ? js.UserDisabilities.length - 2
+                  : 0;
+
+              return (
+                <div
+                  key={js.id}
+                  onClick={() => navigate(`/js/${js.id}`)}
+                  className="group cursor-pointer bg-white border border-gray-200 rounded-2xl p-5 shadow-sm hover:shadow-xl transition-all duration-300 hover:-translate-y-1"
+                  role="button"
+                  tabIndex={0}
+                  onKeyDown={(e) => e.key === 'Enter' && navigate(`/js/${js.id}`)}
+                >
+                  {/* Header */}
+                  <div className="flex items-center gap-4 mb-4">
+                    {/* Avatar */}
+                    <div className="relative flex-shrink-0">
+                      <img
+                        src={js.profilePicture || defaultPfp}
+                        alt={js.UserProfile?.fullName || 'Kandidat'}
+                        className="w-14 h-14 sm:w-16 sm:h-16 rounded-xl object-cover border-2 border-gray-100 group-hover:border-primary-200 transition-colors"
+                      />
+                      <div className="absolute -bottom-1 -right-1 w-6 h-6 bg-primary-500 rounded-full flex items-center justify-center">
+                        <i className="fas fa-user text-white text-xs"></i>
+                      </div>
+                    </div>
+
+                    {/* Name & meta */}
+                    <div className="flex-1 min-w-0">
+                      <h3 className="font-bold text-gray-900 group-hover:text-primary-600 transition-colors truncate">
+                        {js.UserProfile?.fullName || 'Nama tidak tersedia'}
+                      </h3>
+                      <p className="text-sm text-primary-600 truncate">
+                        @{js.username}
+                      </p>
+                      <div className="flex items-center gap-2 text-xs text-gray-500 mt-1">
+                        <i className="fas fa-location-dot text-xs"></i>
+                        <span className="truncate">
+                          {js.UserProfile?.city && js.UserProfile?.country
+                            ? `${js.UserProfile.city}, ${js.UserProfile.country}`
+                            : js.UserProfile?.country || 'Lokasi tidak tersedia'}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Bio */}
+                  {js.UserProfile?.bio && (
+                    <div className="mb-4">
+                      <p className="text-sm text-gray-600 line-clamp-3 leading-relaxed">
+                        {js.UserProfile.bio}
+                      </p>
+                    </div>
+                  )}
+
+                  {/* Skills */}
+                  {skillsPreview.length > 0 && (
+                    <div className="mb-4">
+                      <div className="flex items-center gap-2 mb-2">
+                        <i className="fas fa-tools text-gray-400 text-sm"></i>
+                        <span className="text-xs font-medium text-gray-700">Keahlian</span>
+                      </div>
+                      <div className="flex flex-wrap gap-2">
+                        {skillsPreview.map((skill) => (
+                          <span
+                            key={skill.id}
+                            className="bg-blue-50 text-blue-700 px-3 py-1.5 rounded-lg text-xs font-medium capitalize border border-blue-100"
+                          >
+                            {skill.skillName}
+                          </span>
+                        ))}
+                        {extraSkills > 0 && (
+                          <span className="bg-gray-50 text-gray-600 px-3 py-1.5 rounded-lg text-xs border border-gray-200">
+                            +{extraSkills} lainnya
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Disabilities */}
+                  {disabilityPreview.length > 0 && (
+                    <div className="mb-4">
+                      <div className="flex items-center gap-2 mb-2">
+                        <i className="fas fa-universal-access text-gray-400 text-sm"></i>
+                        <span className="text-xs font-medium text-gray-700">Disabilitas</span>
+                      </div>
+                      <div className="flex flex-wrap gap-2">
+                        {disabilityPreview.map((disability) => (
+                          <span
+                            key={disability.id}
+                            className="bg-green-50 text-green-700 px-3 py-1.5 rounded-lg text-xs font-medium capitalize border border-green-100"
+                          >
+                            {disability.disabilityName}
+                            {disability.type && (
+                              <span className="text-green-600 ml-1">• {disability.type}</span>
+                            )}
+                          </span>
+                        ))}
+                        {extraDisability > 0 && (
+                          <span className="bg-gray-50 text-gray-600 px-3 py-1.5 rounded-lg text-xs border border-gray-200">
+                            +{extraDisability} lainnya
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Footer */}
+                  <div className="pt-4 border-t border-gray-100">
+                    <div className="flex items-center justify-between">
+                      <div className="text-xs text-gray-500">
+                        <i className="fas fa-eye mr-1"></i>
+                        Lihat profil lengkap
+                      </div>
+                      <div className="text-primary-600 text-sm font-medium flex items-center gap-1">
+                        <span className="group-hover:translate-x-1 transition-transform duration-300">
+                          Detail
+                        </span>
+                        <i className="fas fa-arrow-right text-xs group-hover:translate-x-1 transition-transform duration-300"></i>
+                      </div>
+                    </div>
                   </div>
                 </div>
+              );
+            })}
+          </div>
 
-                {/* Bio */}
-                {js.UserProfile?.bio && (
-                  <p className="text-sm text-gray-600 line-clamp-3 leading-relaxed mb-3">
-                    {js.UserProfile?.bio}
-                  </p>
-                )}
-
-                {/* Disabilities & Skills */}
-                {/* Skills */}
-                {skillsPreview.length > 0 && (
-                  <div className="flex flex-wrap gap-2 mb-4 mt-4">
-                    {skillsPreview.map((skill) => (
-                      <span
-                        key={skill.id}
-                        className="bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-xs font-medium capitalize"
-                      >
-                        {skill.skillName}
-                      </span>
-                    ))}
-
-                    {extraSkills > 0 && (
-                      <span className="bg-gray-100 text-gray-700 px-3 py-1 rounded-full text-xs">
-                        +{extraSkills} lainnya
-                      </span>
-                    )}
+          {/* Pagination */}
+          {jobSeekers.length > 0 && (
+            <div className="mt-6 sm:mt-8 bg-white rounded-2xl shadow-sm border border-gray-200 p-4 sm:p-6">
+              <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+                <div className="flex items-center gap-2 text-sm text-gray-600">
+                  <span className="hidden sm:inline">Showing</span>
+                  <select
+                    className="outline-none border border-gray-300 bg-white text-sm rounded-lg px-3 py-2 shadow-sm hidden sm:block"
+                    value={filters.limit}
+                    onChange={(e) => handleLimitChange(e.target.value)}
+                  >
+                    <option value={30}>30</option>
+                    <option value={50}>50</option>
+                    <option value={80}>80</option>
+                  </select>
+                  <span className="text-gray-700 font-medium">
+                    {((meta.page - 1) * meta.limit) + 1} - {Math.min(meta.page * meta.limit, meta.total)} dari {meta.total} kandidat
+                  </span>
+                </div>
+                
+                <div className="flex items-center gap-2">
+                  <button
+                    className="px-4 py-2 border border-gray-300 bg-white hover:bg-gray-50 text-gray-700 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                    onClick={() => handlePageChange(meta.page - 1)}
+                    disabled={meta.page <= 1 || loading}
+                  >
+                    <i className="fas fa-chevron-left"></i>
+                    <span className="hidden sm:inline">Previous</span>
+                  </button>
+                  
+                  <div className="flex items-center gap-1">
+                    {Array.from({ length: Math.min(5, meta.totalPages || 1) }, (_, i) => {
+                      let pageNum;
+                      if (meta.totalPages <= 5) {
+                        pageNum = i + 1;
+                      } else if (meta.page <= 3) {
+                        pageNum = i + 1;
+                      } else if (meta.page >= meta.totalPages - 2) {
+                        pageNum = meta.totalPages - 4 + i;
+                      } else {
+                        pageNum = meta.page - 2 + i;
+                      }
+                      
+                      return (
+                        <button
+                          key={pageNum}
+                          onClick={() => handlePageChange(pageNum)}
+                          className={`w-10 h-10 flex items-center justify-center rounded-lg transition-colors ${
+                            meta.page === pageNum
+                              ? 'bg-primary-600 text-white'
+                              : 'bg-white text-gray-700 hover:bg-gray-50 border border-gray-300'
+                          }`}
+                        >
+                          {pageNum}
+                        </button>
+                      );
+                    })}
                   </div>
-                )}
-
-                {/* Disabilities */}
-                {disabilityPreview.length > 0 && (
-                  <div className="flex flex-wrap gap-2 mb-4">
-                    {disabilityPreview.map((disability) => (
-                      <span
-                        key={disability.id}
-                        className="bg-green-100 text-green-800 px-3 py-1 rounded-full font-medium text-xs capitalize"
-                      >
-                        {disability.disabilityName} / {disability.type}
-                      </span>
-                    ))}
-
-                    {extraDisability > 0 && (
-                      <span className="bg-gray-100 text-gray-700 px-3 py-1 rounded-full text-xs">
-                        +{extraDisability} lainnya
-                      </span>
-                    )}
-                  </div>
-                )}
+                  
+                  <button
+                    className="px-4 py-2 border border-gray-300 bg-white hover:bg-gray-50 text-gray-700 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                    onClick={() => handlePageChange(meta.page + 1)}
+                    disabled={meta.page >= (meta.totalPages || 1) || loading}
+                  >
+                    <span className="hidden sm:inline">Next</span>
+                    <i className="fas fa-chevron-right"></i>
+                  </button>
+                </div>
               </div>
-            );
-          })}
-        </div>
+              
+              {/* Mobile page info */}
+              <div className="sm:hidden text-center mt-4 text-sm text-gray-600">
+                Halaman {meta.page} dari {meta.totalPages || 1}
+              </div>
+            </div>
+          )}
+        </main>
+      </div>
 
-        {/* Pagination */}
-        <div className="flex items-center justify-between mt-6 rounded-lg border border-gray-200 p-4 bg-blue-50">
-          <div className="flex gap-1 items-center text-sm text-gray-600">
-            <span>Showing</span>
-            <select
-              className="font-inter outline-none border border-gray-300 bg-white text-sm rounded-md px-2 py-1 shadow-sm"
-              value={filters.limit}
-              onChange={(e) => handleLimitChange(e.target.value)}
-            >
-              <option value={30}>30</option>
-              <option value={50}>50</option>
-              <option value={80}>80</option>
-            </select>
-            <span>data from {meta.total}</span>
-          </div>
-          <div className="flex gap-2 items-center">
-            <button
-              className="px-3 py-1 bg-gray-50 cursor-pointer border rounded disabled:opacity-50"
-              onClick={() => handlePageChange(meta.page - 1)}
-              disabled={meta.page <= 1 || loading}
-            >
-              Prev
-            </button>
-            <span className="px-3 py-1 text-xs">
-              Page {meta.page} of {meta.totalPages || 1}
-            </span>
-            <button
-              className="px-3 py-1 border bg-gray-50 cursor-pointer rounded disabled:opacity-50"
-              onClick={() => handlePageChange(meta.page + 1)}
-              disabled={meta.page >= (meta.totalPages || 1) || loading}
-            >
-              Next
-            </button>
-          </div>
-        </div>
-      </main>
+      <style jsx>{`
+        .line-clamp-3 {
+          display: -webkit-box;
+          -webkit-line-clamp: 3;
+          -webkit-box-orient: vertical;
+          overflow: hidden;
+        }
+      `}</style>
     </div>
   );
 };

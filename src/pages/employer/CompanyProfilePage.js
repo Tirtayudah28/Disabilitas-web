@@ -1,4 +1,4 @@
-// src/pages/ProfilePage.js - VERSI FIXED
+// src/pages/CompanyProfilePage.js
 import axios from "axios";
 import React, { useEffect, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
@@ -17,14 +17,8 @@ const CompanyProfilePage = () => {
   const [asideLoading, setAsideLoading] = useState(false);
 
   const [profileData, setProfileData] = useState({});
-  const [educations, setEducations] = useState([]);
-  const [experiences, setExperiences] = useState([]);
-  const [skills, setSkills] = useState([]);
-  const [disabilities, setDisabilities] = useState([]);
   const [otherCmPreview, setOtherCmPreview] = useState([]);
-
   const [countries, setCountries] = useState([]);
-
   const [showEditProfPopup, setShowEditProfPopup] = useState(false);
 
   useEffect(() => {
@@ -38,60 +32,6 @@ const CompanyProfilePage = () => {
       document.body.style.cursor = "default";
     };
   }, [loading]);
-
-  //profile completion calculations
-  const computeProfileCompletion = () => {
-    const hasDisability =
-      Array.isArray(disabilities) && disabilities.length > 0;
-    const hasSkill = Array.isArray(skills) && skills.length > 0;
-    const hasExperience = Array.isArray(experiences) && experiences.length > 0;
-    const hasEducation = Array.isArray(educations) && educations.length > 0;
-
-    const detailsCount = [
-      hasDisability,
-      hasSkill,
-      hasExperience,
-      hasEducation,
-    ].filter(Boolean).length;
-
-    const hasBio = Boolean(
-      profileData?.profile?.bio && String(profileData.bio).trim() !== ""
-    );
-    const hasPic = Boolean(
-      profileData?.profilePicture &&
-        String(profileData.profilePicture).trim() !== ""
-    );
-
-    // default
-    let percent = 0;
-
-    if (hasBio && hasPic) {
-      if (detailsCount === 4) percent = 100;
-      else if (detailsCount === 3) percent = 75;
-      else if (detailsCount === 2) percent = 50;
-      else if (detailsCount === 1)
-        percent = 50; // sesuai request (kurang 3 => 50%)
-      else percent = 25;
-    } else {
-      // ada missing bio/pic
-      if (detailsCount === 0 && !hasBio && !hasPic) percent = 10;
-      else percent = 25;
-    }
-
-    return {
-      percent,
-      hasBio,
-      hasPic,
-      detailsCount,
-      breakdown: {
-        hasDisability,
-        hasSkill,
-        hasExperience,
-        hasEducation,
-      },
-    };
-  };
-  const profileCompletion = computeProfileCompletion();
 
   //fatir: get countries
   useEffect(() => {
@@ -134,6 +74,7 @@ const CompanyProfilePage = () => {
       setLoading(false);
     }
   };
+  
   const getOtherCmPreview = async () => {
     setAsideLoading(true);
     try {
@@ -154,6 +95,7 @@ const CompanyProfilePage = () => {
   useEffect(() => {
     getUserById();
   }, [userId]);
+  
   useEffect(() => {
     getOtherCmPreview();
   }, [token, userId]);
@@ -176,8 +118,6 @@ const CompanyProfilePage = () => {
         return;
       }
 
-      console.log(payload);
-
       const res = await axios.put("/api/user/cm/profile", payload, {
         headers: {
           Authorization: `Bearer ${token}`,
@@ -198,6 +138,7 @@ const CompanyProfilePage = () => {
       setLoading(false);
     }
   };
+  
   //handle edit profile picture
   const handleEditPfp = async (e, mode = "upload") => {
     setLoading(true);
@@ -249,24 +190,24 @@ const CompanyProfilePage = () => {
   */
   const ProfileHeaderSkeleton = () => {
     return (
-      <div className="bg-white rounded-md shadow-lg overflow-hidden mb-4 animate-pulse">
+      <div className="bg-white rounded-2xl shadow-xl overflow-hidden mb-6 animate-pulse">
         {/* Cover */}
-        <div className="bg-gray-200 h-28" />
+        <div className="bg-gradient-to-r from-gray-200 to-gray-300 h-36" />
 
         <div className="px-8 pb-8">
-          <div className="flex flex-col items-start -mt-16">
+          <div className="flex flex-col items-start -mt-20">
             {/* Avatar */}
-            <div className="h-32 w-32 rounded-full bg-gray-200 border-4 border-white" />
+            <div className="h-40 w-40 rounded-full bg-gray-200 border-8 border-white shadow-lg" />
 
             {/* Name & Meta */}
-            <div className="mt-6 w-full">
-              <div className="space-y-3">
-                <div className="h-8 w-1/2 bg-gray-200 rounded" />
-                <div className="h-5 w-1/3 bg-gray-200 rounded" />
+            <div className="mt-8 w-full">
+              <div className="space-y-4">
+                <div className="h-10 w-3/5 bg-gray-200 rounded-lg" />
+                <div className="h-6 w-2/5 bg-gray-200 rounded-lg" />
 
-                <div className="flex items-center gap-4 mt-2">
-                  <div className="h-4 w-40 bg-gray-200 rounded" />
-                  <div className="h-4 w-32 bg-gray-200 rounded" />
+                <div className="flex flex-wrap items-center gap-4 mt-4">
+                  <div className="h-5 w-48 bg-gray-200 rounded" />
+                  <div className="h-5 w-40 bg-gray-200 rounded" />
                 </div>
               </div>
             </div>
@@ -275,71 +216,58 @@ const CompanyProfilePage = () => {
       </div>
     );
   };
+  
   const AboutSkeleton = () => {
     return (
-      <div className="flex flex-col bg-white shadow-lg overflow-hidden p-7 mb-4 animate-pulse">
+      <div className="bg-white rounded-2xl shadow-xl p-8 mb-6 animate-pulse">
         {/* Title */}
-        <div className="h-7 w-32 bg-gray-200 rounded" />
+        <div className="h-8 w-40 bg-gray-200 rounded-lg mb-8" />
 
         {/* Description */}
-        <div className="mt-4 space-y-2">
+        <div className="space-y-3 mb-8">
           <div className="h-4 w-full bg-gray-200 rounded" />
           <div className="h-4 w-11/12 bg-gray-200 rounded" />
           <div className="h-4 w-10/12 bg-gray-200 rounded" />
         </div>
 
-        {/* Nama Perusahaan */}
-        <div className="mt-8">
-          <div className="h-4 w-40 bg-gray-200 rounded" />
-          <div className="h-4 w-64 bg-gray-200 rounded mt-2" />
-        </div>
-
-        {/* Industri */}
-        <div className="mt-6">
-          <div className="h-4 w-24 bg-gray-200 rounded" />
-          <div className="h-4 w-48 bg-gray-200 rounded mt-2" />
-        </div>
-
-        {/* Lokasi */}
-        <div className="mt-6">
-          <div className="h-4 w-20 bg-gray-200 rounded" />
-          <div className="h-4 w-56 bg-gray-200 rounded mt-2" />
-          <div className="h-4 w-72 bg-gray-200 rounded mt-2" />
-        </div>
-
-        {/* Tahun Berdiri */}
-        <div className="mt-6">
-          <div className="h-4 w-28 bg-gray-200 rounded" />
-          <div className="h-4 w-20 bg-gray-200 rounded mt-2" />
-        </div>
-
-        {/* Website */}
-        <div className="mt-6">
-          <div className="h-4 w-32 bg-gray-200 rounded" />
-          <div className="h-4 w-72 bg-gray-200 rounded mt-2" />
+        {/* Info Items */}
+        <div className="space-y-6">
+          <div>
+            <div className="h-5 w-48 bg-gray-200 rounded mb-2" />
+            <div className="h-4 w-72 bg-gray-200 rounded" />
+          </div>
+          <div>
+            <div className="h-5 w-32 bg-gray-200 rounded mb-2" />
+            <div className="h-4 w-56 bg-gray-200 rounded" />
+          </div>
+          <div>
+            <div className="h-5 w-28 bg-gray-200 rounded mb-2" />
+            <div className="h-4 w-64 bg-gray-200 rounded" />
+          </div>
         </div>
       </div>
     );
   };
+  
   const OtherCmPreviewSkeleton = ({ count = 4 }) => {
     return (
-      <div className="bg-white rounded shadow-lg overflow-hidden mb-4 p-4 animate-pulse">
+      <div className="bg-white rounded-2xl shadow-xl p-6 animate-pulse">
         {/* Title */}
-        <h2>Pengguna lain</h2>
+        <div className="h-7 w-48 bg-gray-200 rounded-lg mb-6" />
 
-        <div className="flex flex-col gap-3 mt-4">
+        <div className="space-y-4">
           {Array.from({ length: count }).map((_, idx) => (
             <div
               key={idx}
-              className="flex flex-col items-center gap-3 p-3 border border-gray-200 rounded-md"
+              className="flex items-center gap-4 p-4 border border-gray-200 rounded-xl"
             >
               {/* Avatar */}
-              <div className="h-20 w-20 bg-gray-200" />
+              <div className="h-16 w-16 rounded-xl bg-gray-200" />
 
               {/* Name */}
-              <div className="flex flex-col items-center gap-2">
-                <div className="h-5 w-32 bg-gray-200 rounded" />
-                <div className="h-4 w-20 bg-gray-200 rounded" />
+              <div className="flex flex-col gap-2 flex-1">
+                <div className="h-5 w-40 bg-gray-200 rounded" />
+                <div className="h-4 w-24 bg-gray-200 rounded" />
               </div>
             </div>
           ))}
@@ -350,55 +278,60 @@ const CompanyProfilePage = () => {
 
   return (
     <>
-      <div className="grid grid-cols-1 lg:grid-cols-4 gap-4 min-h-screen mx-auto lg:px-28 xl:px-32 py-8">
+      <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 min-h-screen mx-auto px-4 sm:px-6 lg:px-8 xl:px-12 py-8">
         {/* Main Content */}
-        <main id="main-content" className="container col-span-3">
+        <main className="lg:col-span-3 space-y-6">
           {/* Profile Header */}
           {loading ? (
             <ProfileHeaderSkeleton />
           ) : (
-            <div className="bg-white rounded shadow-lg overflow-hidden mb-4 relative">
+            <div className="bg-white rounded-2xl shadow-xl overflow-hidden relative">
+              {/* Action Buttons */}
               {userData?.id === profileData?.id && (
-                <div className="absolute top-3 right-3 flex gap-5">
+                <div className="absolute top-4 right-4 flex flex-col sm:flex-row gap-3 z-10">
                   <Link to={`/employer`}>
-                    <button className="px-5 py-2 rounded bg-white">
-                      Dashboard{" "}
-                      <i
-                        className="fas fa-tachometer-alt w-4"
-                        aria-hidden="true"
-                      ></i>{" "}
+                    <button className="px-5 py-2.5 rounded-xl bg-white/90 backdrop-blur-sm text-gray-700 hover:bg-white hover:shadow-lg transition-all duration-200 border border-gray-200 font-medium flex items-center gap-2">
+                      <i className="fas fa-tachometer-alt"></i>
+                      Dashboard
                     </button>
                   </Link>
                   <button
-                    className="px-5 py-2 rounded bg-white"
+                    className="px-5 py-2.5 rounded-xl bg-blue-600 text-white hover:bg-blue-700 hover:shadow-lg transition-all duration-200 font-medium flex items-center gap-2"
                     onClick={() => setShowEditProfPopup(!showEditProfPopup)}
                   >
-                    Edit Profile <i class="fa-solid fa-pen-to-square"></i>
+                    <i className="fa-solid fa-pen-to-square"></i>
+                    Edit Profile
                   </button>
                 </div>
               )}
-              <div className="bg-gradient-to-r from-violet-700 to-violet-300 h-28"></div>
-              <div className="px-8 pb-8">
-                <div className="flex flex-col items-start -mt-16">
+              
+              {/* Cover Photo */}
+              <div className="bg-gradient-to-r from-indigo-700 via-purple-600 to-pink-500 h-36 relative">
+                <div className="absolute inset-0 bg-gradient-to-t from-black/10 to-transparent"></div>
+              </div>
+              
+              <div className="px-6 sm:px-8 pb-8 relative">
+                <div className="flex flex-col sm:flex-row items-start sm:items-end gap-6 -mt-20">
+                  {/* Profile Picture */}
                   <div className="relative">
-                    <div className="h-32 w-32 aspect-square rounded-full bg-white">
-                      <img
-                        src={profileData?.profilePicture || defaultCm}
-                        alt="profile picture"
-                        className="h-32 w-32 aspect-square rounded-full object-cover"
-                      />
+                    <div className="h-40 w-40 rounded-full bg-gradient-to-r from-blue-500 to-purple-500 p-1 shadow-2xl">
+                      <div className="h-full w-full rounded-full bg-white p-1">
+                        <img
+                          src={profileData?.profilePicture || defaultCm}
+                          alt="profile picture"
+                          className="h-full w-full rounded-full object-cover border-4 border-white"
+                        />
+                      </div>
                     </div>
+                    
                     {userData?.id === profileData?.id && (
                       <>
                         <label
                           htmlFor="profilePictureInput"
-                          className={`${
-                            profileData?.profilePicture
-                              ? "absolute right-0 bottom-0"
-                              : "absolute bottom-2 right-2"
-                          } bg-white/70 p-2 rounded-full shadow-md hover:bg-gray-100 transition cursor-pointer`}
+                          className="absolute right-2 bottom-2 bg-white p-3 rounded-full shadow-lg hover:shadow-xl hover:bg-gray-50 transition-all duration-200 cursor-pointer border border-gray-100"
+                          title="Ubah Foto Profil"
                         >
-                          <i className="fas fa-camera text-gray-600"></i>
+                          <i className="fas fa-camera text-gray-700 text-lg"></i>
                         </label>
 
                         <input
@@ -408,72 +341,80 @@ const CompanyProfilePage = () => {
                           className="hidden"
                           onChange={(e) => handleEditPfp(e, "upload")}
                         />
+                        
                         {profileData?.profilePicture && (
                           <button
-                            title="Delete Profile Picture"
+                            title="Hapus Foto Profil"
                             onClick={(e) => handleEditPfp(null, "delete")}
-                            className="absolute -bottom-4 right-10 p-2 bg-white/70 rounded-full shadow-md hover:bg-gray-100 transition cursor-pointer"
+                            className="absolute -bottom-2 left-2 bg-white p-2.5 rounded-full shadow-lg hover:shadow-xl hover:bg-red-50 transition-all duration-200 cursor-pointer border border-gray-100"
                           >
-                            <i class="fa-solid fa-trash text-gray-600"></i>
+                            <i className="fa-solid fa-trash text-red-600 text-sm"></i>
                           </button>
                         )}
                       </>
                     )}
                   </div>
 
-                  <div className="flex flex-col mt-6 flex-1 md:flex-row md:items-center justify-between">
-                    <div>
-                      <h1 className="text-3xl font-bold text-gray-900">
-                        {profileData?.company?.companyName}{" "}
-                        <Link
-                          to={`/cm/${profileData?.id}`}
-                          className="text-base text-blue-600 font-normal"
-                        >
-                          @{profileData?.username}
-                        </Link>
-                      </h1>
-                      <p className="mt-1 text-gray-600 capitalize">
-                        {profileData?.company?.Industry?.name ||
-                          profileData?.company?.industryName}
-                      </p>
-
-                      <div className="flex items-center mt-2 text-gray-600">
-                        <i className="fas fa-map-marker-alt mr-2"></i>
-                        <span className="capitalize">
-                          {profileData?.company?.country},{" "}
-                          {profileData?.company?.city}
-                        </span>
-                        <span className="mx-2">•</span>
-                        <i className="fas fa-clock mr-2"></i>
-                        <span>
-                          Bergabung sejak{" "}
-                          {profileData?.createdAt
-                            ? new Intl.DateTimeFormat("id-ID", {
-                                day: "numeric",
-                                month: "long",
-                                year: "numeric",
-                              }).format(new Date(profileData.createdAt))
-                            : "-"}
-                        </span>
+                  {/* Profile Info */}
+                  <div className="flex-1 mt-4 sm:mt-0">
+                    <div className="space-y-4">
+                      <div>
+                        <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">
+                          {profileData?.company?.companyName}
+                        </h1>
+                        <div className="flex items-center gap-2 mt-1">
+                          <span className="text-lg text-blue-600 font-medium">
+                            @{profileData?.username}
+                          </span>
+                          <span className="text-gray-400">•</span>
+                          <span className="text-gray-600 capitalize">
+                            {profileData?.company?.Industry?.name ||
+                              profileData?.company?.industryName}
+                          </span>
+                        </div>
                       </div>
 
-                      <div className="flex gap-4 mt-4">
+                      <div className="flex flex-wrap items-center gap-4 text-gray-600">
+                        <div className="flex items-center gap-2">
+                          <i className="fas fa-map-marker-alt text-gray-400"></i>
+                          <span className="capitalize">
+                            {profileData?.company?.city}, {profileData?.company?.country}
+                          </span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <i className="fas fa-calendar-alt text-gray-400"></i>
+                          <span>
+                            Bergabung{" "}
+                            {profileData?.createdAt
+                              ? new Intl.DateTimeFormat("id-ID", {
+                                  month: "long",
+                                  year: "numeric",
+                                }).format(new Date(profileData.createdAt))
+                              : "-"}
+                          </span>
+                        </div>
+                      </div>
+
+                      {/* Action Buttons */}
+                      <div className="flex flex-wrap gap-3 mt-6">
                         {profileData?.company?.websiteLink && (
                           <a
                             target="_blank"
                             rel="noopener noreferrer"
                             href={profileData?.company?.websiteLink}
+                            className="inline-block"
                           >
-                            <button className="bg-blue-600 text-sm text-white cursor-pointer hover:bg-blue-700 rounded-full px-5 py-2">
-                              <i class="fa-solid fa-link"></i> Kunjungi Website
+                            <button className="bg-gradient-to-r from-blue-600 to-blue-700 text-white hover:from-blue-700 hover:to-blue-800 hover:shadow-lg px-5 py-2.5 rounded-xl font-medium transition-all duration-200 flex items-center gap-2">
+                              <i className="fa-solid fa-link"></i>
+                              Kunjungi Website
                             </button>
                           </a>
                         )}
-                        <Link
-                          to={`/jobs?q=${profileData?.company?.companyName}`}
-                        >
-                          <button className="text-sm text-blue-700 border border-blue-700 cursor-pointer hover:bg-gray-100 rounded-full px-5 py-2">
-                            <i class="fa-solid fa-eye"></i> Lihat Pekerjaan
+                        
+                        <Link to={`/jobs?q=${profileData?.company?.companyName}`}>
+                          <button className="border-2 border-blue-600 text-blue-700 hover:bg-blue-50 px-5 py-2.5 rounded-xl font-medium transition-all duration-200 flex items-center gap-2">
+                            <i className="fa-solid fa-eye"></i>
+                            Lihat Pekerjaan
                           </button>
                         </Link>
                       </div>
@@ -481,32 +422,47 @@ const CompanyProfilePage = () => {
                   </div>
                 </div>
 
-                {/* Profile Completion */}
+                {/* Profile Completion (Only for owner) */}
                 {userData?.id === profileData?.id && (
-                  <div className="mt-6 bg-primary-50 rounded-lg p-4">
-                    <div className="flex justify-between items-center mb-2">
-                      <span className="font-medium">Kelengkapan Profil</span>
-                      <span className="font-bold text-primary-600">
-                        {profileCompletion.percent}%
-                      </span>
+                  <div className="mt-8 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-2xl p-6 border border-blue-100">
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-4">
+                      <div>
+                        <h3 className="font-bold text-gray-900 text-lg">Kelengkapan Profil</h3>
+                        <p className="text-gray-600 text-sm mt-1">
+                          Lengkapi profil untuk meningkatkan kredibilitas perusahaan
+                        </p>
+                      </div>
+                      <div className="text-right">
+                        <span className="text-2xl font-bold text-blue-700">100%</span>
+                        <p className="text-gray-600 text-sm">Sempurna!</p>
+                      </div>
                     </div>
-                    <div className="w-full bg-gray-200 rounded-full h-2 overflow-hidden">
-                      <div
-                        className={`h-2 rounded-full transition-all duration-300 ${
-                          profileCompletion.percent >= 75
-                            ? "bg-green-500"
-                            : profileCompletion.percent >= 50
-                            ? "bg-yellow-400"
-                            : "bg-red-400"
-                        }`}
-                        style={{ width: `${profileCompletion.percent}%` }}
+                    
+                    <div className="w-full bg-gray-200 rounded-full h-3 overflow-hidden">
+                      <div 
+                        className="h-3 rounded-full bg-gradient-to-r from-green-500 to-emerald-600 transition-all duration-500"
+                        style={{ width: '100%' }}
                       />
                     </div>
-                    <p className="text-sm text-gray-600 mt-2">
-                      {profileCompletion.percent !== 100
-                        ? "Lengkapi profil Anda untuk meningkatkan peluang diterima kerja"
-                        : "Profil anda sudah sempurna!"}
-                    </p>
+                    
+                    <div className="mt-4 grid grid-cols-2 sm:grid-cols-4 gap-3">
+                      {[
+                        { label: "Foto Profil", completed: true, icon: "fa-camera" },
+                        { label: "Deskripsi", completed: true, icon: "fa-file-alt" },
+                        { label: "Informasi", completed: true, icon: "fa-info-circle" },
+                        { label: "Website", completed: true, icon: "fa-globe" }
+                      ].map((item, index) => (
+                        <div key={index} className="flex items-center gap-3 p-3 bg-white rounded-xl border border-gray-100">
+                          <div className={`h-8 w-8 rounded-full flex items-center justify-center ${item.completed ? 'bg-green-100 text-green-600' : 'bg-gray-100 text-gray-400'}`}>
+                            <i className={`fas ${item.icon} text-sm`}></i>
+                          </div>
+                          <div>
+                            <p className="font-medium text-sm">{item.label}</p>
+                            <p className="text-xs text-gray-500">{item.completed ? 'Lengkap' : 'Belum'}</p>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
                   </div>
                 )}
               </div>
@@ -517,102 +473,174 @@ const CompanyProfilePage = () => {
           {loading ? (
             <AboutSkeleton />
           ) : (
-            <div className="flex flex-col bg-white shadow-lg overflow-hidden p-7 mb-4">
-              <h1 className="text-2xl font-bold text-gray-900">Tentang</h1>
+            <div className="bg-white rounded-2xl shadow-xl p-8">
+              <div className="flex items-center gap-4 mb-8">
+                <div className="h-10 w-2 bg-gradient-to-b from-blue-500 to-purple-500 rounded-full"></div>
+                <h1 className="text-2xl font-bold text-gray-900">Tentang Perusahaan</h1>
+              </div>
+              
               {profileData?.company?.companyDescription && (
-                <p className="mt-3 text-gray-600 leading-loose whitespace-pre-line">
-                  {profileData?.company?.companyDescription}
-                </p>
-              )}
-              <div className="mt-8">
-                <h2 className="font-semibold text-gray-900">Nama Perusahaan</h2>
-                <p className="mt-1 text-gray-600">
-                  {profileData?.company?.companyName}
-                </p>
-              </div>
-              <div className="mt-6">
-                <h2 className="font-semibold text-gray-900">Industri</h2>
-                <p className="mt-1 text-gray-600 capitalize">
-                  {profileData?.company?.Industry?.name ||
-                    profileData?.company?.industryName}
-                </p>
-              </div>
-              <div className="mt-6">
-                <h2 className="font-semibold text-gray-900">Lokasi</h2>
-                <p className="mt-1 text-gray-600 capitalize">
-                  {`${profileData?.company?.country}, ${profileData?.company?.city}`}
-                </p>
-                {profileData?.company?.address && (
-                  <p className="mt-1 text-gray-600">
-                    {profileData?.company?.address}
-                  </p>
-                )}
-              </div>
-              {profileData?.company?.establishedYear && (
-                <div className="mt-6">
-                  <h2 className="font-semibold text-gray-900">Tahun Berdiri</h2>
-                  <p className="mt-1 text-gray-600">
-                    {profileData?.company?.establishedYear}
-                  </p>
-                </div>
-              )}
-              {profileData?.company?.websiteLink && (
-                <div className="mt-6">
-                  <h2 className="font-semibold text-gray-900">
-                    Official Website
-                  </h2>
-                  <div className="mt-1">
-                    <a
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-blue-600"
-                      href={profileData?.company?.websiteLink}
-                    >
-                      {profileData?.company?.websiteLink}
-                    </a>
+                <div className="mb-10">
+                  <div className="prose max-w-none">
+                    <p className="text-gray-700 leading-relaxed whitespace-pre-line">
+                      {profileData?.company?.companyDescription}
+                    </p>
                   </div>
                 </div>
               )}
+
+              {/* Company Details Grid */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {/* Nama Perusahaan */}
+                <div className="bg-gray-50 rounded-xl p-5 border border-gray-100">
+                  <div className="flex items-center gap-3 mb-3">
+                    <div className="h-10 w-10 rounded-lg bg-blue-100 flex items-center justify-center">
+                      <i className="fas fa-building text-blue-600"></i>
+                    </div>
+                    <h3 className="font-semibold text-gray-900">Nama Perusahaan</h3>
+                  </div>
+                  <p className="text-gray-700 font-medium">
+                    {profileData?.company?.companyName}
+                  </p>
+                </div>
+
+                {/* Industri */}
+                <div className="bg-gray-50 rounded-xl p-5 border border-gray-100">
+                  <div className="flex items-center gap-3 mb-3">
+                    <div className="h-10 w-10 rounded-lg bg-purple-100 flex items-center justify-center">
+                      <i className="fas fa-industry text-purple-600"></i>
+                    </div>
+                    <h3 className="font-semibold text-gray-900">Industri</h3>
+                  </div>
+                  <p className="text-gray-700 capitalize">
+                    {profileData?.company?.Industry?.name ||
+                      profileData?.company?.industryName}
+                  </p>
+                </div>
+
+                {/* Lokasi */}
+                <div className="bg-gray-50 rounded-xl p-5 border border-gray-100">
+                  <div className="flex items-center gap-3 mb-3">
+                    <div className="h-10 w-10 rounded-lg bg-green-100 flex items-center justify-center">
+                      <i className="fas fa-map-marker-alt text-green-600"></i>
+                    </div>
+                    <h3 className="font-semibold text-gray-900">Lokasi</h3>
+                  </div>
+                  <div className="space-y-1">
+                    <p className="text-gray-700 capitalize">
+                      {`${profileData?.company?.city}, ${profileData?.company?.country}`}
+                    </p>
+                    {profileData?.company?.address && (
+                      <p className="text-gray-600 text-sm">
+                        {profileData?.company?.address}
+                      </p>
+                    )}
+                  </div>
+                </div>
+
+                {/* Tahun Berdiri */}
+                {profileData?.company?.establishedYear && (
+                  <div className="bg-gray-50 rounded-xl p-5 border border-gray-100">
+                    <div className="flex items-center gap-3 mb-3">
+                      <div className="h-10 w-10 rounded-lg bg-amber-100 flex items-center justify-center">
+                        <i className="fas fa-calendar-star text-amber-600"></i>
+                      </div>
+                      <h3 className="font-semibold text-gray-900">Tahun Berdiri</h3>
+                    </div>
+                    <p className="text-gray-700 font-medium">
+                      {profileData?.company?.establishedYear}
+                    </p>
+                  </div>
+                )}
+
+                {/* Website */}
+                {profileData?.company?.websiteLink && (
+                  <div className="bg-gray-50 rounded-xl p-5 border border-gray-100 md:col-span-2">
+                    <div className="flex items-center gap-3 mb-3">
+                      <div className="h-10 w-10 rounded-lg bg-cyan-100 flex items-center justify-center">
+                        <i className="fas fa-globe text-cyan-600"></i>
+                      </div>
+                      <h3 className="font-semibold text-gray-900">Official Website</h3>
+                    </div>
+                    <a
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-2 text-blue-600 hover:text-blue-800 font-medium group"
+                      href={profileData?.company?.websiteLink}
+                    >
+                      <span className="truncate">{profileData?.company?.websiteLink}</span>
+                      <i className="fas fa-external-link-alt text-sm opacity-0 group-hover:opacity-100 transition-opacity"></i>
+                    </a>
+                  </div>
+                )}
+              </div>
             </div>
           )}
         </main>
-        {/* Aside */}
-        <aside className="flex flex-col col-span-1">
+
+        {/* Sidebar */}
+        <aside className="lg:col-span-1 space-y-6">
           {asideLoading ? (
-            <OtherCmPreviewSkeleton />
+            <OtherCmPreviewSkeleton count={3} />
           ) : (
             otherCmPreview.length > 0 && (
-              <div className="bg-white rounded shadow-lg overflow-hidden mb-4 p-4">
-                <h2>Perusahaan lain</h2>
-                <div className="flex flex-col gap-3 mt-4">
-                  {otherCmPreview.map((ocp) => (
-                    <Link to={`/cm/${ocp.id}`}>
-                      <div
-                        key={ocp.id}
-                        className="flex flex-col items-center gap-3 p-3 border border-gray-200 rounded-md hover:bg-blue-50 transition"
-                      >
-                        <img
-                          src={ocp.profilePicture || defaultCm}
-                          alt="Profile Picture"
-                          className="h-20 w-20 object-cover aspect-square"
-                        />
-                        <div className="flex flex-col items-center">
-                          <h3 className="font-semibold text-center">
-                            {ocp.Company?.companyName}
-                          </h3>
-                          <p className="text-sm text-blue-600">
-                            @{ocp.username}
-                          </p>
+              <div className="bg-white rounded-2xl shadow-xl overflow-hidden">
+                <div className="p-6 border-b border-gray-100">
+                  <h3 className="font-bold text-lg text-gray-900">Perusahaan Lainnya</h3>
+                  <p className="text-gray-600 text-sm mt-1">Temukan perusahaan serupa</p>
+                </div>
+                
+                <div className="p-4">
+                  <div className="space-y-4">
+                    {otherCmPreview.map((ocp) => (
+                      <Link to={`/cm/${ocp.id}`} key={ocp.id}>
+                        <div className="flex items-center gap-4 p-4 border border-gray-100 rounded-xl hover:border-blue-300 hover:shadow-md transition-all duration-200 bg-white group">
+                          <div className="relative">
+                            <div className="h-14 w-14 rounded-xl bg-gradient-to-r from-blue-100 to-purple-100 p-0.5">
+                              <img
+                                src={ocp.profilePicture || defaultCm}
+                                alt="Profile Picture"
+                                className="h-full w-full rounded-xl object-cover border-2 border-white"
+                              />
+                            </div>
+                            <div className="absolute -bottom-1 -right-1 h-5 w-5 bg-blue-500 rounded-full border-2 border-white"></div>
+                          </div>
+                          
+                          <div className="flex-1 min-w-0">
+                            <h4 className="font-semibold text-gray-900 truncate group-hover:text-blue-600 transition-colors">
+                              {ocp.Company?.companyName}
+                            </h4>
+                            <p className="text-sm text-blue-600 font-medium truncate">
+                              @{ocp.username}
+                            </p>
+                            {ocp.Company?.industryName && (
+                              <p className="text-xs text-gray-500 truncate capitalize mt-1">
+                                {ocp.Company.industryName}
+                              </p>
+                            )}
+                          </div>
+                          
+                          <i className="fas fa-chevron-right text-gray-400 group-hover:text-blue-600 transition-colors"></i>
                         </div>
-                      </div>
+                      </Link>
+                    ))}
+                  </div>
+                  
+                  <div className="mt-6 pt-4 border-t border-gray-100">
+                    <Link to="/companies">
+                      <button className="w-full text-center text-blue-600 hover:text-blue-800 font-medium text-sm flex items-center justify-center gap-2">
+                        Lihat Semua Perusahaan
+                        <i className="fas fa-arrow-right"></i>
+                      </button>
                     </Link>
-                  ))}
+                  </div>
                 </div>
               </div>
             )
           )}
         </aside>
       </div>
+      
       <CmEditProfilePopup
         isVisible={showEditProfPopup}
         onClose={() => setShowEditProfPopup(false)}

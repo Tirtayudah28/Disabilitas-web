@@ -1,4 +1,4 @@
-// src/components/layout/Header.js - VERSI DIPERBAIKI
+// src/components/layout/Header.js
 import React, { useState, useEffect } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "../../contexts/AuthContext";
@@ -19,11 +19,16 @@ const Header = () => {
 
   const [profileData, setProfileData] = useState({});
 
-  //fatir: get user by id
+  // Language options
+  const languageOptions = [
+    { code: "id", name: "Indonesia", flag: "🇮🇩" },
+    { code: "en", name: "English", flag: "🇺🇸" },
+  ];
+
+  //get user by id
   const getUserById = async () => {
     try {
       const res = await axios.get(`/api/user/${userData?.id}`);
-
       setProfileData(res.data.data);
     } catch (error) {
       console.error("Error fetching user:", error);
@@ -77,7 +82,6 @@ const Header = () => {
     if (confirmation) {
       try {
         const res = await axios.delete("/api/auth/logout");
-
         logout();
         enqueueSnackbar(res.data.message || "Logout berhasil", {
           variant: "info",
@@ -99,375 +103,251 @@ const Header = () => {
     return location.pathname === "/jobs";
   };
 
-  // PERBAIKAN 4: Logic untuk menentukan apakah menu profile aktif
   const isProfileActive = () => {
     return location.pathname === "/profile";
-  };
-
-  const getMenuClass = (isActive) => {
-    const baseClass =
-      "px-4 py-2 font-medium rounded-lg transition flex items-center gap-1 focus:outline-none";
-    return isActive
-      ? `${baseClass} bg-primary-100 text-primary-600`
-      : `${baseClass} hover:bg-primary-50 hover:text-primary-600`;
-  };
-
-  const getMobileMenuClass = (isActive) => {
-    const baseClass =
-      "block py-3 px-4 rounded-lg transition flex items-center gap-2 focus:outline-none";
-    return isActive
-      ? `${baseClass} bg-primary-50 text-primary-600`
-      : `${baseClass} hover:bg-primary-50`;
   };
 
   // Helper function to determine user role
   const isEmployer = userData?.role === "company";
   const isCandidate = userData?.role === "job-seeker";
 
-  //DESKTOP
+  // Menu class functions
+  const getMenuClass = (isActive) => {
+    const baseClass = "px-3 py-2 font-medium rounded-lg transition flex items-center gap-1 focus:outline-none text-sm sm:text-base";
+    return isActive
+      ? `${baseClass} bg-primary-100 text-primary-600`
+      : `${baseClass} hover:bg-primary-50 hover:text-primary-600`;
+  };
+
+  const getMobileMenuClass = (isActive) => {
+    const baseClass = "block py-3 px-4 rounded-lg transition flex items-center gap-2 focus:outline-none w-full text-base";
+    return isActive
+      ? `${baseClass} bg-primary-50 text-primary-600`
+      : `${baseClass} hover:bg-primary-50`;
+  };
+
+  // Desktop Navigation Menu - Sama untuk semua user
   const renderDesktopMenu = () => {
-    // Not logged in - Public menu
-    if (!userData) {
-      const isLowonganMenuActive = isLowonganActive();
+    const isLowonganMenuActive = isLowonganActive();
 
-      return (
-        <nav className="hidden lg:flex space-x-1" aria-label="Navigasi utama">
-          {/* Menu Cari Lowongan */}
-          <Link
-            to={"/profile"}
-            className={getMenuClass(isProfileActive())}
-            aria-current={isProfileActive() ? "page" : undefined}
-          >
-            <i class="fa-solid fa-person-circle-check" aria-hidden="true"></i>
-            <span>Profil Pengguna</span>
-          </Link>
-
-          <Link
-            to={"/jobs"}
-            className={getMenuClass(isLowonganMenuActive)}
-            aria-current={isLowonganMenuActive ? "page" : undefined}
-          >
-            <i className="fas fa-briefcase" aria-hidden="true"></i>
-            <span>Pekerjaan</span>
-          </Link>
-
-          <Link
-            to="/companies"
-            className={getMenuClass(location.pathname === "/companies")}
-            aria-current={
-              location.pathname === "/companies" ? "page" : undefined
-            }
-          >
-            <i className="fas fa-building" aria-hidden="true"></i>
-            <span>Perusahaan</span>
-          </Link>
-          <Link
-            to="/candidates"
-            className={getMenuClass(location.pathname === "/candidates")}
-            aria-current={
-              location.pathname === "/candidates" ? "page" : undefined
-            }
-          >
-            <i className="fas fa-users w-5 text-center" aria-hidden="true"></i>{" "}
-            <span>Kandidat</span>
-          </Link>
-        </nav>
-      );
-    }
-    // Logged-In User Menu
-    if (isCandidate || isEmployer) {
-      const isLowonganMenuActive = isLowonganActive();
-
-      return (
-        <nav
-          className="hidden lg:flex space-x-1"
-          aria-label="Navigasi kandidat"
+    return (
+      <nav className="hidden md:flex space-x-1 lg:space-x-2" aria-label="Navigasi utama">
+        {/* Menu Cari Lowongan */}
+        <Link
+          to={"/jobs"}
+          className={getMenuClass(isLowonganMenuActive)}
+          aria-current={isLowonganMenuActive ? "page" : undefined}
         >
-          <Link
-            to={"/jobs"}
-            className={getMenuClass(isLowonganMenuActive)}
-            aria-current={isLowonganMenuActive ? "page" : undefined}
-          >
-            <i className="fas fa-briefcase" aria-hidden="true"></i>
-            <span>Pekerjaan</span>
-          </Link>
-          <Link
-            to="/companies"
-            className={getMenuClass(location.pathname === "/companies")}
-            aria-current={
-              location.pathname === "/companies" ? "page" : undefined
-            }
-          >
-            <i className="fas fa-building" aria-hidden="true"></i>
-            <span>Perusahaan</span>
-          </Link>
+          <i className="fas fa-briefcase" aria-hidden="true"></i>
+          <span className="hidden sm:inline">Pekerjaan</span>
+          <span className="sm:hidden">Kerja</span>
+        </Link>
 
-          <Link
-            to="/candidates"
-            className={getMenuClass(location.pathname === "/candidates")}
-            aria-current={
-              location.pathname === "/candidates" ? "page" : undefined
-            }
-          >
-            <i className="fas fa-users" aria-hidden="true"></i>
-            <span>Kandidat</span>
-          </Link>
-        </nav>
-      );
-    }
+        <Link
+          to="/companies"
+          className={getMenuClass(location.pathname === "/companies")}
+          aria-current={location.pathname === "/companies" ? "page" : undefined}
+        >
+          <i className="fas fa-building" aria-hidden="true"></i>
+          <span className="hidden sm:inline">Perusahaan</span>
+          <span className="sm:hidden">Company</span>
+        </Link>
+
+        <Link
+          to="/candidates"
+          className={getMenuClass(location.pathname === "/candidates")}
+          aria-current={location.pathname === "/candidates" ? "page" : undefined}
+        >
+          <i className="fas fa-users w-5 text-center" aria-hidden="true"></i>
+          <span className="hidden sm:inline">Kandidat</span>
+          <span className="sm:hidden">Kandidat</span>
+        </Link>
+      </nav>
+    );
   };
 
-  //MOBILE
-  const renderMobileMenu = () => {
-    if (!userData) {
-      const isLowonganMenuActive = isLowonganActive();
+  // Mobile Menu Items - Sama untuk semua user
+  const renderMobileMenuItems = () => {
+    const isLowonganMenuActive = isLowonganActive();
 
-      return (
-        <>
-          <Link
-            to={"/jobs"}
-            className={getMobileMenuClass(isLowonganMenuActive)}
-            aria-current={isLowonganMenuActive ? "page" : undefined}
-          >
-            <i
-              className="fas fa-briefcase w-5 text-center"
-              aria-hidden="true"
-            ></i>{" "}
-            Pekerjaan
-          </Link>
-          {/* PERBAIKAN: gunakan getProfileLink() untuk mobile */}
-          <Link
-            to={"/profile"}
-            className={getMobileMenuClass(isProfileActive())}
-            aria-current={isProfileActive() ? "page" : undefined}
-          >
-            <i className="fas fa-users w-5 text-center" aria-hidden="true"></i>{" "}
-            Profile
-          </Link>
-          <Link
-            to="/companies"
-            className={getMobileMenuClass(location.pathname === "/companies")}
-            aria-current={
-              location.pathname === "/companies" ? "page" : undefined
-            }
-          >
-            <i
-              className="fas fa-building w-5 text-center"
-              aria-hidden="true"
-            ></i>{" "}
-            Perusahaan
-          </Link>
-          <Link
-            to="/candidates"
-            className={getMobileMenuClass(location.pathname === "/candidates")}
-            aria-current={
-              location.pathname === "/candidates" ? "page" : undefined
-            }
-          >
-            <i className="fas fa-users w-5 text-center" aria-hidden="true"></i>{" "}
-            Kandidat
-          </Link>
-        </>
-      );
-    }
+    return (
+      <>
+        <Link
+          to={"/jobs"}
+          className={getMobileMenuClass(isLowonganMenuActive)}
+          onClick={() => setIsMobileMenuOpen(false)}
+        >
+          <i className="fas fa-briefcase w-5 text-center"></i>
+          Pekerjaan
+        </Link>
 
-    if (isCandidate || isEmployer) {
-      const isLowonganMenuActive = isLowonganActive();
+        <Link
+          to="/companies"
+          className={getMobileMenuClass(location.pathname === "/companies")}
+          onClick={() => setIsMobileMenuOpen(false)}
+        >
+          <i className="fas fa-building w-5 text-center"></i>
+          Perusahaan
+        </Link>
 
-      return (
-        <>
-          <Link
-            to={"/jobs"}
-            className={getMobileMenuClass(isLowonganMenuActive)}
-            aria-current={isLowonganMenuActive ? "page" : undefined}
-          >
-            <i
-              className="fas fa-briefcase w-5 text-center"
-              aria-hidden="true"
-            ></i>{" "}
-            Pekerjaan
-          </Link>
-          <Link
-            to="/companies"
-            className={getMenuClass(location.pathname === "/companies")}
-            aria-current={
-              location.pathname === "/companies" ? "page" : undefined
-            }
-          >
-            <i className="fas fa-building" aria-hidden="true"></i>
-            <span>Perusahaan</span>
-          </Link>
-          <Link
-            to="/candidates"
-            className={getMobileMenuClass(location.pathname === "/candidates")}
-            aria-current={
-              location.pathname === "/candidates" ? "page" : undefined
-            }
-          >
-            <i className="fas fa-users w-5 text-center" aria-hidden="true"></i>{" "}
-            Kandidat
-          </Link>
-        </>
-      );
-    }
+        <Link
+          to="/candidates"
+          className={getMobileMenuClass(location.pathname === "/candidates")}
+          onClick={() => setIsMobileMenuOpen(false)}
+        >
+          <i className="fas fa-users w-5 text-center"></i>
+          Kandidat
+        </Link>
+      </>
+    );
   };
 
-  //DROPDOWN PROFILE
+  // Language Selector Component - Sama untuk semua state
+  const renderLanguageSelector = () => {
+    const currentLang = languageOptions.find(lang => lang.code === currentLanguage);
+    
+    return (
+      <div className="relative">
+        <button
+          onClick={toggleLanguageMenu}
+          onKeyDown={handleKeyDown}
+          className="flex items-center space-x-2 px-2 sm:px-3 py-2 rounded-lg hover:bg-primary-50 transition focus:outline-none focus:ring-2 focus:ring-primary-500"
+          aria-label="Pilih bahasa"
+          aria-expanded={isLanguageMenuOpen}
+        >
+          <i className="fas fa-globe text-gray-600 text-sm sm:text-base"></i>
+          <span className="text-sm font-medium hidden xs:inline">
+            {currentLanguage === "id" ? "ID" : "EN"}
+          </span>
+        </button>
+
+        {/* Language Dropdown Menu */}
+        {isLanguageMenuOpen && (
+          <div
+            className="absolute right-0 mt-2 w-32 bg-white rounded-lg shadow-lg py-2 z-50 border border-gray-200"
+            role="menu"
+          >
+            <button
+              onClick={() => changeLanguage("id")}
+              className={`w-full text-left px-4 py-2 text-sm transition flex items-center justify-between ${
+                currentLanguage === "id"
+                  ? "bg-primary-50 text-primary-600"
+                  : "text-gray-700 hover:bg-gray-50"
+              }`}
+              role="menuitem"
+            >
+              <span>Indonesia</span>
+              {currentLanguage === "id" && (
+                <i className="fas fa-check text-primary-600"></i>
+              )}
+            </button>
+            <button
+              onClick={() => changeLanguage("en")}
+              className={`w-full text-left px-4 py-2 text-sm transition flex items-center justify-between ${
+                currentLanguage === "en"
+                  ? "bg-primary-50 text-primary-600"
+                  : "text-gray-700 hover:bg-gray-50"
+              }`}
+              role="menuitem"
+            >
+              <span>English</span>
+              {currentLanguage === "en" && (
+                <i className="fas fa-check text-primary-600"></i>
+              )}
+            </button>
+          </div>
+        )}
+      </div>
+    );
+  };
+
+  // Language Selector for Mobile Menu
+  const renderMobileLanguageSelector = () => {
+    return (
+      <div className="flex space-x-2 px-4 py-3">
+        <button
+          onClick={() => changeLanguage("id")}
+          className={`flex-1 py-2 px-3 rounded-lg text-sm transition flex items-center justify-center gap-2 ${
+            currentLanguage === "id"
+              ? "bg-primary-500 text-white"
+              : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+          }`}
+        >
+          <i className="fas fa-globe"></i>
+          ID
+        </button>
+        <button
+          onClick={() => changeLanguage("en")}
+          className={`flex-1 py-2 px-3 rounded-lg text-sm transition flex items-center justify-center gap-2 ${
+            currentLanguage === "en"
+              ? "bg-primary-500 text-white"
+              : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+          }`}
+        >
+          <i className="fas fa-globe"></i>
+          EN
+        </button>
+      </div>
+    );
+  };
+
+  // User Actions (Login/Register or Profile) - TAMBAH LANGUAGE SELECTOR
   const renderUserActions = () => {
     if (!userData) {
       return (
-        <div className="flex items-center space-x-3">
+        <div className="flex items-center space-x-2 sm:space-x-3">
           {/* Language Selector */}
-          <div className="relative">
-            <button
-              onClick={toggleLanguageMenu}
-              onKeyDown={handleKeyDown}
-              className="flex items-center space-x-2 px-3 py-2 rounded-lg hover:bg-primary-50 transition focus:outline-none focus:ring-2 focus:ring-primary-500"
-              aria-label="Pilih bahasa"
-              aria-expanded={isLanguageMenuOpen}
-            >
-              <i className="fas fa-globe text-gray-600"></i>
-              <span className="text-sm font-medium">
-                {currentLanguage === "id" ? "ID" : "EN"}
-              </span>
-              <i
-                className={`fas fa-chevron-down text-xs transition-transform ${
-                  isLanguageMenuOpen ? "rotate-180" : ""
-                }`}
-              ></i>
-            </button>
-
-            {/* Language Dropdown Menu */}
-            {isLanguageMenuOpen && (
-              <div
-                className="absolute right-0 mt-2 w-32 bg-white rounded-lg shadow-lg py-2 z-50 border border-gray-200"
-                role="menu"
-              >
-                <button
-                  onClick={() => changeLanguage("id")}
-                  className={`w-full text-left px-4 py-2 text-sm transition flex items-center justify-between ${
-                    currentLanguage === "id"
-                      ? "bg-primary-50 text-primary-600"
-                      : "text-gray-700 hover:bg-gray-50"
-                  }`}
-                  role="menuitem"
-                >
-                  <span>Indonesia</span>
-                  {currentLanguage === "id" && (
-                    <i className="fas fa-check text-primary-600"></i>
-                  )}
-                </button>
-                <button
-                  onClick={() => changeLanguage("en")}
-                  className={`w-full text-left px-4 py-2 text-sm transition flex items-center justify-between ${
-                    currentLanguage === "en"
-                      ? "bg-primary-50 text-primary-600"
-                      : "text-gray-700 hover:bg-gray-50"
-                  }`}
-                  role="menuitem"
-                >
-                  <span>English</span>
-                  {currentLanguage === "en" && (
-                    <i className="fas fa-check text-primary-600"></i>
-                  )}
-                </button>
-              </div>
-            )}
-          </div>
+          {renderLanguageSelector()}
 
           {/* Login/Register Buttons */}
-          <div className="hidden md:flex space-x-2">
+          <div className="hidden sm:flex space-x-2">
             <Link
               to="/login"
-              className="border border-primary-500 text-primary-500 px-4 py-2 rounded-lg hover:bg-primary-50 transition font-medium focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2"
+              className="border border-primary-500 text-primary-500 px-3 py-2 rounded-lg hover:bg-primary-50 transition font-medium focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 text-sm sm:text-base whitespace-nowrap"
             >
               Login
             </Link>
             <Link
               to="/register"
-              className="bg-primary-500 text-white px-4 py-2 rounded-lg hover:bg-primary-600 transition font-medium flex items-center gap-2 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2"
+              className="bg-primary-500 text-white px-3 py-2 rounded-lg hover:bg-primary-600 transition font-medium flex items-center gap-2 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 text-sm sm:text-base whitespace-nowrap"
             >
               <span>Register</span>
             </Link>
           </div>
+          
+          {/* Mobile Login Button */}
+          <Link
+            to="/login"
+            className="sm:hidden flex items-center justify-center w-10 h-10 rounded-full bg-primary-500 text-white hover:bg-primary-600 transition"
+            aria-label="Login"
+          >
+            <i className="fas fa-sign-in-alt"></i>
+          </Link>
         </div>
       );
     }
 
     return (
-      <div className="flex items-center space-x-3">
-        {/* Language Selector for logged in users */}
-        <div className="relative">
-          <button
-            onClick={toggleLanguageMenu}
-            onKeyDown={handleKeyDown}
-            className="flex items-center space-x-2 px-3 py-2 rounded-lg hover:bg-primary-50 transition focus:outline-none focus:ring-2 focus:ring-primary-500"
-            aria-label="Pilih bahasa"
-            aria-expanded={isLanguageMenuOpen}
-          >
-            <i className="fas fa-globe text-gray-600"></i>
-            <span className="text-sm font-medium hidden sm:inline">
-              {currentLanguage === "id" ? "ID" : "EN"}
-            </span>
-          </button>
-
-          {/* Language Dropdown Menu */}
-          {isLanguageMenuOpen && (
-            <div
-              className="absolute right-0 mt-2 w-32 bg-white rounded-lg shadow-lg py-2 z-50 border border-gray-200"
-              role="menu"
-            >
-              <button
-                onClick={() => changeLanguage("id")}
-                className={`w-full text-left px-4 py-2 text-sm transition flex items-center justify-between ${
-                  currentLanguage === "id"
-                    ? "bg-primary-50 text-primary-600"
-                    : "text-gray-700 hover:bg-gray-50"
-                }`}
-                role="menuitem"
-              >
-                <span>Indonesia</span>
-                {currentLanguage === "id" && (
-                  <i className="fas fa-check text-primary-600"></i>
-                )}
-              </button>
-              <button
-                onClick={() => changeLanguage("en")}
-                className={`w-full text-left px-4 py-2 text-sm transition flex items-center justify-between ${
-                  currentLanguage === "en"
-                    ? "bg-primary-50 text-primary-600"
-                    : "text-gray-700 hover:bg-gray-50"
-                }`}
-                role="menuitem"
-              >
-                <span>English</span>
-                {currentLanguage === "en" && (
-                  <i className="fas fa-check text-primary-600"></i>
-                )}
-              </button>
-            </div>
-          )}
-        </div>
+      <div className="flex items-center space-x-2 sm:space-x-3">
+        {/* Language Selector for logged in users - SAMA seperti sebelum login */}
+        {renderLanguageSelector()}
 
         {/* Profile Dropdown */}
         <div className="relative">
           <button
             onClick={toggleProfileMenu}
             onKeyDown={handleKeyDown}
-            className="flex items-center space-x-2 p-2 rounded-lg hover:bg-primary-50 focus:outline-none focus:ring-2 focus:ring-primary-500"
+            className="flex items-center space-x-2 p-1 sm:p-2 rounded-lg hover:bg-primary-50 focus:outline-none focus:ring-2 focus:ring-primary-500 transition-all duration-200"
             aria-label="Menu profil pengguna"
             aria-expanded={isProfileMenuOpen}
           >
             <img
-              src={
-                profileData?.profilePicture ||
-                (isEmployer ? defaultCm : defaultPfp)
-              }
+              src={profileData?.profilePicture || (isEmployer ? defaultCm : defaultPfp)}
               alt="profile picture"
-              className="rounded-full aspect-square object-cover w-10"
+              className="rounded-full aspect-square object-cover w-8 h-8 sm:w-10 sm:h-10"
             />
             <div className="hidden md:block text-left">
-              <div className="text-sm font-medium text-gray-900">
+              <div className="text-sm font-medium text-gray-900 truncate max-w-[120px]">
                 {userData?.name}
               </div>
               <div className="text-xs text-gray-500">
@@ -475,24 +355,22 @@ const Header = () => {
               </div>
             </div>
             <i
-              className={`fas fa-chevron-down text-xs transition-transform ${
-                isProfileMenuOpen ? "rotate-180" : ""
-              }`}
+              className={`fas fa-chevron-down text-xs transition-transform ${isProfileMenuOpen ? "rotate-180" : ""}`}
               aria-hidden="true"
             ></i>
           </button>
 
-          {/* Profile Dropdown Menu - PERBAIKAN: update link profile untuk candidate */}
+          {/* Profile Dropdown Menu */}
           {isProfileMenuOpen && (
             <div
-              className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg py-2 z-50 border border-gray-200"
+              className="absolute right-0 mt-2 w-48 sm:w-56 bg-white rounded-lg shadow-lg py-2 z-50 border border-gray-200"
               role="menu"
             >
               <div className="px-4 py-2 border-b border-gray-100">
-                <p className="text-sm font-medium text-gray-900">
+                <p className="text-sm font-medium text-gray-900 truncate">
                   {userData?.name}
                 </p>
-                <p className="text-xs text-gray-500">{userData?.email}</p>
+                <p className="text-xs text-gray-500 truncate">{userData?.email}</p>
               </div>
 
               {isEmployer ? (
@@ -501,6 +379,7 @@ const Header = () => {
                     to={`/cm/${userData?.id}`}
                     className="px-4 py-2 text-sm text-gray-700 hover:bg-primary-50 transition flex items-center gap-2"
                     role="menuitem"
+                    onClick={() => setIsProfileMenuOpen(false)}
                   >
                     <i className="fas fa-building w-4" aria-hidden="true"></i>
                     Profile Perusahaan
@@ -509,11 +388,9 @@ const Header = () => {
                     to="/employer"
                     className="px-4 py-2 text-sm text-gray-700 hover:bg-primary-50 transition flex items-center gap-2"
                     role="menuitem"
+                    onClick={() => setIsProfileMenuOpen(false)}
                   >
-                    <i
-                      className="fas fa-tachometer-alt w-4"
-                      aria-hidden="true"
-                    ></i>
+                    <i className="fas fa-tachometer-alt w-4" aria-hidden="true"></i>
                     Dashboard
                   </Link>
                 </>
@@ -523,6 +400,7 @@ const Header = () => {
                     to={`/js/${userData?.id}`}
                     className="px-4 py-2 text-sm text-gray-700 hover:bg-primary-50 transition flex items-center gap-2"
                     role="menuitem"
+                    onClick={() => setIsProfileMenuOpen(false)}
                   >
                     <i className="fas fa-user w-4" aria-hidden="true"></i>
                     Profile Saya
@@ -531,6 +409,7 @@ const Header = () => {
                     to={`/js/applications`}
                     className="px-4 py-2 text-sm text-gray-700 hover:bg-primary-50 transition flex items-center gap-2"
                     role="menuitem"
+                    onClick={() => setIsProfileMenuOpen(false)}
                   >
                     <i className="fas fa-history w-4" aria-hidden="true"></i>
                     Riwayat Lamar
@@ -556,30 +435,27 @@ const Header = () => {
   };
 
   return (
-    <header
-      className="bg-white/90 backdrop-blur-md shadow sticky top-0 z-40"
-      role="banner"
-    >
-      <div className="container mx-auto px-28 py-3">
+    <header className="bg-white/90 backdrop-blur-md shadow sticky top-0 z-40" role="banner">
+      <div className="w-full px-4 sm:px-6 md:px-8 lg:px-12 xl:px-16 2xl:px-20 py-2 sm:py-3">
         <div className="flex items-center justify-between">
-          <div className="flex items-center gap-10">
+          <div className="flex items-center gap-4 sm:gap-6 md:gap-8">
             {/* Logo */}
             <Link
               to={token ? "/jobs" : "/"}
-              className="flex items-center space-x-3 hover:bg-gray-100 transition p-2 rounded-lg"
+              className="flex items-center space-x-2 sm:space-x-3 hover:bg-gray-100 transition p-1 sm:p-2 rounded-lg min-w-0"
               aria-label="InklusiKerja - Kembali ke beranda"
             >
               <div
-                className="bg-gradient-to-r from-primary-500 to-accent-500 w-12 h-12 rounded-full flex items-center justify-center shadow-md"
+                className="bg-gradient-to-r from-primary-500 to-accent-500 w-8 h-8 sm:w-10 sm:h-10 md:w-12 md:h-12 rounded-full flex items-center justify-center shadow-md flex-shrink-0"
                 aria-hidden="true"
               >
-                <i className="fas fa-hands-helping text-white text-xl"></i>
+                <i className="fas fa-hands-helping text-white text-sm sm:text-lg md:text-xl"></i>
               </div>
-              <div>
-                <span className="text-2xl font-bold text-primary-700">
+              <div className="min-w-0">
+                <span className="text-lg sm:text-xl md:text-2xl font-bold text-primary-700 block truncate">
                   InklusiKerja
                 </span>
-                <p className="text-xs text-gray-600">
+                <p className="text-[10px] xs:text-xs text-gray-600 hidden xs:block truncate">
                   Platform Inklusif untuk Disabilitas
                 </p>
               </div>
@@ -590,22 +466,20 @@ const Header = () => {
           </div>
 
           {/* User Actions */}
-          <div className="flex items-center space-x-3">
+          <div className="flex items-center space-x-1 sm:space-x-2 md:space-x-3">
             {renderUserActions()}
 
             {/* Mobile Menu Button */}
             <button
               onClick={toggleMobileMenu}
               onKeyDown={handleKeyDown}
-              className="lg:hidden text-dark text-xl p-2 rounded-lg hover:bg-primary-50 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2"
-              aria-label={
-                isMobileMenuOpen ? "Tutup menu navigasi" : "Buka menu navigasi"
-              }
+              className="md:hidden text-dark text-xl p-2 rounded-lg hover:bg-primary-50 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 ml-1"
+              aria-label={isMobileMenuOpen ? "Tutup menu navigasi" : "Buka menu navigasi"}
               aria-expanded={isMobileMenuOpen}
               aria-controls="mobile-menu"
             >
               <i
-                className={`fas ${isMobileMenuOpen ? "fa-times" : "fa-bars"}`}
+                className={`fas ${isMobileMenuOpen ? "fa-times" : "fa-bars"} text-base sm:text-lg`}
                 aria-hidden="true"
               ></i>
             </button>
@@ -616,52 +490,35 @@ const Header = () => {
         {isMobileMenuOpen && (
           <nav
             id="mobile-menu"
-            className="lg:hidden bg-white/95 backdrop-blur-md px-4 py-3 shadow-lg mt-2 rounded-lg"
+            className="md:hidden bg-white/95 backdrop-blur-md px-3 sm:px-4 py-3 shadow-lg mt-2 rounded-lg animate-fadeIn"
             aria-label="Navigasi mobile"
           >
-            {renderMobileMenu()}
+            <div className="space-y-1">
+              {renderMobileMenuItems()}
+            </div>
 
-            {/* Auth links for non-logged in users in mobile */}
+            {/* Language Selector for mobile - SAMA untuk semua user */}
+            <div className="border-t border-gray-200 my-3 pt-3">
+              {renderMobileLanguageSelector()}
+            </div>
+
+            {/* Auth links untuk non-logged in users di mobile */}
             {!userData && (
-              <div className="border-t border-gray-200 my-2 pt-3 space-y-2">
-                <div className="flex space-x-2">
-                  <button
-                    onClick={() => changeLanguage("id")}
-                    className={`flex-1 py-2 px-3 rounded-lg text-sm transition flex items-center justify-center gap-2 ${
-                      currentLanguage === "id"
-                        ? "bg-primary-500 text-white"
-                        : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-                    }`}
-                  >
-                    <i className="fas fa-globe"></i>
-                    ID
-                  </button>
-                  <button
-                    onClick={() => changeLanguage("en")}
-                    className={`flex-1 py-2 px-3 rounded-lg text-sm transition flex items-center justify-center gap-2 ${
-                      currentLanguage === "en"
-                        ? "bg-primary-500 text-white"
-                        : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-                    }`}
-                  >
-                    <i className="fas fa-globe"></i>
-                    EN
-                  </button>
-                </div>
+              <div className="space-y-2">
                 <Link
                   to="/login"
                   className="py-3 px-4 hover:bg-primary-50 rounded-lg transition flex items-center gap-2 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 border border-gray-200"
+                  onClick={() => setIsMobileMenuOpen(false)}
                 >
-                  <i
-                    className="fas fa-sign-in-alt w-5 text-center"
-                    aria-hidden="true"
-                  ></i>
+                  <i className="fas fa-sign-in-alt w-5 text-center" aria-hidden="true"></i>
                   Login
                 </Link>
                 <Link
                   to="/register"
                   className="py-3 px-4 bg-primary-500 text-white rounded-lg transition flex items-center gap-2 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2"
+                  onClick={() => setIsMobileMenuOpen(false)}
                 >
+                  <i className="fas fa-user-plus w-5 text-center" aria-hidden="true"></i>
                   Register
                 </Link>
               </div>

@@ -17,14 +17,19 @@ const STATUS_OPTIONS = [
 ];
 
 const STATUS_COLOR = {
-  applied: { colorClass: "bg-blue-100 text-blue-800", badgeColor: "blue" },
-  reviewed: {
-    colorClass: "bg-yellow-100 text-yellow-800",
-    badgeColor: "yellow",
-  },
-  accepted: { colorClass: "bg-green-100 text-green-800", badgeColor: "green" },
-  rejected: { colorClass: "bg-red-100 text-red-800", badgeColor: "red" },
-  withdrawn: { colorClass: "bg-gray-100 text-gray-800", badgeColor: "gray" },
+  applied: { colorClass: "bg-blue-100 text-blue-800 border border-blue-200", badgeColor: "blue" },
+  reviewed: { colorClass: "bg-amber-100 text-amber-800 border border-amber-200", badgeColor: "amber" },
+  accepted: { colorClass: "bg-emerald-100 text-emerald-800 border border-emerald-200", badgeColor: "emerald" },
+  rejected: { colorClass: "bg-rose-100 text-rose-800 border border-rose-200", badgeColor: "rose" },
+  withdrawn: { colorClass: "bg-gray-100 text-gray-800 border border-gray-200", badgeColor: "gray" },
+};
+
+const STATUS_ICONS = {
+  applied: "fa-regular fa-paper-plane",
+  reviewed: "fa-solid fa-eye",
+  accepted: "fa-solid fa-check-circle",
+  rejected: "fa-solid fa-times-circle",
+  withdrawn: "fa-solid fa-undo",
 };
 
 const DEFAULT_LIMIT = 30;
@@ -197,9 +202,14 @@ const ApplicationHistory = () => {
   const getStatusBadgeClass = (status) => {
     return (
       (STATUS_COLOR[status] && STATUS_COLOR[status].colorClass) ||
-      "bg-gray-100 text-gray-800"
+      "bg-gray-100 text-gray-800 border border-gray-200"
     );
   };
+  
+  const getStatusIcon = (status) => {
+    return STATUS_ICONS[status] || "fa-solid fa-question-circle";
+  };
+  
   const toggleMessage = (id) => {
     setOpenMessages((prev) => ({
       ...prev,
@@ -248,12 +258,12 @@ const ApplicationHistory = () => {
   */
   const ApplicationCardSkeleton = () => {
     return (
-      <div className="bg-white rounded-md shadow-lg p-6 animate-pulse">
+      <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 animate-pulse">
         {/* Header */}
         <div className="flex flex-col lg:flex-row lg:items-start justify-between gap-4">
           <div className="flex w-full items-start gap-4">
             {/* Company Logo */}
-            <div className="w-16 h-16 bg-gray-200 rounded" />
+            <div className="w-16 h-16 bg-gray-200 rounded-lg" />
 
             {/* Job Info */}
             <div className="flex-1 space-y-2">
@@ -288,193 +298,284 @@ const ApplicationHistory = () => {
   };
 
   return (
-    <div className="min-h-screen">
+    <div className="min-h-screen bg-gradient-to-b from-gray-50 to-white">
       <main
         id="main-content"
-        className="container mx-auto lg:px-32 xl:px-36 px-4 py-8"
+        className="container mx-auto lg:px-6 xl:px-8 px-4 py-6 md:py-8"
       >
         {/* Header */}
-        <div className="mb-8 flex justify-between items-center">
-          <h1 className="text-3xl font-bold text-blue-700">Lamaran Saya</h1>
+        <div className="mb-8 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+          <div>
+            <h1 className="text-2xl md:text-3xl font-bold text-gray-900">Riwayat Lamaran</h1>
+            <p className="text-gray-600 mt-1">Kelola dan pantau status lamaran kerja Anda</p>
+          </div>
           <div
-            className="flex items-center gap-3 hover:bg-gray-100 rounded-md cursor-pointer p-2"
+            className="flex items-center gap-3 hover:bg-gray-50 rounded-lg cursor-pointer p-2 transition-all duration-200 border border-transparent hover:border-gray-200"
             onClick={() => navigate(`/js/${userData?.id}`)}
           >
-            <img
-              src={profileData?.profilePicture || defaultCm}
-              alt="Profile Picture"
-              className="w-10 h-10 aspect-square rounded-full object-cover"
-            />
+            <div className="relative">
+              <img
+                src={profileData?.profilePicture || defaultCm}
+                alt="Profile Picture"
+                className="w-10 h-10 aspect-square rounded-full object-cover ring-2 ring-blue-100"
+              />
+              <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-emerald-500 rounded-full border-2 border-white"></div>
+            </div>
             <div>
-              <p className="text-sm font-semibold">
-                {profileData?.profile?.fullName}
+              <p className="text-sm font-semibold text-gray-900">
+                {profileData?.profile?.fullName || "Pengguna"}
               </p>
-              <p className="text-xs text-blue-600">@{profileData?.username}</p>
+              <p className="text-xs text-blue-600">@{profileData?.username || "user"}</p>
             </div>
           </div>
         </div>
 
         {/* Stats Overview */}
-        <div className="grid grid-cols-3 gap-4 mb-8">
-          <div className="bg-white rounded-md shadow-md p-6">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-5 hover:shadow-md transition-shadow duration-200">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-xs text-gray-600">Total Lamaran</p>
-                <p className="text-2xl mt-0.5 font-bold text-gray-900">
+                <p className="text-xs text-gray-500 uppercase tracking-wide">Total Lamaran</p>
+                <p className="text-2xl md:text-3xl mt-2 font-bold text-gray-900">
                   {applicationStats.jsTotalApplicationCount || 0}
                 </p>
-                <p
-                  className={`text-sm mt-2 ${
-                    applicationStats.thisMonthApplicationCount > 0
-                      ? "text-blue-600"
-                      : "text-gray-600"
-                  }`}
-                >
+                <p className={`text-sm mt-3 ${applicationStats.thisMonthApplicationCount > 0 ? "text-blue-600 font-medium" : "text-gray-600"}`}>
+                  <i className="fas fa-arrow-up mr-1"></i>
                   {applicationStats.thisMonthApplicationCount > 0
                     ? `+${applicationStats.thisMonthApplicationCount}`
                     : applicationStats.thisMonthApplicationCount ?? 0}{" "}
                   bulan ini
                 </p>
               </div>
-              <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
+              <div className="w-12 h-12 bg-gradient-to-br from-blue-50 to-blue-100 rounded-xl flex items-center justify-center">
                 <i className="fas fa-file-alt text-blue-600 text-xl"></i>
               </div>
             </div>
           </div>
 
-          <div className="bg-white rounded-md shadow-md p-6">
+          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-5 hover:shadow-md transition-shadow duration-200">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-xs text-gray-600">Status Reviewed</p>
-                <p className="text-2xl mt-0.5 font-bold text-gray-900">
+                <p className="text-xs text-gray-500 uppercase tracking-wide">Dalam Review</p>
+                <p className="text-2xl md:text-3xl mt-2 font-bold text-gray-900">
                   {applicationStats.jsReviewedApplicationCount || 0}
                 </p>
-                <p
-                  className="text-sm mt-2 text-blue-500 hover:underline"
-                  role="button"
+                <button
+                  className="text-sm mt-3 text-blue-600 hover:text-blue-800 font-medium flex items-center gap-1 transition-colors"
                   onClick={() => changeStatus("reviewed")}
                 >
+                  <i className="fas fa-filter text-xs"></i>
                   Terapkan filter
-                </p>
+                </button>
               </div>
-              <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
-                <i className="fas fa-eye text-blue-600 text-xl"></i>
+              <div className="w-12 h-12 bg-gradient-to-br from-amber-50 to-amber-100 rounded-xl flex items-center justify-center">
+                <i className="fas fa-eye text-amber-600 text-xl"></i>
               </div>
             </div>
           </div>
 
-          <div className="bg-white rounded-xl shadow-md p-4">
-            <div className="text-sm text-gray-600 text-center mb-2">
-              Result Percentage
+          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-5 hover:shadow-md transition-shadow duration-200">
+            <div className="mb-4">
+              <p className="text-xs text-gray-500 uppercase tracking-wide">Rasio Diterima</p>
             </div>
+            
             {/* Percentage */}
-            <div className="mt-2 flex justify-between">
+            <div className="mt-2 flex justify-between items-end">
               <div className="flex flex-col">
-                <span className="text-xs text-gray-600">
-                  {accepted} diterima
-                </span>
-                <span className="text-lg font-bold text-green-600">
-                  {acceptedPercent}%
-                </span>
+                <span className="text-xs text-gray-600">Diterima</span>
+                <div className="flex items-baseline gap-1">
+                  <span className="text-xl md:text-2xl font-bold text-emerald-600">
+                    {acceptedPercent}%
+                  </span>
+                  <span className="text-sm text-gray-500">({accepted})</span>
+                </div>
               </div>
               <div className="flex flex-col items-end">
-                <span className="text-xs text-gray-600">
-                  {rejected} ditolak
-                </span>
-                <span className="text-lg font-bold text-red-600">
-                  {rejectedPercent}%
-                </span>
+                <span className="text-xs text-gray-600">Ditolak</span>
+                <div className="flex items-baseline gap-1">
+                  <span className="text-xl md:text-2xl font-bold text-rose-600">
+                    {rejectedPercent}%
+                  </span>
+                  <span className="text-sm text-gray-500">({rejected})</span>
+                </div>
               </div>
             </div>
 
             {/* Progress Bar */}
-            <div className="w-full h-3 bg-gray-200 rounded-full overflow-hidden flex">
+            <div className="w-full h-2.5 bg-gray-200 rounded-full overflow-hidden flex mt-4">
               <div
-                className="bg-green-500 transition-all duration-500"
+                className="bg-gradient-to-r from-emerald-500 to-emerald-600 transition-all duration-700"
                 style={{ width: `${acceptedPercent}%` }}
               />
               <div
-                className="bg-red-500 transition-all duration-500"
+                className="bg-gradient-to-r from-rose-500 to-rose-600 transition-all duration-700"
                 style={{ width: `${rejectedPercent}%` }}
               />
+            </div>
+            <div className="text-xs text-gray-500 mt-2 text-center">
+              Berdasarkan {totalDecision} lamaran dengan keputusan
             </div>
           </div>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+          {/* Filter Sidebar */}
           <div className="lg:col-span-1">
-            <div className="bg-white rounded-md shadow p-6 sticky top-32">
-              <h3 className="font-bold text-lg mb-4">Filter</h3>
+            <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-5 sticky top-24">
+              <div className="flex items-center gap-2 mb-5">
+                <i className="fas fa-sliders-h text-blue-600"></i>
+                <h3 className="font-bold text-lg text-gray-900">Filter & Sort</h3>
+              </div>
 
-              <div className="space-y-2 mb-4">
-                {/* Status Select */}
-                <div className="mb-4">
-                  <label className="text-sm text-gray-600">
-                    Status Lamaran
-                  </label>
-                  <select
+              {/* Search Input inside sidebar for mobile */}
+              <div className="lg:hidden mb-6">
+                <div className="relative">
+                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                    <i className="fa-solid fa-magnifying-glass text-gray-400"></i>
+                  </div>
+                  <input
+                    className="w-full pl-10 pr-4 py-2.5 border border-gray-300 rounded-lg bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition"
+                    type="search"
+                    placeholder="Posisi, perusahaan..."
                     disabled={appLoading}
-                    value={statusInput}
-                    onChange={(e) => changeStatus(e.target.value)}
-                    className="w-full mt-2 border border-gray-300 rounded-lg px-3 py-2 bg-white focus:ring-2 focus:ring-primary-400 focus:outline-none disabled:opacity-50"
-                  >
-                    {STATUS_OPTIONS.map((s) => (
-                      <option key={s.value} value={s.value}>
-                        {s.label}
-                      </option>
-                    ))}
-                  </select>
+                    value={searchInput}
+                    onChange={(e) => setSearchInput(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") applySearch();
+                    }}
+                  />
                 </div>
               </div>
 
-              <div className="mb-4">
-                <label className="text-sm text-gray-600">Sort</label>
-                <select
-                  disabled={appLoading}
-                  value={sortInput}
-                  onChange={(e) => changeSort(e.target.value)}
-                  className="w-full mt-2 border rounded px-3 py-2 disabled:opacity-50"
-                >
-                  <option value="newest">Terbaru</option>
-                  <option value="oldest">Terlama</option>
-                </select>
-              </div>
+              <div className="space-y-5">
+                {/* Status Select */}
+                <div>
+                  <label className="text-sm font-medium text-gray-700 mb-2 block">
+                    <i className="fas fa-flag mr-2 text-gray-500"></i>
+                    Status Lamaran
+                  </label>
+                  <div className="relative">
+                    <select
+                      disabled={appLoading}
+                      value={statusInput}
+                      onChange={(e) => changeStatus(e.target.value)}
+                      className="w-full border border-gray-300 rounded-lg px-4 py-2.5 bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition appearance-none disabled:opacity-50"
+                    >
+                      {STATUS_OPTIONS.map((s) => (
+                        <option key={s.value} value={s.value}>
+                          {s.label}
+                        </option>
+                      ))}
+                    </select>
+                    <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-700">
+                      <i className="fas fa-chevron-down"></i>
+                    </div>
+                  </div>
+                </div>
 
-              <button
-                onClick={() => resetFilters("all")}
-                className="w-full border border-gray-300 text-gray-700 py-2 rounded-lg hover:bg-gray-50 transition mt-2"
-              >
-                Reset Filter
-              </button>
+                {/* Sort Select */}
+                <div>
+                  <label className="text-sm font-medium text-gray-700 mb-2 block">
+                    <i className="fas fa-sort mr-2 text-gray-500"></i>
+                    Urutkan
+                  </label>
+                  <div className="relative">
+                    <select
+                      disabled={appLoading}
+                      value={sortInput}
+                      onChange={(e) => changeSort(e.target.value)}
+                      className="w-full border border-gray-300 rounded-lg px-4 py-2.5 bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition appearance-none disabled:opacity-50"
+                    >
+                      <option value="newest">Terbaru</option>
+                      <option value="oldest">Terlama</option>
+                    </select>
+                    <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-700">
+                      <i className="fas fa-chevron-down"></i>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Results per page */}
+                <div>
+                  <label className="text-sm font-medium text-gray-700 mb-2 block">
+                    <i className="fas fa-list-ol mr-2 text-gray-500"></i>
+                    Tampilkan per halaman
+                  </label>
+                  <div className="grid grid-cols-3 gap-2">
+                    {ALLOWED_LIMITS.map((limit) => (
+                      <button
+                        key={limit}
+                        onClick={() => changeLimit(limit)}
+                        className={`py-2 rounded-lg text-sm font-medium transition-colors ${
+                          filters.limit === limit
+                            ? "bg-blue-600 text-white shadow-sm"
+                            : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                        }`}
+                      >
+                        {limit}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                <button
+                  onClick={() => resetFilters("all")}
+                  className="w-full py-2.5 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors font-medium flex items-center justify-center gap-2"
+                >
+                  <i className="fas fa-redo"></i>
+                  Reset Filter
+                </button>
+              </div>
             </div>
           </div>
 
+          {/* Main Content */}
           <div className="lg:col-span-3">
-            <div className="flex gap-3 flex-1 bg-gray-50 items-center border border-gray-300 rounded-full px-6 py-3 shadow mb-6">
-              <i className="fa-solid fa-magnifying-glass" />
-              <input
-                className="outline-none flex-1 bg-transparent"
-                type="search"
-                placeholder="Posisi, perusahaan..."
-                disabled={appLoading}
-                value={searchInput}
-                onChange={(e) => setSearchInput(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter") applySearch();
-                }}
-              />
+            {/* Search bar - hidden on mobile (moved to sidebar) */}
+            <div className="hidden lg:flex mb-6">
+              <div className="flex-1 relative">
+                <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                  <i className="fa-solid fa-magnifying-glass text-gray-400"></i>
+                </div>
+                <input
+                  className="w-full pl-12 pr-4 py-3 border border-gray-300 rounded-l-lg bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition"
+                  type="search"
+                  placeholder="Cari berdasarkan posisi, perusahaan..."
+                  disabled={appLoading}
+                  value={searchInput}
+                  onChange={(e) => setSearchInput(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") applySearch();
+                  }}
+                />
+              </div>
               <button
                 onClick={applySearch}
-                className="px-5 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-sm"
+                className="px-6 py-3 rounded-r-lg bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white font-medium transition-all duration-200 flex items-center gap-2 shadow-sm"
               >
                 {appLoading ? (
                   <>
-                    <i className="fas fa-spinner animate-spin"></i> Mencari...
+                    <i className="fas fa-spinner animate-spin"></i>
+                    Mencari...
                   </>
                 ) : (
-                  <>Cari</>
+                  <>
+                    <i className="fas fa-search"></i>
+                    Cari
+                  </>
                 )}
               </button>
+            </div>
+
+            {/* Applications Count */}
+            <div className="flex justify-between items-center mb-4">
+              <div className="text-gray-700">
+                Menampilkan <span className="font-bold">{applications.length}</span> dari{" "}
+                <span className="font-bold">{meta.total}</span> lamaran
+              </div>
+              <div className="text-sm text-gray-500">
+                Halaman {meta.page} dari {meta.totalPages || 1}
+              </div>
             </div>
 
             {/* Applications List */}
@@ -485,8 +586,19 @@ const ApplicationHistory = () => {
                 ))}
 
               {!appLoading && applications.length === 0 && (
-                <div className="bg-white rounded-md shadow-lg p-6 text-center text-gray-500">
-                  Tidak ada apa-apa disini
+                <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-10 text-center">
+                  <div className="w-20 h-20 mx-auto mb-4 rounded-full bg-gray-100 flex items-center justify-center">
+                    <i className="fas fa-inbox text-3xl text-gray-400"></i>
+                  </div>
+                  <h3 className="text-lg font-medium text-gray-900 mb-2">Tidak ada lamaran</h3>
+                  <p className="text-gray-600 mb-6">Anda belum mengirimkan lamaran apapun.</p>
+                  <button
+                    onClick={() => navigate("/job/search")}
+                    className="px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition-colors inline-flex items-center gap-2"
+                  >
+                    <i className="fas fa-search"></i>
+                    Cari Lowongan
+                  </button>
                 </div>
               )}
 
@@ -494,176 +606,210 @@ const ApplicationHistory = () => {
                 applications.map((application) => (
                   <div
                     key={application.id}
-                    className="bg-white rounded-md shadow-lg p-6 hover:shadow-xl transition cursor-pointer"
+                    className="bg-white rounded-xl shadow-sm border border-gray-200 p-5 hover:shadow-md hover:border-gray-300 transition-all duration-200"
                   >
                     <div className="flex flex-col w-full lg:flex-row lg:items-start justify-between gap-4">
                       {/* Job Info */}
                       <div className="flex w-full items-start gap-4">
-                        <img
-                          src={
-                            application.Job?.Company?.User?.profilePicture ||
-                            defaultCm
-                          }
-                          alt="Profile Picture"
-                          className="w-16 h-16 aspect-square object-cover"
-                        />
-                        <div className="flex flex-1 flex-col items-start mb-2">
-                          <h3
-                            className="text-xl font-bold text-blue-600 hover:underline cursor-pointer"
-                            onClick={() =>
-                              navigate(`/job/${application?.Job?.id}`)
+                        <div className="relative">
+                          <img
+                            src={
+                              application.Job?.Company?.User?.profilePicture ||
+                              defaultCm
                             }
-                          >
-                            {application.Job?.title}
-                          </h3>
-                          <p className="text-sm">
-                            {application.Job?.Company?.companyName} •{" "}
-                            <span className="capitalize">
-                              {`${application.Job?.employmentType} (${application.Job?.locationType})`}
-                            </span>
-                          </p>
-                          <span className="text-sm text-gray-600 mt-1">
-                            <i className="fas fa-calendar mr-1"></i>
-                            Dilamar:{" "}
-                            {application?.appliedAt
-                              ? new Intl.DateTimeFormat("id-ID", {
-                                  day: "numeric",
-                                  month: "long",
-                                  year: "numeric",
-                                }).format(new Date(application.appliedAt))
-                              : ""}
-                          </span>
+                            alt="Company Logo"
+                            className="w-16 h-16 aspect-square object-cover rounded-xl border border-gray-200"
+                          />
+                          <div className="absolute -bottom-2 -right-2 w-8 h-8 bg-white rounded-full border border-gray-200 flex items-center justify-center">
+                            <i className={`${getStatusIcon(application.status)} text-sm ${application.status === 'accepted' ? 'text-emerald-600' : application.status === 'rejected' ? 'text-rose-600' : 'text-blue-600'}`}></i>
+                          </div>
                         </div>
-                        <p
-                          className={`px-3 py-1 rounded-full text-sm uppercase font-medium ${getStatusBadgeClass(
-                            application.status
-                          )}`}
-                        >
-                          {STATUS_OPTIONS.find(
-                            (s) => s.value === application.status
-                          )?.label || application.status}
-                        </p>
+                        <div className="flex flex-1 flex-col">
+                          <div className="flex flex-col lg:flex-row lg:items-start justify-between gap-2">
+                            <div>
+                              <h3
+                                className="text-lg font-bold text-gray-900 hover:text-blue-700 cursor-pointer transition-colors"
+                                onClick={() =>
+                                  navigate(`/job/${application?.Job?.id}`)
+                                }
+                              >
+                                {application.Job?.title}
+                              </h3>
+                              <p className="text-sm text-gray-600 mt-1">
+                                {application.Job?.Company?.companyName}
+                              </p>
+                              <div className="flex flex-wrap gap-2 mt-2">
+                                <span className="text-xs px-2.5 py-1 bg-gray-100 text-gray-700 rounded-full">
+                                  <i className="fas fa-briefcase mr-1"></i>
+                                  {application.Job?.employmentType}
+                                </span>
+                                <span className="text-xs px-2.5 py-1 bg-gray-100 text-gray-700 rounded-full">
+                                  <i className="fas fa-location-dot mr-1"></i>
+                                  {application.Job?.locationType}
+                                </span>
+                              </div>
+                            </div>
+                            <div className="flex flex-col items-start lg:items-end gap-2">
+                              <span
+                                className={`px-3 py-1.5 rounded-full text-xs uppercase font-semibold ${getStatusBadgeClass(
+                                  application.status
+                                )}`}
+                              >
+                                <i className={`${getStatusIcon(application.status)} mr-1.5`}></i>
+                                {STATUS_OPTIONS.find(
+                                  (s) => s.value === application.status
+                                )?.label || application.status}
+                              </span>
+                              <span className="text-xs text-gray-500">
+                                <i className="fas fa-calendar mr-1"></i>
+                                {application?.appliedAt
+                                  ? new Intl.DateTimeFormat("id-ID", {
+                                      day: "numeric",
+                                      month: "short",
+                                      year: "numeric",
+                                    }).format(new Date(application.appliedAt))
+                                  : ""}
+                              </span>
+                            </div>
+                          </div>
+
+                          {/* message section */}
+                          {(application.message ||
+                            application.portofolioLink ||
+                            application.companyMessage ||
+                            application.companyExternalLink) && (
+                            <button
+                              onClick={() => toggleMessage(application.id)}
+                              className="text-sm text-blue-600 hover:text-blue-800 font-medium mt-4 inline-flex items-center gap-1 transition-colors"
+                            >
+                              {openMessages[application.id] ? (
+                                <>
+                                  <i className="fas fa-chevron-up"></i>
+                                  Sembunyikan detail
+                                </>
+                              ) : (
+                                <>
+                                  <i className="fas fa-chevron-down"></i>
+                                  Lihat detail lamaran
+                                </>
+                              )}
+                            </button>
+                          )}
+
+                          {openMessages[application.id] &&
+                            (application.message || application.portofolioLink) && (
+                              <div className="rounded-lg p-4 mt-3 bg-gradient-to-r from-blue-50 to-blue-100 border border-blue-200">
+                                <div className="flex items-center gap-2 mb-2">
+                                  <i className="fas fa-user text-blue-600"></i>
+                                  <p className="text-sm font-medium text-blue-800">
+                                    Pesan dan Lampiran Anda
+                                  </p>
+                                </div>
+                                {application.message && (
+                                  <div className="mb-3">
+                                    <p className="text-sm text-gray-700 leading-relaxed whitespace-pre-line">
+                                      {application.message}
+                                    </p>
+                                  </div>
+                                )}
+                                {application.portofolioLink && (
+                                  <div className="flex items-center gap-2">
+                                    <i className="fas fa-link text-blue-600"></i>
+                                    <a
+                                      target="_blank"
+                                      rel="noopener noreferrer"
+                                      href={application.portofolioLink}
+                                      className="text-sm text-blue-700 hover:text-blue-900 font-medium truncate"
+                                    >
+                                      {application.portofolioLink}
+                                    </a>
+                                  </div>
+                                )}
+                              </div>
+                            )}
+
+                          {openMessages[application.id] &&
+                            (application.companyMessage ||
+                              application.companyExternalLink) && (
+                              <div
+                                className={`rounded-lg p-4 mt-3 border ${
+                                  application.status === "accepted"
+                                    ? "bg-gradient-to-r from-emerald-50 to-emerald-100 border-emerald-200"
+                                    : application.status === "rejected"
+                                    ? "bg-gradient-to-r from-rose-50 to-rose-100 border-rose-200"
+                                    : "bg-gradient-to-r from-blue-50 to-blue-100 border-blue-200"
+                                }`}
+                              >
+                                <div className="flex items-center gap-2 mb-2">
+                                  <i className="fas fa-building text-gray-600"></i>
+                                  <p className="text-sm font-medium text-gray-800">
+                                    Respon Perusahaan
+                                  </p>
+                                </div>
+                                {application.companyMessage && (
+                                  <div className="mb-3">
+                                    <p className="text-sm text-gray-700 leading-relaxed whitespace-pre-line">
+                                      {application.companyMessage}
+                                    </p>
+                                  </div>
+                                )}
+                                {application.companyExternalLink && (
+                                  <div className="flex items-center gap-2">
+                                    <i className="fas fa-external-link-alt text-blue-600"></i>
+                                    <a
+                                      target="_blank"
+                                      rel="noopener noreferrer"
+                                      href={application.companyExternalLink}
+                                      className="text-sm text-blue-700 hover:text-blue-900 font-medium truncate"
+                                    >
+                                      {application.companyExternalLink}
+                                    </a>
+                                  </div>
+                                )}
+                              </div>
+                            )}
+                        </div>
                       </div>
                     </div>
 
-                    {/* message section */}
-                    {(application.message ||
-                      application.portofolioLink ||
-                      application.companyMessage ||
-                      application.companyExternalLink) && (
-                      <button
-                        onClick={() => toggleMessage(application.id)}
-                        className="text-sm text-gray-600 hover:underline mt-2"
-                      >
-                        {openMessages[application.id]
-                          ? "Sembunyikan pesan lamaran"
-                          : "Lihat pesan lamaran..."}
-                      </button>
-                    )}
-
-                    {openMessages[application.id] &&
-                      (application.message || application.portofolioLink) && (
-                        <div className="rounded-md p-3 mt-3 bg-blue-50 border border-blue-400 ">
-                          {application.message && (
-                            <div>
-                              <p className="text-sm text-blue-600">
-                                <i className="fa-solid fa-message mr-1"></i>{" "}
-                                Pesan Pelamar
-                              </p>
-                              <p className="text-sm leading-loose whitespace-pre-line mt-1">
-                                {application.message}
-                              </p>
-                            </div>
-                          )}
-                          {application.portofolioLink && (
-                            <div className="mt-3">
-                              <a
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                href={application.portofolioLink}
-                                className="text-xs text-blue-600"
-                              >
-                                <i className="fa-solid fa-link mr-1"></i>
-                                {application.portofolioLink}
-                              </a>
-                            </div>
-                          )}
+                    {/* Progress Bar & Actions */}
+                    <div className="flex flex-col sm:flex-row gap-4 mt-5 items-center">
+                      <div className="flex-1 w-full">
+                        <div className="flex justify-between text-sm text-gray-600 mb-2">
+                          <span className="font-medium">Progress Lamaran</span>
+                          <span className="font-bold">{progressMap[application.status]}%</span>
                         </div>
-                      )}
-
-                    {openMessages[application.id] &&
-                      (application.companyMessage ||
-                        application.companyExternalLink) && (
-                        <div
-                          className={`rounded-md p-3 mt-2 border ${
-                            application.status === "accepted"
-                              ? "border-green-400 bg-green-50"
-                              : application.status === "rejected"
-                              ? "border-red-400 bg-red-50"
-                              : "border-blue-400 bg-blue-50"
-                          }`}
-                        >
-                          {application.companyMessage && (
-                            <div>
-                              <p className="text-sm text-blue-600">
-                                <i className="fa-solid fa-message mr-1"></i>{" "}
-                                Pesan Perusahaan
-                              </p>
-                              <p className="text-sm leading-loose whitespace-pre-line mt-1">
-                                {application.companyMessage}
-                              </p>
-                            </div>
-                          )}
-                          {application.companyExternalLink && (
-                            <div className="mt-3">
-                              <a
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                href={application.companyExternalLink}
-                                className="text-xs text-blue-600"
-                              >
-                                <i className="fa-solid fa-link mr-1"></i>
-                                {application.companyExternalLink}
-                              </a>
-                            </div>
-                          )}
+                        <div className="w-full bg-gray-200 rounded-full h-2.5">
+                          <div
+                            className={`h-2.5 rounded-full transition-all duration-700 ${
+                              application.status === "accepted"
+                                ? "bg-gradient-to-r from-emerald-500 to-emerald-600"
+                                : application.status === "rejected"
+                                ? "bg-gradient-to-r from-rose-500 to-rose-600"
+                                : application.status === "withdrawn"
+                                ? "bg-gradient-to-r from-gray-400 to-gray-500"
+                                : application.status === "reviewed"
+                                ? "bg-gradient-to-r from-amber-500 to-amber-600"
+                                : "bg-gradient-to-r from-blue-500 to-blue-600"
+                            }`}
+                            style={{
+                              width: `${progressMap[application.status]}%`,
+                            }}
+                          />
                         </div>
-                      )}
-
-                    <div className="flex gap-4 mt-4 items-center">
-                      {progressMap[application.status] && (
-                        <div className="flex-1 w-full">
-                          <div className="flex justify-between text-sm text-gray-600 mb-1">
-                            <span>Progress Lamaran</span>
-                            <span>{progressMap[application.status]}%</span>
-                          </div>
-
-                          <div className="w-full bg-gray-200 rounded-full h-2">
-                            <div
-                              className={`h-2 rounded-full transition-all duration-500
-                              ${
-                                application.status === "accepted"
-                                  ? "bg-green-500"
-                                  : application.status === "rejected"
-                                  ? "bg-red-500"
-                                  : application.status === "withdrawn"
-                                  ? "bg-gray-400"
-                                  : "bg-blue-500"
-                              }
-                            `}
-                              style={{
-                                width: `${progressMap[application.status]}%`,
-                              }}
-                            />
-                          </div>
-                        </div>
-                      )}
+                      </div>
                       {application.status === "applied" && (
                         <button
                           onClick={() => handleWithdraw(application)}
-                          className="text-sm px-5 py-2 border-red-400 text-red-700 rounded-md font-medium border cursor-pointer transition hover:bg-gray-100 "
+                          className="px-5 py-2.5 border border-rose-300 text-rose-700 hover:bg-rose-50 rounded-lg font-medium cursor-pointer transition-colors flex items-center gap-2"
+                          disabled={loading}
                         >
-                          Batalkan lamaran
+                          {loading ? (
+                            <i className="fas fa-spinner animate-spin"></i>
+                          ) : (
+                            <i className="fas fa-times-circle"></i>
+                          )}
+                          Batalkan Lamaran
                         </button>
                       )}
                     </div>
@@ -672,42 +818,61 @@ const ApplicationHistory = () => {
             </div>
 
             {/* Pagination */}
-            <div className="flex items-center justify-between mt-6">
-              <div className="flex gap-1 items-center text-sm text-gray-600">
-                <span>Showing</span>
-                <select
-                  className="font-inter outline-none border border-gray-300 bg-white text-sm rounded-md px-2 py-1 shadow-sm"
-                  value={filters.limit}
-                  onChange={(e) => changeLimit(Number(e.target.value))}
-                >
-                  {ALLOWED_LIMITS.map((l) => (
-                    <option key={l} value={l}>
-                      {l}
-                    </option>
-                  ))}
-                </select>
-                <span>data from {meta.total}</span>
+            {meta.totalPages > 1 && (
+              <div className="flex flex-col sm:flex-row items-center justify-between mt-8 pt-6 border-t border-gray-200">
+                <div className="mb-4 sm:mb-0 text-sm text-gray-600">
+                  Menampilkan {(meta.page - 1) * meta.limit + 1} -{" "}
+                  {Math.min(meta.page * meta.limit, meta.total)} dari {meta.total} lamaran
+                </div>
+                <div className="flex items-center gap-2">
+                  <button
+                    className="px-4 py-2.5 border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center gap-2"
+                    onClick={() => goToPage(meta.page - 1)}
+                    disabled={meta.page <= 1 || appLoading}
+                  >
+                    <i className="fas fa-chevron-left"></i>
+                    Sebelumnya
+                  </button>
+                  <div className="flex gap-1">
+                    {Array.from({ length: Math.min(5, meta.totalPages) }, (_, i) => {
+                      let pageNum;
+                      if (meta.totalPages <= 5) {
+                        pageNum = i + 1;
+                      } else if (meta.page <= 3) {
+                        pageNum = i + 1;
+                      } else if (meta.page >= meta.totalPages - 2) {
+                        pageNum = meta.totalPages - 4 + i;
+                      } else {
+                        pageNum = meta.page - 2 + i;
+                      }
+                      
+                      return (
+                        <button
+                          key={pageNum}
+                          onClick={() => goToPage(pageNum)}
+                          className={`w-10 h-10 rounded-lg flex items-center justify-center ${
+                            meta.page === pageNum
+                              ? "bg-blue-600 text-white font-medium"
+                              : "border border-gray-300 text-gray-700 hover:bg-gray-50"
+                          } transition-colors`}
+                          disabled={appLoading}
+                        >
+                          {pageNum}
+                        </button>
+                      );
+                    })}
+                  </div>
+                  <button
+                    className="px-4 py-2.5 border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center gap-2"
+                    onClick={() => goToPage(meta.page + 1)}
+                    disabled={meta.page >= meta.totalPages || appLoading}
+                  >
+                    Selanjutnya
+                    <i className="fas fa-chevron-right"></i>
+                  </button>
+                </div>
               </div>
-              <div className="flex gap-2">
-                <button
-                  className="px-3 py-1 border rounded disabled:opacity-50"
-                  onClick={() => goToPage(meta.page - 1)}
-                  disabled={meta.page <= 1 || loading}
-                >
-                  Prev
-                </button>
-                <span className="px-3 py-1">
-                  Page {meta.page} of {meta.totalPages || 1}
-                </span>
-                <button
-                  className="px-3 py-1 border rounded disabled:opacity-50"
-                  onClick={() => goToPage(meta.page + 1)}
-                  disabled={meta.page >= (meta.totalPages || 1) || loading}
-                >
-                  Next
-                </button>
-              </div>
-            </div>
+            )}
           </div>
         </div>
       </main>
