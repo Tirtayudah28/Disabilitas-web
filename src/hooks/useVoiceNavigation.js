@@ -27,7 +27,7 @@ export const useVoiceNavigation = () => {
         speechController.stop();
         setTimeout(() => {
           speechController.readPage();
-          speakFeedback("Membacakan seluruh halaman");
+          speakFeedback("seluruh halaman sudah di baca");
         }, 300);
         break;
         
@@ -35,7 +35,7 @@ export const useVoiceNavigation = () => {
         speechController.stop();
         setTimeout(() => {
           speechController.readImportantContent();
-          speakFeedback("Membacakan konten penting");
+          speakFeedback("konten penting sudah selesai di baca");
         }, 300);
         break;
         
@@ -72,31 +72,31 @@ export const useVoiceNavigation = () => {
       case 'navigateHome':
         speechController.stop();
         navigate("/");
-        speakFeedback("Membuka beranda");
+        speakFeedback("Kamu sudah di halaman beranda");
         break;
 
       case 'navigateProfile':
         speechController.stop();
         navigate("/profile");
-        speakFeedback("Membuka Profile");
+        speakFeedback("Kamu sudah di halaman Profile");
         break;
         
       case 'navigateJobs':
         speechController.stop();
         navigate("/jobs");
-        speakFeedback("Membuka halaman pekerjaan");
+        speakFeedback("Kamu sudah di halaman pekerjaan");
         break;
         
       case 'navigateCompanies':
         speechController.stop();
         navigate("/companies");
-        speakFeedback("Membuka halaman perusahaan");
+        speakFeedback("Kamu sudah di halaman perusahaan");
         break;
         
       case 'navigateCandidates':
         speechController.stop();
         navigate("/candidates");
-        speakFeedback("Membuka halaman kandidat");
+        speakFeedback("Kamu sudah di halaman kandidat");
         break;
 
       case 'help':
@@ -114,13 +114,13 @@ export const useVoiceNavigation = () => {
       case 'navigateLogin':
         speechController.stop();
         navigate("/login");
-        speakFeedback("Mengarahkan ke halaman login. Silakan isi email dan password secara manual");
+        speakFeedback("Kamu sudah di halaman login. Silakan isi email dan password secara manual");
         break;
         
       case 'navigateRegister':
         speechController.stop();
         navigate("/register");
-        speakFeedback("Mengarahkan ke halaman pendaftaran. Silakan isi formulir secara manual");
+        speakFeedback("Kamu sudah di halaman pendaftaran. Silakan isi formulir secara manual");
         break;
         
       case 'navigateForgotPassword':
