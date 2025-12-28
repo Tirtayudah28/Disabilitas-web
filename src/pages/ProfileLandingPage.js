@@ -391,7 +391,7 @@ const ProfileLandingPage = () => {
       <section className="py-16 md:py-24 bg-white">
         <div className="container mx-auto px-4 sm:px-6 lg:px-8">
           <div className="max-w-4xl mx-auto text-center">
-            <div className="bg-gradient-to-r from-primary-50 to-secondary-50 rounded-3xl p-8 md:p-12 shadow-2xl relative overflow-hidden">
+            <div className="bg-primary-50 rounded-3xl p-8 md:p-12 shadow-2xl relative overflow-hidden">
               {/* Decorative Elements */}
               <div className="absolute top-0 right-0 w-32 h-32 bg-primary-100 rounded-full -translate-y-16 translate-x-16 opacity-50"></div>
               <div className="absolute bottom-0 left-0 w-40 h-40 bg-secondary-100 rounded-full translate-y-16 -translate-x-16 opacity-50"></div>

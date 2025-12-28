@@ -19,7 +19,14 @@ const synonymDictionary = {
   'ulangi': ['repeat', 'ulang', 'kembali', 'lagi'],
   'isi': ['tulis', 'input', 'masukkan', 'ketik'],
   'kirim': ['submit', 'unggah', 'send', 'post'],
-  'hapus': ['clear', 'bersihkan', 'delete', 'kosongkan']
+  'hapus': ['clear', 'bersihkan', 'delete', 'kosongkan'],
+  'login': ['masuk', 'signin', 'log in', 'masuk akun'],
+  'daftar': ['register', 'signup', 'registrasi', 'buat akun'],
+  // 'email': ['surel', 'e-mail', 'alamat email'],
+  // 'password': ['kata sandi', 'sandi', 'pin'],
+  // 'nama': ['name', 'fullname', 'nama lengkap'],
+  // 'submit': ['kirim', 'unggah', 'simpan', 'proses'],
+  // 'reset': ['hapus', 'bersihkan', 'clear', 'kosongkan']
 };
 
 // Pattern templates untuk matching
@@ -85,6 +92,25 @@ const commandPatterns = [
     pattern: /(navigasi|panduan|cara pakai)/i, 
     action: 'helpNavigation'
   },
+
+  // AUTH & LOGIN COMMANDS - TAMBAHAN BARU
+  { 
+    pattern: /(login|masuk|sign.?in|log.?in)/i, 
+    action: 'navigateLogin'
+  },
+  { 
+    pattern: /(daftar|register|sign.?up|buat.?akun|registrasi)/i, 
+    action: 'navigateRegister'
+  },
+  { 
+    pattern: /(lupa.?password|reset.?password)/i, 
+    action: 'navigateForgotPassword'
+  },
+  { 
+    pattern: /(keluar|logout|sign.?out)/i, 
+    action: 'logout'
+  },
+  
 ];
 
 // Helper: Normalisasi teks

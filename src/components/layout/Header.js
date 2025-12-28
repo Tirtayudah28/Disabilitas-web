@@ -1,4 +1,4 @@
-// src/components/layout/Header.js - VERSI DIPERBAIKI (HANYA TAMBAH)
+// src/components/layout/Header.js
 import React, { useState, useEffect } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "../../contexts/AuthContext";
@@ -260,7 +260,7 @@ const Header = () => {
             }
           >
             <i
-              className="fas fa-building w-6 text-center"
+              className="fas fa-building w-5 text-center"
               aria-hidden="true"
             ></i>
             Perusahaan

@@ -13,6 +13,7 @@ export const useVoiceNavigation = () => {
   const [transcript, setTranscript] = useState("");
   const [lastCommand, setLastCommand] = useState(null);
   const [suggestions, setSuggestions] = useState([]);
+  
 
   const handleCommand = (rawText) => {
     setTranscript(rawText);
@@ -109,6 +110,29 @@ export const useVoiceNavigation = () => {
         handleSearch(searchTerm);
         break;
         
+      // AUTH NAVIGATION ONLY - SIMPLIFIED
+      case 'navigateLogin':
+        speechController.stop();
+        navigate("/login");
+        speakFeedback("Mengarahkan ke halaman login. Silakan isi email dan password secara manual");
+        break;
+        
+      case 'navigateRegister':
+        speechController.stop();
+        navigate("/register");
+        speakFeedback("Mengarahkan ke halaman pendaftaran. Silakan isi formulir secara manual");
+        break;
+        
+      case 'navigateForgotPassword':
+        speechController.stop();
+        navigate("/forgot-password");
+        speakFeedback("Mengarahkan ke halaman reset password");
+        break;
+        
+      case 'logout':
+        handleLogout();
+        break;
+
       case 'unknown':
       default:
         const newSuggestions = getCommandSuggestions(rawText);
@@ -129,6 +153,23 @@ export const useVoiceNavigation = () => {
     feedback.rate = 1.0;
     feedback.volume = 0.8;
     window.speechSynthesis.speak(feedback);
+  };
+
+    /**
+   * Handle logout action
+   */
+  const handleLogout = () => {
+    speechController.stop();
+    
+    // Clear user data
+    localStorage.removeItem('userToken');
+    localStorage.removeItem('userData');
+    
+    // Navigate to home
+    navigate("/");
+    
+    // Voice feedback
+    speakFeedback("Anda telah logout. Mengarahkan ke beranda");
   };
   
   const handleSearch = (term) => {
