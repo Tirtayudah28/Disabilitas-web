@@ -482,6 +482,8 @@ const AccessibilityWidget = () => {
                           <li>"<strong>kerja</strong>" - Ke halaman pekerjaan</li>
                           <li>"<strong>perusahaan</strong>" - Ke halaman perusahaan</li>
                           <li>"<strong>kandidat</strong>" - Ke halaman pelamar</li>
+                          <li>"<strong>buka profile</strong>" - Ke halaman landingPage profile</li>
+                          <li>"<strong>profile saya</strong>" - Ke halaman profile sendiri</li>
                         </ul>
                       </div>
                       <div className="bg-white p-3 rounded border">

@@ -64,6 +64,10 @@ const commandPatterns = [
     action: 'navigateProfile'
   },
   { 
+    pattern: /(pergi|buka|navigasi|ke|ke halaman)\s+(profil|profile|pengguna)\s+(saya|sendiri)/i, 
+    action: 'navigateProfileSaya'
+  },
+  { 
     pattern: /(pergi|buka|navigasi|ke|ke halaman)\s+(kerja|pekerjaan|job|jobs)/i, 
     action: 'navigateJobs'
   },
@@ -74,6 +78,10 @@ const commandPatterns = [
   { 
     pattern: /(pergi|buka|navigasi|ke|ke halaman)\s+(kandidat|candidate|pelamar)/i, 
     action: 'navigateCandidates'
+  },
+  { 
+    pattern: /(pergi|buka|navigasi|ke|ke halaman)\s+(riwayat lamaran|history lamaran|histori lamaran)/i, 
+    action: 'navigateRiwayatLamaran'
   },
   { 
     pattern: /(cari|temukan|carikan)\s+(.*)/i, 
@@ -201,9 +209,11 @@ export const parseVoiceCommand = (rawText) => {
     'ulangi': 'repeat',
     'beranda': 'navigateHome',
     'profile': 'navigateProfile',
+    'profile saya': 'navigateProfileSaya',
+    'riwayat lamaran': 'navigateRiwayatLamaran',
     'kerja': 'navigateJobs',
     'perusahaan': 'navigateCompanies',
-    'kandidat': 'navigateCandidates'
+    'kandidat': 'navigateCandidates',
   };
   
   for (const [command, action] of Object.entries(simpleCommands)) {
@@ -233,6 +243,8 @@ export const parseVoiceCommand = (rawText) => {
     'kerja': 'navigateJobs',
     'perusahaan': 'navigateCompanies',
     'kandidat': 'navigateCandidates',
+    'profile saya': 'navigateProfileSaya',
+    'riwayat lamaran': 'navigateRiwayatLamaran',
     'beranda': 'navigateHome'
   };
   
@@ -283,7 +295,9 @@ export const getCommandSuggestions = (partialText = '') => {
       'buka profile',
       'buka kerja',
       'buka perusahaan',
-      'buka kandidat'
+      'buka kandidat',
+      'buka profile saya',
+      'buka riwayat lamaran'
     ];
   }
   
@@ -291,7 +305,9 @@ export const getCommandSuggestions = (partialText = '') => {
   const allCommands = [
     'baca halaman', 'baca penting', 'ringkasan',
     'berhenti', 'lanjut', 'ulangi',
-    'buka beranda', 'buka profile', 'buka kerja', 'buka perusahaan', 'buka kandidat'
+    'buka beranda', 'buka profile', 'buka profile saya', 
+    'buka kerja', 'buka perusahaan', 'buka kandidat', 
+    'buka riwayat lamaran',
   ];
   
   allCommands.forEach(cmd => {

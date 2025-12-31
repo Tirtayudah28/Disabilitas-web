@@ -388,6 +388,8 @@ export const speakHelpCommands = () => {
       Katakan "beranda" untuk menuju halaman utama,
       Katakan "cari lowongan" untuk mencari pekerjaan,
       Katakan "profil" untuk mengakses profil Anda,
+      Katakan "profil saya" untuk mengakses profil Anda sendiri,
+      Katakan "riwayat lamaran" untuk mengakses riwayat lamaran anda,
       Katakan "resume" untuk mengelola resume,
       Katakan "perusahaan" untuk melihat perusahaan,
       Katakan "lamaran" untuk melihat riwayat lamar,

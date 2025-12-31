@@ -3,11 +3,17 @@ import { useNavigate } from 'react-router-dom';
 import { createSpeechRecognition } from '../voice/speechRecognition';
 import { speechController } from '../utils/speechController';
 import { parseVoiceCommand, getCommandSuggestions } from '../utils/voiceCommandParser';
+import { useAuth } from "../contexts/AuthContext";
+import axios from "axios";
+import { enqueueSnackbar } from "notistack";
 
 export const useVoiceNavigation = () => {
   const navigate = useNavigate();
   const recognitionRef = useRef(null);
   const isRunningRef = useRef(false);
+  const [profileData, setProfileData] = useState({});
+  const { token, userData, logout } = useAuth();
+
   
   const [isListening, setIsListening] = useState(false);
   const [transcript, setTranscript] = useState("");
@@ -79,6 +85,24 @@ export const useVoiceNavigation = () => {
         speechController.stop();
         navigate("/profile");
         speakFeedback("Kamu sudah di halaman Profile");
+        break;
+
+      case 'navigateProfileSaya':
+        speechController.stop();
+        if (userData?.id) {
+          navigate(`/js/${userData.id}`);
+        } else {
+          // Jika belum login, arahkan ke login
+          navigate("/login");
+          speakFeedback("Silakan login terlebih dahulu untuk melihat profile Anda");
+        }
+        speakFeedback("Kamu sudah di halaman profile sendiri");
+        break;
+
+      case 'navigateRiwayatLamaran':
+        speechController.stop();
+        navigate("/js/applications")
+        speakFeedback("Kamu sudah di halaman riwayat lamaran");
         break;
         
       case 'navigateJobs':
@@ -155,22 +179,72 @@ export const useVoiceNavigation = () => {
     window.speechSynthesis.speak(feedback);
   };
 
-    /**
-   * Handle logout action
-   */
-  const handleLogout = () => {
-    speechController.stop();
-    
-    // Clear user data
-    localStorage.removeItem('userToken');
-    localStorage.removeItem('userData');
-    
-    // Navigate to home
-    navigate("/");
-    
-    // Voice feedback
-    speakFeedback("Anda telah logout. Mengarahkan ke beranda");
-  };
+ /**
+ * Handle logout action dengan konfirmasi dan API call
+ */
+const handleLogout = async () => {
+  // Hentikan pembacaan suara jika sedang berjalan
+  speechController.stop();
+  
+  // Konfirmasi logout dengan suara
+  speakFeedback("Apakah Anda yakin ingin logout?");
+  
+  // Beri jeda sebelum menampilkan konfirmasi visual
+  setTimeout(async () => {
+    try {
+      // Konfirmasi visual (sama seperti manual logout)
+      const confirmation = window.confirm("Yakin ingin logout?");
+      
+      if (confirmation) {
+        
+        // Panggil API logout
+        const res = await axios.delete("/api/auth/logout");
+        
+        // Clear user data dari localStorage
+        localStorage.removeItem('userToken');
+        localStorage.removeItem('userData');
+        
+        // Gunakan logout function dari AuthContext jika tersedia
+        if (typeof logout === 'function') {
+          logout();
+        }
+        
+        // Navigate to home
+        navigate("/");
+        
+        // Voice feedback sukses
+        setTimeout(() => {
+          speakFeedback("Logout berhasil. Anda telah keluar dari akun.");
+          
+          // Tambahkan feedback visual jika menggunakan notistack
+          if (typeof enqueueSnackbar === 'function') {
+            enqueueSnackbar(res.data.message || "Logout berhasil", {
+              variant: "success",
+            });
+          }
+        }, 500);
+        
+      } else {
+        // Jika user membatalkan
+        speakFeedback("Logout dibatalkan");
+      }
+      
+    } catch (err) {
+      console.error("Logout error:", err);
+      
+      // Feedback error
+      speakFeedback("Gagal logout. Silakan coba lagi.");
+      
+      // Error visual jika ada
+      if (typeof enqueueSnackbar === 'function') {
+        enqueueSnackbar(
+          err.response?.data?.message || "Gagal logout",
+          { variant: "error" }
+        );
+      }
+    }
+  }, 1500); // Jeda untuk mendengarkan konfirmasi suara
+};
   
   const handleSearch = (term) => {
     navigate(`/jobs?search=${encodeURIComponent(term)}`);
@@ -249,20 +323,22 @@ export const useVoiceNavigation = () => {
         "3. 'ringkasan' - untuk ringkasan singkat",
         "",
         "⏯PERINTAH KONTROL:",
-        "4. 'berhenti' atau 'jeda' - untuk menghentikan sementara",
-        "5. 'lanjut' - untuk melanjutkan pembacaan",
-        "6. 'ulangi' - untuk mengulang bacaan terakhir",
+        "1. 'berhenti' atau 'jeda' - untuk menghentikan sementara",
+        "2. 'lanjut' - untuk melanjutkan pembacaan",
+        "3. 'ulangi' - untuk mengulang bacaan terakhir",
         "",
         "PERINTAH NAVIGASI:",
-        "7. 'beranda' - ke halaman utama",
-        "8. 'profile' - ke halaman profile",
-        "9. 'kerja' - ke halaman pekerjaan",
-        "10. 'perusahaan' - ke halaman perusahaan",
-        "11. 'kandidat' - ke halaman pelamar kerja",
+        "1. 'beranda' - ke halaman utama",
+        "2. 'profile' - ke halaman profile",
+        "3. 'profile saya' - ke halaman profile kamu kalau sudah login",
+        "4. 'riwayat lamaran' - ke halaman riwayat lamaran kamu, bisa di akses jika kamu sudah login",
+        "5. 'kerja' - ke halaman pekerjaan",
+        "6. 'perusahaan' - ke halaman perusahaan",
+        "7. 'kandidat' - ke halaman pelamar kerja",
         "",
         "PERINTAH LAINNYA:",
-        "12. 'bantuan' - untuk mendengar panduan ini lagi",
-        "13. 'cari [kata kunci]' - untuk mencari pekerjaan"
+        "1. 'bantuan' - untuk mendengar panduan ini lagi",
+        "2. 'cari [kata kunci]' - untuk mencari pekerjaan"
       ];
       
       // Baca panduan secara bertahap
@@ -327,7 +403,7 @@ export const useVoiceNavigation = () => {
     intro.onend = () => {
       setTimeout(() => {
         readNextCommand();
-      }, 800);
+      }, 700);
     };
     
     window.speechSynthesis.speak(intro);
