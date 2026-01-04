@@ -42,7 +42,7 @@ const EmployerJobPage = () => {
         sort: filters.sort || undefined,
       };
 
-      const res = await axios.get("/api/company-jobs", {
+      const res = await axios.get("/api/user/cm/jobs", {
         params,
         headers: { Authorization: `Bearer ${token}` },
       });

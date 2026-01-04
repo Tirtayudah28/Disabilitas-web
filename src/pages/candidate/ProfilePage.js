@@ -5,7 +5,6 @@ import { Link, useNavigate, useParams } from "react-router-dom";
 import { useSnackbar } from "notistack";
 
 import defaultPfp from "../../assets/default-pfp.png";
-import defaultCm from "../../assets/default-company.png";
 import { useAuth } from "../../contexts/AuthContext";
 import EditProfilePopup from "../../components/popups/EditProfilePopup";
 import AddUserDisPopup from "../../components/popups/AddUserDisPopup";
@@ -43,6 +42,21 @@ const ProfilePage = () => {
   const [otherJsPreview, setOtherJsPreview] = useState([]);
   const [countries, setCountries] = useState([]);
   const [activeTab, setActiveTab] = useState("data-diri");
+
+  const [disabilityPage, setDisabilityPage] = useState(1);
+  const [skillPage, setSkillPage] = useState(1);
+  const [experiencePage, setExperiencePage] = useState(1);
+  const [educationPage, setEducationPage] = useState(1);
+
+  const [disabilityTotal, setDisabilityTotal] = useState(0);
+  const [skillTotal, setSkillTotal] = useState(0);
+  const [experienceTotal, setExperienceTotal] = useState(0);
+  const [educationTotal, setEducationTotal] = useState(0);
+
+  const [hasMoreDisabilities, setHasMoreDisabilities] = useState(true);
+  const [hasMoreSkills, setHasMoreSkills] = useState(true);
+  const [hasMoreExperiences, setHasMoreExperiences] = useState(true);
+  const [hasMoreEducations, setHasMoreEducations] = useState(true);
 
   const [showEditProfPopup, setShowEditProfPopup] = useState(false);
   const [showAddDisPopup, setShowAddDisPopup] = useState(false);
@@ -86,7 +100,7 @@ const ProfilePage = () => {
     ].filter(Boolean).length;
 
     const hasBio = Boolean(
-      profileData?.profile?.bio && String(profileData.bio).trim() !== ""
+      profileData?.UserProfile?.bio && String(profileData.bio).trim() !== ""
     );
     const hasPic = Boolean(
       profileData?.profilePicture &&
@@ -148,6 +162,9 @@ const ProfilePage = () => {
     fetchCountries();
   }, []);
 
+  /*
+    GET PROFILE DATAS
+  */
   //fatir: get user by id
   const getUserById = async () => {
     try {
@@ -162,45 +179,115 @@ const ProfilePage = () => {
     }
   };
   //fatir: get user educations
-  const getUserEducations = async () => {
+  const getUserEducations = async (page = 1, loadMore = false) => {
     try {
-      const res = await axios.get(`/api/user/js/${userId}/educations`);
-      setEducations(res.data.data);
+      const res = await axios.get(
+        `/api/user/js/${userId}/educations?page=${page}`
+      );
+      const newData = res.data.data;
+
+      if (page === 1 || !loadMore) {
+        setEducations(newData);
+        setEducationPage(1);
+      } else {
+        setEducations((prev) => [...prev, ...newData]);
+        setEducationPage(page);
+      }
+
+      // Check if there are more pages (assuming 10 items per page)
+      setHasMoreEducations(newData.length === 10);
+      setEducationTotal(res.data.meta?.total || 0);
     } catch (error) {
-      console.error("Error fetching user:", error);
-      navigate("/");
+      console.error("Error fetching educations:", error);
+      if (page === 1) navigate("/");
     }
   };
   //fatir: get user experience
-  const getUserExperiences = async () => {
+  const getUserExperiences = async (page = 1, loadMore = false) => {
     try {
-      const res = await axios.get(`/api/user/js/${userId}/experiences`);
-      setExperiences(res.data.data);
+      const res = await axios.get(
+        `/api/user/js/${userId}/experiences?page=${page}`
+      );
+      const newData = res.data.data;
+
+      if (page === 1 || !loadMore) {
+        setExperiences(newData);
+        setExperiencePage(1);
+      } else {
+        setExperiences((prev) => [...prev, ...newData]);
+        setExperiencePage(page);
+      }
+      setHasMoreExperiences(newData.length === 10);
+      setExperienceTotal(res.data.meta?.total || 0);
     } catch (error) {
-      console.error("Error fetching user:", error);
-      navigate("/");
+      console.error("Error fetching experiences:", error);
+      if (page === 1) navigate("/");
     }
   };
   //fatir: get user skill
-  const getUserSkills = async () => {
+  const getUserSkills = async (page = 1, loadMore = false) => {
     try {
-      const res = await axios.get(`/api/user/js/${userId}/skills`);
-      setSkills(res.data.data);
+      const res = await axios.get(`/api/user/js/${userId}/skills?page=${page}`);
+      const newData = res.data.data;
+
+      if (page === 1 || !loadMore) {
+        setSkills(newData);
+        setSkillPage(1);
+      } else {
+        setSkills((prev) => [...prev, ...newData]);
+        setSkillPage(page);
+      }
+
+      setHasMoreSkills(newData.length === 10);
+      setSkillTotal(res.data.meta?.total || 0);
     } catch (error) {
-      console.error("Error fetching user:", error);
-      navigate("/");
+      console.error("Error fetching skills:", error);
+      if (page === 1) navigate("/");
     }
   };
   //fatir: get user disability
-  const getUserDisability = async () => {
+  const getUserDisability = async (page = 1, loadMore = false) => {
     try {
-      const res = await axios.get(`/api/user/js/${userId}/disabilities`);
-      setDisabilities(res.data.data);
+      const res = await axios.get(
+        `/api/user/js/${userId}/disabilities?page=${page}`
+      );
+      const newData = res.data.data;
+
+      if (page === 1 || !loadMore) {
+        setDisabilities(newData);
+        setDisabilityPage(1);
+      } else {
+        setDisabilities((prev) => [...prev, ...newData]);
+        setDisabilityPage(page);
+      }
+
+      setHasMoreDisabilities(newData.length === 10);
+      setDisabilityTotal(res.data.meta?.total || 0);
     } catch (error) {
-      console.error("Error fetching user:", error);
-      navigate("/");
+      console.error("Error fetching disabilities:", error);
+      if (page === 1) navigate("/");
     }
   };
+
+  /*
+    LOAD MORE HANDLERS
+  */
+  const handleLoadMoreDisabilities = () => {
+    getUserDisability(disabilityPage + 1, true);
+  };
+  const handleLoadMoreSkills = () => {
+    getUserSkills(skillPage + 1, true);
+  };
+  const handleLoadMoreExperiences = () => {
+    getUserExperiences(experiencePage + 1, true);
+  };
+  const handleLoadMoreEducations = () => {
+    getUserEducations(educationPage + 1, true);
+  };
+
+  /*
+    GET PREVIEWS DATA
+  */
   const getJsPreviewApp = async () => {
     try {
       const res = await axios.get(
@@ -233,10 +320,10 @@ const ProfilePage = () => {
       try {
         await Promise.all([
           getUserById(),
-          getUserDisability(),
-          getUserSkills(),
-          getUserExperiences(),
-          getUserEducations(),
+          getUserDisability(1),
+          getUserSkills(1),
+          getUserExperiences(1),
+          getUserEducations(1),
         ]);
       } catch (err) {
         console.error(err);
@@ -282,7 +369,7 @@ const ProfilePage = () => {
     try {
       const payload = {};
       Object.keys(form).forEach((key) => {
-        if (profileData?.profile?.[key] !== form[key]) {
+        if (profileData?.UserProfile?.[key] !== form[key]) {
           payload[key] = form[key] === "" ? null : form[key];
         }
       });
@@ -623,7 +710,6 @@ const ProfilePage = () => {
       </div>
     );
   };
-  
   const OtherJsPreviewSkeleton = ({ count = 4 }) => {
     return (
       <div className="bg-white rounded-2xl shadow-xl p-6 animate-pulse">
@@ -650,7 +736,6 @@ const ProfilePage = () => {
       </div>
     );
   };
-  
   const ProfileTabSkeleton = ({ rows = 2 }) => {
     return (
       <div className="bg-white rounded-2xl shadow-xl p-8 animate-pulse">
@@ -709,14 +794,14 @@ const ProfilePage = () => {
                   </button>
                 </div>
               )}
-              
+
               {/* Cover Photo */}
-              <div className="bg-gradient-to-r from-blue-600 via-blue-500 to-cyan-500 h-36 relative">
+              <div className="bg-gradient-to-r from-blue-600 via-blue-500 to-cyan-300 h-36 relative">
                 <div className="absolute inset-0 bg-gradient-to-t from-black/10 to-transparent"></div>
               </div>
-              
+
               <div className="px-6 sm:px-8 pb-8 relative">
-                <div className="flex flex-col sm:flex-row items-start sm:items-end gap-6 -mt-20">
+                <div className="flex flex-col sm:flex-row items-start sm:items-center gap-6 -mt-20">
                   {/* Profile Picture */}
                   <div className="relative">
                     <div className="h-40 w-40 rounded-full bg-gradient-to-r from-blue-500 to-cyan-500 p-1 shadow-2xl">
@@ -728,7 +813,7 @@ const ProfilePage = () => {
                         />
                       </div>
                     </div>
-                    
+
                     {userData?.id === profileData?.id && (
                       <>
                         <label
@@ -746,7 +831,7 @@ const ProfilePage = () => {
                           className="hidden"
                           onChange={(e) => handleEditPfp(e, "upload")}
                         />
-                        
+
                         {profileData?.profilePicture && (
                           <button
                             title="Hapus Foto Profil"
@@ -760,83 +845,81 @@ const ProfilePage = () => {
                     )}
                   </div>
 
-                 {/* Profile Info */}
-<div className="flex-1 mt-4 sm:mt-0">
-  <div className="space-y-4">
-    <div>
-      <div className="flex flex-wrap items-center gap-3 mb-2">
-        <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">
-          {profileData?.profile?.fullName}
-        </h1>
-        
-        {/* Gender Icons Only */}
-        {profileData?.profile?.gender !== "blank" && (
-          <div className="flex items-center">
-            {profileData?.profile?.gender === "male" && (
-              <div className="h-8 w-8 rounded-full bg-blue-100 flex items-center justify-center border-2 border-blue-300" 
-                   title="Pria">
-                <i className="fas fa-mars text-blue-600 text-sm"></i>
-              </div>
-            )}
-            {profileData?.profile?.gender === "female" && (
-              <div className="h-8 w-8 rounded-full bg-pink-100 flex items-center justify-center border-2 border-pink-300"
-                   title="Wanita">
-                <i className="fas fa-venus text-pink-600 text-sm"></i>
-              </div>
-            )}
-            {profileData?.profile?.gender !== "male" && 
-             profileData?.profile?.gender !== "female" && (
-              <div className="h-8 w-8 rounded-full bg-purple-100 flex items-center justify-center border-2 border-purple-300"
-                   title={profileData?.profile?.gender}>
-                <i className="fas fa-transgender text-purple-600 text-sm"></i>
-              </div>
-            )}
-          </div>
-        )}
-      </div>
-      
-      <div className="flex items-center gap-2 mt-1">
-        <span className="text-lg text-blue-800 font-bold">
-          @{profileData?.username}
-        </span>
-        <span className="text-gray-400">•</span>
-        <span className="text-gray-600">
-          Job Seeker
-        </span>
-      </div>
-    </div>
+                  {/* Profile Info */}
+                  <div className="flex-1 mt-4 sm:mt-0">
+                    <div className="space-y-2">
+                      <div>
+                        <div className="flex flex-wrap items-center gap-3 mb-2">
+                          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">
+                            {profileData?.UserProfile?.fullName}
+                          </h1>
 
-    <div className="flex flex-wrap items-center gap-4 text-gray-600">
-      <div className="flex items-center gap-2">
-        <i className="fas fa-map-marker-alt text-gray-400"></i>
-        <span className="capitalize">
-          {profileData?.profile?.city}, {profileData?.profile?.country}
-        </span>
-      </div>
-      <div className="flex items-center gap-2">
-        <i className="fas fa-calendar-alt text-gray-400"></i>
-        <span>
-          Bergabung{" "}
-          {profileData?.createdAt
-            ? new Intl.DateTimeFormat("id-ID", {
-                month: "long",
-                year: "numeric",
-              }).format(new Date(profileData.createdAt))
-            : "-"}
-        </span>
-      </div>
-    </div>
+                          {/* Gender Icons Only */}
+                          {profileData?.UserProfile?.gender !== "blank" && (
+                            <div className="flex items-center">
+                              {profileData?.UserProfile?.gender === "male" && (
+                                <div
+                                  className="h-8 w-8 rounded-full bg-blue-100 flex items-center justify-center border-2 border-blue-300"
+                                  title="Pria"
+                                >
+                                  <i className="fas fa-mars text-blue-600 text-sm"></i>
+                                </div>
+                              )}
+                              {profileData?.UserProfile?.gender ===
+                                "female" && (
+                                <div
+                                  className="h-8 w-8 rounded-full bg-pink-100 flex items-center justify-center border-2 border-pink-300"
+                                  title="Wanita"
+                                >
+                                  <i className="fas fa-venus text-pink-600 text-sm"></i>
+                                </div>
+                              )}
+                              {profileData?.UserProfile?.gender !== "male" &&
+                                profileData?.UserProfile?.gender !==
+                                  "female" && (
+                                  <div
+                                    className="h-8 w-8 rounded-full bg-purple-100 flex items-center justify-center border-2 border-purple-300"
+                                    title={profileData?.UserProfile?.gender}
+                                  >
+                                    <i className="fas fa-transgender text-purple-600 text-sm"></i>
+                                  </div>
+                                )}
+                            </div>
+                          )}
+                        </div>
 
-    {/* Bio */}
-    {profileData?.profile?.bio && (
-      <div className="mt-4">
-        <p className="text-gray-700 leading-relaxed">
-          {profileData?.profile?.bio}
-        </p>
-      </div>
-    )}
-  </div>
-</div>
+                        <div className="flex items-center gap-2 mt-1">
+                          <span className="text-lg text-blue-600 font-semibold">
+                            @{profileData?.username}
+                          </span>
+                          <span className="text-gray-400">•</span>
+                          <span className="text-gray-600">Job Seeker</span>
+                        </div>
+                      </div>
+
+                      <div className="flex flex-wrap items-center gap-4 text-gray-600">
+                        <div className="flex items-center gap-2">
+                          <i className="fas fa-map-marker-alt text-gray-400"></i>
+                          <span className="capitalize">
+                            {profileData?.UserProfile?.city},{" "}
+                            {profileData?.UserProfile?.country}
+                          </span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <i className="fas fa-calendar-alt text-gray-400"></i>
+                          <span>
+                            Bergabung{" "}
+                            {profileData?.createdAt
+                              ? new Intl.DateTimeFormat("id-ID", {
+                                  month: "long",
+                                  year: "numeric",
+                                }).format(new Date(profileData.createdAt))
+                              : "-"}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
                 </div>
 
                 {/* Profile Completion (Only for owner) */}
@@ -844,9 +927,12 @@ const ProfilePage = () => {
                   <div className="mt-8 bg-gradient-to-r from-blue-50 to-cyan-50 rounded-2xl p-6 border border-blue-100">
                     <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-4">
                       <div>
-                        <h3 className="font-bold text-gray-900 text-lg">Kelengkapan Profil</h3>
+                        <h3 className="font-bold text-gray-900 text-lg">
+                          Kelengkapan Profil
+                        </h3>
                         <p className="text-gray-600 text-sm mt-1">
-                          Lengkapi profil untuk meningkatkan peluang diterima kerja
+                          Lengkapi profil untuk meningkatkan peluang diterima
+                          kerja
                         </p>
                       </div>
                       <div className="text-right">
@@ -854,13 +940,15 @@ const ProfilePage = () => {
                           {profileCompletion.percent}%
                         </span>
                         <p className="text-gray-600 text-sm">
-                          {profileCompletion.percent === 100 ? 'Sempurna!' : 'Perlu dilengkapi'}
+                          {profileCompletion.percent === 100
+                            ? "Sempurna!"
+                            : "Perlu dilengkapi"}
                         </p>
                       </div>
                     </div>
-                    
+
                     <div className="w-full bg-gray-200 rounded-full h-3 overflow-hidden">
-                      <div 
+                      <div
                         className={`h-3 rounded-full transition-all duration-500 ${
                           profileCompletion.percent >= 75
                             ? "bg-gradient-to-r from-green-500 to-emerald-600"
@@ -871,23 +959,58 @@ const ProfilePage = () => {
                         style={{ width: `${profileCompletion.percent}%` }}
                       />
                     </div>
-                    
+
                     <div className="mt-4 grid grid-cols-2 sm:grid-cols-4 gap-3">
                       {[
-                        { label: "Foto Profil", completed: profileCompletion.hasPic, icon: "fa-camera" },
-                        { label: "Bio", completed: profileCompletion.hasBio, icon: "fa-file-alt" },
-                        { label: "Keahlian", completed: profileCompletion.breakdown.hasSkill, icon: "fa-tools" },
-                        { label: "Pengalaman", completed: profileCompletion.breakdown.hasExperience, icon: "fa-briefcase" },
-                        { label: "Pendidikan", completed: profileCompletion.breakdown.hasEducation, icon: "fa-graduation-cap" },
-                        { label: "Disabilitas", completed: profileCompletion.breakdown.hasDisability, icon: "fa-universal-access" },
+                        {
+                          label: "Foto Profil",
+                          completed: profileCompletion.hasPic,
+                          icon: "fa-camera",
+                        },
+                        {
+                          label: "Bio",
+                          completed: profileCompletion.hasBio,
+                          icon: "fa-file-alt",
+                        },
+                        {
+                          label: "Keahlian",
+                          completed: profileCompletion.breakdown.hasSkill,
+                          icon: "fa-tools",
+                        },
+                        {
+                          label: "Pengalaman",
+                          completed: profileCompletion.breakdown.hasExperience,
+                          icon: "fa-briefcase",
+                        },
+                        {
+                          label: "Pendidikan",
+                          completed: profileCompletion.breakdown.hasEducation,
+                          icon: "fa-graduation-cap",
+                        },
+                        {
+                          label: "Disabilitas",
+                          completed: profileCompletion.breakdown.hasDisability,
+                          icon: "fa-universal-access",
+                        },
                       ].map((item, index) => (
-                        <div key={index} className="flex items-center gap-3 p-3 bg-white rounded-xl border border-gray-100">
-                          <div className={`h-8 w-8 rounded-full flex items-center justify-center ${item.completed ? 'bg-green-100 text-green-600' : 'bg-gray-100 text-gray-400'}`}>
+                        <div
+                          key={index}
+                          className="flex items-center gap-3 p-3 bg-white rounded-xl border border-gray-100"
+                        >
+                          <div
+                            className={`h-8 w-8 rounded-full flex items-center justify-center ${
+                              item.completed
+                                ? "bg-green-100 text-green-600"
+                                : "bg-gray-100 text-gray-400"
+                            }`}
+                          >
                             <i className={`fas ${item.icon} text-sm`}></i>
                           </div>
                           <div>
                             <p className="font-medium text-sm">{item.label}</p>
-                            <p className="text-xs text-gray-500">{item.completed ? 'Lengkap' : 'Belum'}</p>
+                            <p className="text-xs text-gray-500">
+                              {item.completed ? "Lengkap" : "Belum"}
+                            </p>
                           </div>
                         </div>
                       ))}
@@ -915,11 +1038,13 @@ const ProfilePage = () => {
                           : "hover:bg-gray-50 text-gray-700"
                       }`}
                     >
-                      <div className={`h-8 w-8 rounded-lg flex items-center justify-center ${
-                        activeTab === tab.id 
-                          ? 'bg-blue-100 text-blue-600' 
-                          : 'bg-gray-100 text-gray-500'
-                      }`}>
+                      <div
+                        className={`h-8 w-8 rounded-lg flex items-center justify-center ${
+                          activeTab === tab.id
+                            ? "bg-blue-100 text-blue-600"
+                            : "bg-gray-100 text-gray-500"
+                        }`}
+                      >
                         <i className={`fas fa-${tab.icon} text-sm`}></i>
                       </div>
                       <span className="font-medium">{tab.label}</span>
@@ -949,7 +1074,9 @@ const ProfilePage = () => {
                       </div>
                       {userData?.id === profileData?.id && (
                         <button
-                          onClick={() => setShowEditProfPopup(!showEditProfPopup)}
+                          onClick={() =>
+                            setShowEditProfPopup(!showEditProfPopup)
+                          }
                           className="h-10 w-10 rounded-full bg-blue-100 text-blue-600 hover:bg-blue-200 transition-all duration-200 flex items-center justify-center"
                           title="Edit Profil"
                         >
@@ -959,11 +1086,11 @@ const ProfilePage = () => {
                     </div>
 
                     {/* Bio */}
-                    {profileData?.profile?.bio && (
+                    {profileData?.UserProfile?.bio && (
                       <div className="mb-10">
                         <div className="prose max-w-none">
                           <p className="text-gray-700 leading-relaxed">
-                            {profileData?.profile?.bio}
+                            {profileData?.UserProfile?.bio}
                           </p>
                         </div>
                       </div>
@@ -976,10 +1103,12 @@ const ProfilePage = () => {
                           <div className="h-10 w-10 rounded-lg bg-blue-100 flex items-center justify-center">
                             <i className="fas fa-user text-blue-600"></i>
                           </div>
-                          <h3 className="font-semibold text-gray-900">Nama Lengkap</h3>
+                          <h3 className="font-semibold text-gray-900">
+                            Nama Lengkap
+                          </h3>
                         </div>
                         <p className="text-gray-700 font-medium">
-                          {profileData?.profile?.fullName}
+                          {profileData?.UserProfile?.fullName}
                         </p>
                         <p className="text-blue-600 text-sm mt-1">
                           @{profileData?.username}
@@ -992,50 +1121,58 @@ const ProfilePage = () => {
                           <div className="h-10 w-10 rounded-lg bg-green-100 flex items-center justify-center">
                             <i className="fas fa-map-marker-alt text-green-600"></i>
                           </div>
-                          <h3 className="font-semibold text-gray-900">Lokasi</h3>
+                          <h3 className="font-semibold text-gray-900">
+                            Lokasi
+                          </h3>
                         </div>
                         <div className="space-y-1">
                           <p className="text-gray-700 capitalize">
-                            {`${profileData?.profile?.city}, ${profileData?.profile?.country}`}
+                            {`${profileData?.UserProfile?.city}, ${profileData?.UserProfile?.country}`}
                           </p>
-                          {profileData?.profile?.address && (
+                          {profileData?.UserProfile?.address && (
                             <p className="text-gray-600 text-sm">
-                              {profileData?.profile?.address}
+                              {profileData?.UserProfile?.address}
                             </p>
                           )}
                         </div>
                       </div>
 
                       {/* Phone Number */}
-                      {profileData?.profile?.phoneNumber && (
+                      {profileData?.UserProfile?.phoneNumber && (
                         <div className="bg-gray-50 rounded-xl p-5 border border-gray-100">
                           <div className="flex items-center gap-3 mb-3">
                             <div className="h-10 w-10 rounded-lg bg-purple-100 flex items-center justify-center">
                               <i className="fas fa-phone text-purple-600"></i>
                             </div>
-                            <h3 className="font-semibold text-gray-900">Telepon</h3>
+                            <h3 className="font-semibold text-gray-900">
+                              Telepon
+                            </h3>
                           </div>
                           <p className="text-gray-700 font-medium">
-                            {profileData.profile.phoneNumber}
+                            {profileData.UserProfile.phoneNumber}
                           </p>
                         </div>
                       )}
 
                       {/* Date of Birth */}
-                      {profileData?.profile?.dateOfBirth && (
+                      {profileData?.UserProfile?.dateOfBirth && (
                         <div className="bg-gray-50 rounded-xl p-5 border border-gray-100">
                           <div className="flex items-center gap-3 mb-3">
                             <div className="h-10 w-10 rounded-lg bg-amber-100 flex items-center justify-center">
                               <i className="fas fa-calendar text-amber-600"></i>
                             </div>
-                            <h3 className="font-semibold text-gray-900">Tanggal Lahir</h3>
+                            <h3 className="font-semibold text-gray-900">
+                              Tanggal Lahir
+                            </h3>
                           </div>
                           <p className="text-gray-700">
                             {new Intl.DateTimeFormat("id-ID", {
                               day: "numeric",
                               month: "long",
                               year: "numeric",
-                            }).format(new Date(profileData.profile.dateOfBirth))}
+                            }).format(
+                              new Date(profileData.UserProfile.dateOfBirth)
+                            )}
                           </p>
                         </div>
                       )}
@@ -1049,9 +1186,17 @@ const ProfilePage = () => {
                     <div className="flex justify-between items-center mb-8">
                       <div className="flex items-center gap-4">
                         <div className="h-10 w-2 bg-gradient-to-b from-purple-500 to-pink-500 rounded-full"></div>
-                        <h2 className="text-2xl font-bold text-gray-900">
-                          Jenis Disabilitas
-                        </h2>
+                        <div>
+                          <h2 className="text-2xl font-bold text-gray-900">
+                            Jenis Disabilitas
+                          </h2>
+                          {disabilityTotal > 0 && (
+                            <p className="text-sm text-gray-600 mt-1">
+                              Menampilkan {disabilities.length} dari{" "}
+                              {disabilityTotal} disabilitas
+                            </p>
+                          )}
+                        </div>
                       </div>
                       {userData?.id === profileData?.id && (
                         <button
@@ -1065,44 +1210,56 @@ const ProfilePage = () => {
                     </div>
 
                     {disabilities && disabilities.length > 0 ? (
-                      <div className="space-y-4">
-                        {disabilities.map((d) => (
-                          <div
-                            className="flex justify-between items-start p-5 hover:bg-gray-50 transition-all duration-200 rounded-xl border border-gray-100"
-                            key={d.id}
-                          >
-                            <div className="flex gap-4">
-                              <div className="h-12 w-12 rounded-xl bg-purple-100 flex items-center justify-center">
-                                <i className="fas fa-universal-access text-purple-600"></i>
-                              </div>
-                              <div className="flex flex-col gap-2">
-                                <h3 className="font-semibold text-gray-900 capitalize">
-                                  {d.disabilityName || d.Disability.name}
-                                </h3>
-                                <div className="flex items-center gap-2">
-                                  <span className="px-3 py-1 bg-blue-100 text-blue-700 text-xs font-medium rounded-full">
-                                    {d.type || d.Disability.type}
-                                  </span>
+                      <>
+                        <div className="space-y-2 mb-6">
+                          {disabilities.map((d) => (
+                            <div
+                              className="flex justify-between items-start p-3 hover:bg-gray-50 transition-all duration-200 rounded-xl border border-gray-100"
+                              key={d.id}
+                            >
+                              <div className="flex items-center gap-4">
+                                <div className="h-8 w-8 rounded-xl bg-purple-100 flex items-center justify-center">
+                                  <i className="fas fa-universal-access text-purple-600"></i>
                                 </div>
-                                {d.description && (
-                                  <p className="text-gray-600 text-sm mt-2">
-                                    {d.description}
-                                  </p>
-                                )}
+                                <div className="flex flex-col gap-2">
+                                  <h3 className="font-semibold text-gray-900 capitalize">
+                                    {d.Disability.name}{" "}
+                                    <span className="px-3 py-1 bg-blue-100 text-blue-700 text-xs font-medium rounded-full">
+                                      {d.Disability.type}
+                                    </span>
+                                  </h3>
+                                  {d.description && (
+                                    <p className="text-gray-600 text-sm">
+                                      {d.description}
+                                    </p>
+                                  )}
+                                </div>
                               </div>
+                              {userData?.id === profileData?.id && (
+                                <button
+                                  onClick={() => handleDeleteDisability(d.id)}
+                                  className="h-8 w-8 rounded-full bg-red-50 text-red-600 hover:bg-red-100 transition-all duration-200 flex items-center justify-center"
+                                  title="Hapus Disabilitas"
+                                >
+                                  <i className="fa-solid fa-trash text-xs"></i>
+                                </button>
+                              )}
                             </div>
-                            {userData?.id === profileData?.id && (
-                              <button
-                                onClick={() => handleDeleteDisability(d.id)}
-                                className="h-8 w-8 rounded-full bg-red-50 text-red-600 hover:bg-red-100 transition-all duration-200 flex items-center justify-center"
-                                title="Hapus Disabilitas"
-                              >
-                                <i className="fa-solid fa-trash text-xs"></i>
-                              </button>
-                            )}
+                          ))}
+                        </div>
+
+                        {hasMoreDisabilities && (
+                          <div className="text-center pt-2">
+                            <button
+                              onClick={handleLoadMoreDisabilities}
+                              className="px-6 py-2 bg-gradient-to-r from-purple-50 to-pink-50 text-purple-700 rounded-lg hover:from-purple-100 hover:to-pink-100 transition-all duration-200 font-medium flex items-center gap-2 mx-auto border border-purple-200"
+                            >
+                              <i className="fa-solid fa-chevron-down"></i>
+                              Tampilkan lebih banyak
+                            </button>
                           </div>
-                        ))}
-                      </div>
+                        )}
+                      </>
                     ) : (
                       <div className="text-center py-12">
                         <div className="h-16 w-16 rounded-full bg-gray-100 flex items-center justify-center mx-auto mb-4">
@@ -1112,7 +1269,8 @@ const ProfilePage = () => {
                           Belum ada data disabilitas
                         </h3>
                         <p className="text-gray-500">
-                          Tambahkan jenis disabilitas untuk melengkapi profil Anda
+                          Tambahkan jenis disabilitas untuk melengkapi profil
+                          Anda
                         </p>
                       </div>
                     )}
@@ -1125,9 +1283,17 @@ const ProfilePage = () => {
                     <div className="flex justify-between items-center mb-8">
                       <div className="flex items-center gap-4">
                         <div className="h-10 w-2 bg-gradient-to-b from-green-500 to-emerald-500 rounded-full"></div>
-                        <h2 className="text-2xl font-bold text-gray-900">
-                          Keahlian
-                        </h2>
+                        <div>
+                          <h2 className="text-2xl font-bold text-gray-900">
+                            Keahlian
+                          </h2>
+                          {skillTotal > 0 && (
+                            <p className="text-sm text-gray-600 mt-1">
+                              Menampilkan {skills.length} dari {skillTotal}{" "}
+                              keahlian
+                            </p>
+                          )}
+                        </div>
                       </div>
                       {userData?.id === profileData?.id && (
                         <button
@@ -1141,39 +1307,53 @@ const ProfilePage = () => {
                     </div>
 
                     {skills && skills.length > 0 ? (
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        {skills.map((s) => (
-                          <div
-                            className="flex justify-between items-start p-5 hover:bg-gray-50 transition-all duration-200 rounded-xl border border-gray-100"
-                            key={s.id}
-                          >
-                            <div className="flex flex-col gap-2 flex-1">
-                              <div className="flex items-center gap-3">
-                                <div className="h-10 w-10 rounded-lg bg-green-100 flex items-center justify-center">
+                      <>
+                        <div className="space-y-2 mb-6">
+                          {skills.map((s) => (
+                            <div
+                              className="flex justify-between items-start p-3 hover:bg-gray-50 transition-all duration-200 rounded-xl border border-gray-100"
+                              key={s.id}
+                            >
+                              <div className="flex items-center gap-4">
+                                <div className="h-8 w-8 rounded-xl bg-green-100 flex items-center justify-center">
                                   <i className="fas fa-tools text-green-600"></i>
                                 </div>
-                                <h3 className="font-semibold text-gray-900 capitalize">
-                                  {s.skillName || s.Skill.name}
-                                </h3>
+                                <div className="flex flex-col gap-2">
+                                  <h3 className="font-semibold text-gray-900 capitalize">
+                                    {s.Skill.name}{" "}
+                                  </h3>
+                                  {s.description && (
+                                    <p className="text-gray-600 text-sm">
+                                      {s.description}
+                                    </p>
+                                  )}
+                                </div>
                               </div>
-                              {s.description && (
-                                <p className="text-gray-600 text-sm mt-2">
-                                  {s.description}
-                                </p>
+                              {userData?.id === profileData?.id && (
+                                <button
+                                  onClick={() => handleDeleteSkill(s.id)}
+                                  className="h-8 w-8 rounded-full bg-red-50 text-red-600 hover:bg-red-100 transition-all duration-200 flex items-center justify-center"
+                                  title="Hapus Keahlian"
+                                >
+                                  <i className="fa-solid fa-trash text-xs"></i>
+                                </button>
                               )}
                             </div>
-                            {userData?.id === profileData?.id && (
-                              <button
-                                onClick={() => handleDeleteSkill(s.id)}
-                                className="h-8 w-8 rounded-full bg-red-50 text-red-600 hover:bg-red-100 transition-all duration-200 flex items-center justify-center ml-4"
-                                title="Hapus Keahlian"
-                              >
-                                <i className="fa-solid fa-trash text-xs"></i>
-                              </button>
-                            )}
+                          ))}
+                        </div>
+
+                        {hasMoreSkills && (
+                          <div className="text-center pt-2">
+                            <button
+                              onClick={handleLoadMoreSkills}
+                              className="px-6 py-2 bg-gradient-to-r from-green-50 to-emerald-50 text-green-700 rounded-lg hover:from-green-100 hover:to-emerald-100 transition-all duration-200 font-medium flex items-center gap-2 mx-auto border border-green-200"
+                            >
+                              <i className="fa-solid fa-chevron-down"></i>
+                              Tampilkan lebih banyak
+                            </button>
                           </div>
-                        ))}
-                      </div>
+                        )}
+                      </>
                     ) : (
                       <div className="text-center py-12">
                         <div className="h-16 w-16 rounded-full bg-gray-100 flex items-center justify-center mx-auto mb-4">
@@ -1196,9 +1376,17 @@ const ProfilePage = () => {
                     <div className="flex justify-between items-center mb-8">
                       <div className="flex items-center gap-4">
                         <div className="h-10 w-2 bg-gradient-to-b from-amber-500 to-orange-500 rounded-full"></div>
-                        <h2 className="text-2xl font-bold text-gray-900">
-                          Pengalaman
-                        </h2>
+                        <div>
+                          <h2 className="text-2xl font-bold text-gray-900">
+                            Pengalaman
+                          </h2>
+                          {experienceTotal > 0 && (
+                            <p className="text-sm text-gray-600 mt-1">
+                              Menampilkan {experiences.length} dari{" "}
+                              {experienceTotal} pengalaman
+                            </p>
+                          )}
+                        </div>
                       </div>
                       {userData?.id === profileData?.id && (
                         <button
@@ -1212,62 +1400,78 @@ const ProfilePage = () => {
                     </div>
 
                     {experiences && experiences.length > 0 ? (
-                      <div className="space-y-6">
-                        {experiences.map((e) => (
-                          <div
-                            className="flex justify-between items-start p-5 hover:bg-gray-50 transition-all duration-200 rounded-xl border border-gray-100"
-                            key={e.id}
-                          >
-                            <div className="flex gap-4 flex-1">
-                              <div className="h-16 w-16 rounded-xl overflow-hidden bg-gradient-to-r from-amber-100 to-orange-100 flex items-center justify-center">
-                                {e.Company?.User?.profilePicture ? (
-                                  <img
-                                    src={e.Company.User.profilePicture}
-                                    alt="company logo"
-                                    className="h-full w-full object-cover"
-                                  />
-                                ) : (
-                                  <i className="fas fa-building text-amber-600 text-2xl"></i>
-                                )}
-                              </div>
-                              <div className="flex flex-col gap-2 flex-1">
-                                <div className="flex justify-between items-start">
-                                  <div>
-                                    <h3 className="font-bold text-gray-900 text-lg capitalize">
-                                      {e.position}
-                                    </h3>
-                                    <p className="text-gray-700 font-medium">
-                                      {e.Company?.companyName || e.companyName}
-                                    </p>
-                                    <div className="flex items-center gap-2 mt-1">
-                                      <span className="px-3 py-1 bg-amber-100 text-amber-700 text-xs font-medium rounded-full capitalize">
-                                        {e.experienceType}
-                                      </span>
-                                      <span className="text-gray-500 text-sm">
-                                        {e.startDate} - {e.endDate ? e.endDate : "Sekarang"}
-                                      </span>
+                      <>
+                        <div className="space-y-4 mb-6">
+                          {experiences.map((e) => (
+                            <div
+                              className="flex justify-between items-start p-5 hover:bg-gray-50 transition-all duration-200 rounded-xl border border-gray-100"
+                              key={e.id}
+                            >
+                              <div className="flex gap-4 flex-1">
+                                <div className="h-12 w-12 rounded-xl overflow-hidden bg-gradient-to-r from-amber-100 to-orange-100 flex items-center justify-center shrink-0">
+                                  {e.Company?.User?.profilePicture ? (
+                                    <img
+                                      src={e.Company.User.profilePicture}
+                                      alt="company logo"
+                                      className="h-full w-full object-cover"
+                                    />
+                                  ) : (
+                                    <i className="fas fa-building text-amber-600 text-xl"></i>
+                                  )}
+                                </div>
+                                <div className="flex flex-col gap-1 flex-1 min-w-0">
+                                  <div className="flex items-start justify-between">
+                                    <div className="min-w-0">
+                                      <h3 className="font-bold text-gray-900 text-base truncate">
+                                        {e.position}
+                                      </h3>
+                                      <div className="flex items-center gap-2 mt-1">
+                                        <span className="text-gray-700 font-medium text-sm truncate">
+                                          {e.Company?.companyName ||
+                                            e.companyName}
+                                        </span>
+                                        <span className="px-2 py-0.5 bg-amber-100 text-amber-700 text-xs font-medium rounded-full capitalize shrink-0">
+                                          {e.experienceType}
+                                        </span>
+                                      </div>
+                                      <p className="text-gray-500 text-xs mt-1">
+                                        {e.startDate} -{" "}
+                                        {e.endDate ? e.endDate : "Sekarang"}
+                                      </p>
                                     </div>
                                   </div>
+                                  {e.description && (
+                                    <p className="text-gray-600 text-sm mt-2 line-clamp-2">
+                                      {e.description}
+                                    </p>
+                                  )}
                                 </div>
-                                {e.description && (
-                                  <p className="text-gray-600 mt-2">
-                                    {e.description}
-                                  </p>
-                                )}
                               </div>
+                              {userData?.id === profileData?.id && (
+                                <button
+                                  onClick={() => handleDeleteExperience(e.id)}
+                                  className="h-8 w-8 rounded-full bg-red-50 text-red-600 hover:bg-red-100 transition-all duration-200 flex items-center justify-center shrink-0 ml-4"
+                                  title="Hapus Pengalaman"
+                                >
+                                  <i className="fas fa-trash text-xs"></i>
+                                </button>
+                              )}
                             </div>
-                            {userData?.id === profileData?.id && (
-                              <button
-                                onClick={() => handleDeleteExperience(e.id)}
-                                className="h-8 w-8 rounded-full bg-red-50 text-red-600 hover:bg-red-100 transition-all duration-200 flex items-center justify-center ml-4"
-                                title="Hapus Pengalaman"
-                              >
-                                <i className="fas fa-trash text-xs"></i>
-                              </button>
-                            )}
+                          ))}
+                        </div>
+
+                        {hasMoreExperiences && (
+                          <div className="text-center pt-2">
+                            <button
+                              onClick={handleLoadMoreExperiences}
+                              className="px-6 py-2 bg-gradient-to-r from-amber-50 to-orange-50 text-amber-700 rounded-lg hover:from-amber-100 hover:to-orange-100 transition-all duration-200 font-medium flex items-center gap-2 mx-auto border border-amber-200"
+                            >
+                              <i className="fa-solid fa-chevron-down"></i>
+                              Tampilkan lebih banyak
+                            </button>
                           </div>
-                        ))}
-                      </div>
+                        )}
+                      </>
                     ) : (
                       <div className="text-center py-12">
                         <div className="h-16 w-16 rounded-full bg-gray-100 flex items-center justify-center mx-auto mb-4">
@@ -1290,9 +1494,17 @@ const ProfilePage = () => {
                     <div className="flex justify-between items-center mb-8">
                       <div className="flex items-center gap-4">
                         <div className="h-10 w-2 bg-gradient-to-b from-indigo-500 to-violet-500 rounded-full"></div>
-                        <h2 className="text-2xl font-bold text-gray-900">
-                          Pendidikan
-                        </h2>
+                        <div>
+                          <h2 className="text-2xl font-bold text-gray-900">
+                            Pendidikan
+                          </h2>
+                          {educationTotal > 0 && (
+                            <p className="text-sm text-gray-600 mt-1">
+                              Menampilkan {educations.length} dari{" "}
+                              {educationTotal} pendidikan
+                            </p>
+                          )}
+                        </div>
                       </div>
                       {userData?.id === profileData?.id && (
                         <button
@@ -1306,67 +1518,80 @@ const ProfilePage = () => {
                     </div>
 
                     {educations && educations.length > 0 ? (
-                      <div className="space-y-6">
-                        {educations.map((e) => (
-                          <div
-                            className="flex justify-between items-start p-5 hover:bg-gray-50 transition-all duration-200 rounded-xl border border-gray-100"
-                            key={e.id}
-                          >
-                            <div className="flex gap-4 flex-1">
-                              <div className="h-16 w-16 rounded-xl overflow-hidden bg-gradient-to-r from-indigo-100 to-violet-100 flex items-center justify-center">
-                                {e.Company?.User?.profilePicture ? (
-                                  <img
-                                    src={e.Company.User.profilePicture}
-                                    alt="institution logo"
-                                    className="h-full w-full object-cover"
-                                  />
-                                ) : (
-                                  <i className="fas fa-graduation-cap text-indigo-600 text-2xl"></i>
-                                )}
-                              </div>
-                              <div className="flex flex-col gap-2 flex-1">
-                                <div className="flex justify-between items-start">
-                                  <div>
-                                    <h3 className="font-bold text-gray-900 text-lg">
-                                      {e.Company?.companyName || e.institutionName}
-                                    </h3>
-                                    <div className="flex items-center gap-2 mt-1">
-                                      <span className="text-gray-700 font-medium">
-                                        {e.degree} - {e.fieldOfStudy}
-                                      </span>
-                                      {e.score && (
-                                        <>
-                                          <span className="text-gray-400">•</span>
-                                          <span className="px-3 py-1 bg-indigo-100 text-indigo-700 text-xs font-medium rounded-full">
-                                            IPK: {e.score}
-                                          </span>
-                                        </>
-                                      )}
-                                    </div>
-                                    <p className="text-gray-500 text-sm mt-1">
-                                      {e.startDate} - {e.endDate ? e.endDate : "Sekarang"}
-                                    </p>
-                                  </div>
+                      <>
+                        <div className="space-y-4 mb-6">
+                          {educations.map((e) => (
+                            <div
+                              className="flex justify-between items-start p-5 hover:bg-gray-50 transition-all duration-200 rounded-xl border border-gray-100"
+                              key={e.id}
+                            >
+                              <div className="flex gap-4 flex-1">
+                                <div className="h-12 w-12 rounded-xl overflow-hidden bg-gradient-to-r from-indigo-100 to-violet-100 flex items-center justify-center shrink-0">
+                                  {e.Company?.User?.profilePicture ? (
+                                    <img
+                                      src={e.Company.User.profilePicture}
+                                      alt="institution logo"
+                                      className="h-full w-full object-cover"
+                                    />
+                                  ) : (
+                                    <i className="fas fa-graduation-cap text-indigo-600 text-xl"></i>
+                                  )}
                                 </div>
-                                {e.description && (
-                                  <p className="text-gray-600 mt-2">
-                                    {e.description}
-                                  </p>
-                                )}
+                                <div className="flex flex-col gap-1 flex-1 min-w-0">
+                                  <div className="flex items-start justify-between">
+                                    <div className="min-w-0">
+                                      <h3 className="font-bold text-gray-900 text-base truncate">
+                                        {e.Company?.companyName ||
+                                          e.institutionName}
+                                      </h3>
+                                      <div className="flex items-center gap-2 mt-1">
+                                        <span className="text-gray-700 font-medium text-sm truncate">
+                                          {e.degree} - {e.fieldOfStudy}
+                                        </span>
+                                        {e.score && (
+                                          <span className="px-2 py-0.5 bg-indigo-100 text-indigo-700 text-xs font-medium rounded-full shrink-0">
+                                            {e.score}
+                                          </span>
+                                        )}
+                                      </div>
+                                      <p className="text-gray-500 text-xs mt-1">
+                                        {e.startDate} -{" "}
+                                        {e.endDate ? e.endDate : "Sekarang"}
+                                      </p>
+                                    </div>
+                                  </div>
+                                  {e.description && (
+                                    <p className="text-gray-600 text-sm mt-2 line-clamp-2">
+                                      {e.description}
+                                    </p>
+                                  )}
+                                </div>
                               </div>
+                              {userData?.id === profileData?.id && (
+                                <button
+                                  onClick={() => handleDeleteEducation(e.id)}
+                                  className="h-8 w-8 rounded-full bg-red-50 text-red-600 hover:bg-red-100 transition-all duration-200 flex items-center justify-center shrink-0 ml-4"
+                                  title="Hapus Pendidikan"
+                                >
+                                  <i className="fa-solid fa-trash text-xs"></i>
+                                </button>
+                              )}
                             </div>
-                            {userData?.id === profileData?.id && (
-                              <button
-                                onClick={() => handleDeleteEducation(e.id)}
-                                className="h-8 w-8 rounded-full bg-red-50 text-red-600 hover:bg-red-100 transition-all duration-200 flex items-center justify-center ml-4"
-                                title="Hapus Pendidikan"
-                              >
-                                <i className="fa-solid fa-trash text-xs"></i>
-                              </button>
-                            )}
+                          ))}
+                        </div>
+
+                        {hasMoreEducations && (
+                          <div className="text-center pt-2">
+                            <button
+                              onClick={handleLoadMoreEducations}
+                              className="px-6 py-2 bg-gradient-to-r from-indigo-50 to-violet-50 text-indigo-700 rounded-lg hover:from-indigo-100 hover:to-violet-100 transition-all duration-200 font-medium flex items-center gap-2 mx-auto border border-indigo-200"
+                            >
+                              <i className="fa-solid fa-chevron-down"></i>
+                              Tampilkan lebih banyak
+                            </button>
                           </div>
-                        ))}
-                      </div>
+                        )}
+                      </>
                     ) : (
                       <div className="text-center py-12">
                         <div className="h-16 w-16 rounded-full bg-gray-100 flex items-center justify-center mx-auto mb-4">
@@ -1401,7 +1626,7 @@ const ProfilePage = () => {
                   User ini telah melamar di lowongan Anda
                 </p>
               </div>
-              
+
               <div className="p-4">
                 <div className="space-y-4">
                   {previewApp.map((pa) => (
@@ -1420,7 +1645,7 @@ const ProfilePage = () => {
                           <i className="fas fa-building text-blue-600"></i>
                         )}
                       </div>
-                      
+
                       <div className="flex-1 min-w-0">
                         <div className="flex items-start justify-between">
                           <div>
@@ -1439,30 +1664,30 @@ const ProfilePage = () => {
                             {pa.status}
                           </span>
                         </div>
-                        
+
                         <Link
                           to={`/job/${pa.Job?.id}`}
                           className="text-blue-600 hover:text-blue-800 font-medium text-sm block mt-2 truncate"
                         >
                           {pa.Job?.title}
                         </Link>
-                        
+
                         <p className="text-xs text-gray-500 mt-2 flex items-center gap-1">
                           <i className="fa-solid fa-calendar"></i>
                           Dilamar pada{" "}
-                          {pa?.appliedAt
+                          {pa?.createdAt
                             ? new Intl.DateTimeFormat("id-ID", {
                                 day: "numeric",
                                 month: "long",
                                 year: "numeric",
-                              }).format(new Date(pa.appliedAt))
+                              }).format(new Date(pa.createdAt))
                             : ""}
                         </p>
                       </div>
                     </div>
                   ))}
                 </div>
-                
+
                 <div className="mt-6 pt-4 border-t border-gray-100">
                   <Link
                     to={`/employer/applications?q=${profileData?.username}`}
@@ -1483,10 +1708,14 @@ const ProfilePage = () => {
             otherJsPreview.length > 0 && (
               <div className="bg-white rounded-2xl shadow-xl overflow-hidden">
                 <div className="p-6 border-b border-gray-100">
-                  <h3 className="font-bold text-lg text-gray-900">Pencari Kerja Lainnya</h3>
-                  <p className="text-gray-600 text-sm mt-1">Temukan talenta lainnya</p>
+                  <h3 className="font-bold text-lg text-gray-900">
+                    Pencari Kerja Lainnya
+                  </h3>
+                  <p className="text-gray-600 text-sm mt-1">
+                    Temukan talenta lainnya
+                  </p>
                 </div>
-                
+
                 <div className="p-4">
                   <div className="space-y-4">
                     {otherJsPreview.map((ojp) => (
@@ -1500,9 +1729,8 @@ const ProfilePage = () => {
                                 className="h-full w-full rounded-full object-cover border-2 border-white"
                               />
                             </div>
-                            <div className="absolute -bottom-1 -right-1 h-5 w-5 bg-green-500 rounded-full border-2 border-white"></div>
                           </div>
-                          
+
                           <div className="flex-1 min-w-0">
                             <h4 className="font-semibold text-gray-900 truncate group-hover:text-blue-600 transition-colors">
                               {ojp.UserProfile?.fullName}
@@ -1516,15 +1744,15 @@ const ProfilePage = () => {
                               </p>
                             )}
                           </div>
-                          
+
                           <i className="fas fa-chevron-right text-gray-400 group-hover:text-blue-600 transition-colors"></i>
                         </div>
                       </Link>
                     ))}
                   </div>
-                  
+
                   <div className="mt-6 pt-4 border-t border-gray-100">
-                    <Link to="/job-seekers">
+                    <Link to="/candidates">
                       <button className="w-full text-center text-blue-600 hover:text-blue-800 font-medium text-sm flex items-center justify-center gap-2">
                         Lihat Semua Pencari Kerja
                         <i className="fas fa-arrow-right"></i>
@@ -1537,7 +1765,7 @@ const ProfilePage = () => {
           )}
         </aside>
       </div>
-      
+
       <EditProfilePopup
         isVisible={showEditProfPopup}
         onClose={() => setShowEditProfPopup(false)}

@@ -224,7 +224,7 @@ const AppContent = () => {
 // Main App Component
 function App() {
   //fatir: DEFAULT AXIOS SETTINGS
-  axios.defaults.baseURL = "https://inkr-api.vercel.app"; 
+  axios.defaults.baseURL = "http://localhost:8080"; 
   // https://inkr-api.vercel.app
   axios.defaults.withCredentials = true;
   return (

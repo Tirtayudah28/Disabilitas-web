@@ -291,7 +291,7 @@ const EmployerOverviewPage = () => {
                     <div className="flex items-center justify-between text-sm">
                       <span className="text-gray-500">
                         <i class="fa-regular fa-calendar mr-2"></i>
-                        {fmt(application.appliedAt)}
+                        {fmt(application.createdAt)}
                       </span>
                     </div>
                   </div>

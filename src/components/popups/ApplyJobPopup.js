@@ -1,10 +1,13 @@
 import axios from "axios";
 import { enqueueSnackbar } from "notistack";
 import React, { useEffect, useState } from "react";
+import { useAuth } from "../../contexts/AuthContext";
 
 const ApplyJobPopup = ({ isVisible, onClose, onCreate, jobDetail, userData }) => {
+  const {userData: loginUser} = useAuth()
   const [form, setForm] = useState({
     message: "",
+    email: "",
     portofolioLink: "",
   });
 
@@ -23,6 +26,7 @@ const ApplyJobPopup = ({ isVisible, onClose, onCreate, jobDetail, userData }) =>
       setForm({
         message: "",
         portofolioLink: "",
+        email: loginUser?.email ?? ""
       });
     }
   }, [isVisible]);
@@ -47,11 +51,11 @@ const ApplyJobPopup = ({ isVisible, onClose, onCreate, jobDetail, userData }) =>
 
   return (
     <div
-      className="fixed inset-0 bg-black/60 flex justify-center items-center z-50"
+      className="fixed ani-appear inset-0 bg-black/60 flex justify-center items-center z-50"
       onClick={onClose}
     >
       <div
-        className="relative bg-gray-50 border border-gray-300 rounded shadow-lg flex flex-col w-[90%] max-w-[720px] max-h-[90vh]"
+        className="relative  bg-gray-50 border border-gray-300 rounded shadow-lg flex flex-col w-[90%] max-w-[720px] max-h-[90vh]"
         onClick={(e) => e.stopPropagation()}
       >
         {/* HEADER */}
@@ -79,7 +83,7 @@ const ApplyJobPopup = ({ isVisible, onClose, onCreate, jobDetail, userData }) =>
                   <td>Pelamar</td>
                   <td className="px-2 py-1">:</td>
                   <td>
-                    {userData?.profile?.fullName}{" "}
+                    {userData?.UserProfile?.fullName}{" "}
                     <span className="text-xs">@{userData?.username}</span>
                   </td>
                 </tr>
@@ -88,7 +92,9 @@ const ApplyJobPopup = ({ isVisible, onClose, onCreate, jobDetail, userData }) =>
                   <td className="px-2 py-1">:</td>
                   <td>
                     {jobDetail?.Company?.companyName}{" "}
-                    <span className="text-xs">@{jobDetail?.Company?.User?.username}</span>
+                    <span className="text-xs">
+                      @{jobDetail?.Company?.User?.username}
+                    </span>
                   </td>
                 </tr>
                 <tr>
@@ -100,7 +106,20 @@ const ApplyJobPopup = ({ isVisible, onClose, onCreate, jobDetail, userData }) =>
             </table>
             <p className="text-sm text-gray-800 mt-3"></p>
           </div>
-          {/* 1) message */}
+
+          {/* 1) email */}
+          <div>
+            <label className="text-sm text-gray-800">Email Anda</label>
+            <input
+              type="email"
+              name="email"
+              value={form.email}
+              onChange={handleChange}
+              className="w-full mt-1 border border-gray-600 rounded px-3 py-2 focus:outline-blue-500"
+            />
+          </div>
+
+          {/* 2) message */}
           <div>
             <label className="text-sm text-gray-800">
               Pesan untuk perusahaan (opsional)
@@ -119,7 +138,7 @@ const ApplyJobPopup = ({ isVisible, onClose, onCreate, jobDetail, userData }) =>
             </div>
           </div>
 
-          {/* 2) external link */}
+          {/* 3) external link */}
           <div>
             <label className="text-sm text-gray-800">
               Tautkan link eksternal

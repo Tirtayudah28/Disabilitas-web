@@ -323,7 +323,7 @@ const ApplicationHistory = () => {
             </div>
             <div>
               <p className="text-sm font-semibold text-gray-900">
-                {profileData?.profile?.fullName || "Pengguna"}
+                {profileData?.UserProfile?.fullName || "Pengguna"}
               </p>
               <p className="text-xs text-blue-600">@{profileData?.username || "user"}</p>
             </div>
@@ -639,11 +639,11 @@ const ApplicationHistory = () => {
                                 {application.Job?.Company?.companyName}
                               </p>
                               <div className="flex flex-wrap gap-2 mt-2">
-                                <span className="text-xs px-2.5 py-1 bg-gray-100 text-gray-700 rounded-full">
+                                <span className="capitalize text-xs px-2.5 py-1 bg-gray-100 text-gray-700 rounded-full">
                                   <i className="fas fa-briefcase mr-1"></i>
                                   {application.Job?.employmentType}
                                 </span>
-                                <span className="text-xs px-2.5 py-1 bg-gray-100 text-gray-700 rounded-full">
+                                <span className="capitalize text-xs px-2.5 py-1 bg-gray-100 text-gray-700 rounded-full">
                                   <i className="fas fa-location-dot mr-1"></i>
                                   {application.Job?.locationType}
                                 </span>
@@ -662,12 +662,14 @@ const ApplicationHistory = () => {
                               </span>
                               <span className="text-xs text-gray-500">
                                 <i className="fas fa-calendar mr-1"></i>
-                                {application?.appliedAt
+                                {application?.createdAt
                                   ? new Intl.DateTimeFormat("id-ID", {
                                       day: "numeric",
                                       month: "short",
                                       year: "numeric",
-                                    }).format(new Date(application.appliedAt))
+                                      hour: "numeric",
+                                      minute: "2-digit"
+                                    }).format(new Date(application.createdAt))
                                   : ""}
                               </span>
                             </div>

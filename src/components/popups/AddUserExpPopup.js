@@ -7,7 +7,7 @@ const AddUserExpPopup = ({ isVisible, onClose, onCreate }) => {
   const [form, setForm] = useState({
     companyId: "",
     companyName: "",
-    experienceType: "",
+    experienceType: "full-time",
     position: "",
     startDate: "",
     endDate: "",
@@ -65,7 +65,7 @@ const AddUserExpPopup = ({ isVisible, onClose, onCreate }) => {
       setForm({
         companyId: "",
         companyName: "",
-        experienceType: "",
+        experienceType: "full-time",
         position: "",
         startDate: "",
         endDate: "",

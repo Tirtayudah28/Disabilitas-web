@@ -252,7 +252,9 @@ const CandidatePage = () => {
                     onFocus={() => {
                       if (countryInput.trim() && countries.length > 0) {
                         const filtered = countries.filter((name) =>
-                          name.toLowerCase().includes(countryInput.toLowerCase())
+                          name
+                            .toLowerCase()
+                            .includes(countryInput.toLowerCase())
                         );
                         setFilteredCountries(filtered);
                         setShowDropdown(true);
@@ -323,7 +325,7 @@ const CandidatePage = () => {
                 <h2 className="text-lg sm:text-xl font-bold text-gray-900">
                   {meta?.total || 0} Kandidat Ditemukan
                 </h2>
-                
+
                 {/* Filter Tags */}
                 <div className="flex flex-wrap gap-2 mt-2">
                   {filters.search && (
@@ -375,7 +377,7 @@ const CandidatePage = () => {
               Array.from({ length: 6 }).map((_, i) => (
                 <CandidateCardSkeleton key={i} />
               ))}
-            
+
             {!loading && jobSeekers.length === 0 && (
               <div className="col-span-3 bg-white rounded-2xl shadow-sm p-8 sm:p-12 text-center">
                 <div className="w-16 h-16 sm:w-20 sm:h-20 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
@@ -385,7 +387,8 @@ const CandidatePage = () => {
                   Tidak ada kandidat ditemukan
                 </h3>
                 <p className="text-gray-600 mb-4 max-w-md mx-auto">
-                  Coba ubah kata kunci pencarian atau filter negara untuk menemukan kandidat yang sesuai.
+                  Coba ubah kata kunci pencarian atau filter negara untuk
+                  menemukan kandidat yang sesuai.
                 </p>
                 <button
                   onClick={() => resetFilters("all")}
@@ -396,140 +399,149 @@ const CandidatePage = () => {
                 </button>
               </div>
             )}
-            
-            {!loading && jobSeekers.map((js) => {
-              const skillsPreview = js.UserSkills?.slice(0, 2) || [];
-              const extraSkills =
-                js.UserSkills?.length > 2 ? js.UserSkills.length - 2 : 0;
 
-              const disabilityPreview = js.UserDisabilities?.slice(0, 2) || [];
-              const extraDisability =
-                js.UserDisabilities?.length > 2
-                  ? js.UserDisabilities.length - 2
-                  : 0;
+            {!loading &&
+              jobSeekers.map((js) => {
+                const skillsPreview = js.UserSkills?.slice(0, 2) || [];
+                const extraSkills =
+                  js.UserSkills?.length > 2 ? js.UserSkills.length - 2 : 0;
 
-              return (
-                <div
-                  key={js.id}
-                  onClick={() => navigate(`/js/${js.id}`)}
-                  className="group cursor-pointer bg-white border border-gray-200 rounded-2xl p-5 shadow-sm hover:shadow-xl transition-all duration-300 hover:-translate-y-1"
-                  role="button"
-                  tabIndex={0}
-                  onKeyDown={(e) => e.key === 'Enter' && navigate(`/js/${js.id}`)}
-                >
-                  {/* Header */}
-                  <div className="flex items-center gap-4 mb-4">
-                    {/* Avatar */}
-                    <div className="relative flex-shrink-0">
-                      <img
-                        src={js.profilePicture || defaultPfp}
-                        alt={js.UserProfile?.fullName || 'Kandidat'}
-                        className="w-14 h-14 sm:w-16 sm:h-16 rounded-xl object-cover border-2 border-gray-100 group-hover:border-primary-200 transition-colors"
-                      />
-                      <div className="absolute -bottom-1 -right-1 w-6 h-6 bg-primary-500 rounded-full flex items-center justify-center">
-                        <i className="fas fa-user text-white text-xs"></i>
+                const disabilityPreview =
+                  js.UserDisabilities?.slice(0, 2) || [];
+                const extraDisability =
+                  js.UserDisabilities?.length > 2
+                    ? js.UserDisabilities.length - 2
+                    : 0;
+
+                return (
+                  <div
+                    key={js.id}
+                    onClick={() => navigate(`/js/${js.id}`)}
+                    className="group cursor-pointer bg-white border border-gray-200 rounded-2xl p-5 shadow-sm hover:shadow-xl transition-all duration-300 hover:-translate-y-1"
+                    role="button"
+                    tabIndex={0}
+                    onKeyDown={(e) =>
+                      e.key === "Enter" && navigate(`/js/${js.id}`)
+                    }
+                  >
+                    {/* Header */}
+                    <div className="flex items-center gap-4 mb-4">
+                      {/* Avatar */}
+                      <div className="relative flex-shrink-0">
+                        <img
+                          src={js.profilePicture || defaultPfp}
+                          alt={js.UserProfile?.fullName || "Kandidat"}
+                          className="w-14 h-14 sm:w-16 sm:h-16 rounded-xl object-cover border-2 border-gray-100 group-hover:border-primary-200 transition-colors"
+                        />
+                        <div className="absolute -bottom-1 -right-1 w-6 h-6 bg-primary-500 rounded-full flex items-center justify-center">
+                          <i className="fas fa-user text-white text-xs"></i>
+                        </div>
+                      </div>
+
+                      {/* Name & meta */}
+                      <div className="flex-1 min-w-0">
+                        <h3 className="font-bold text-gray-900 group-hover:text-primary-600 transition-colors truncate">
+                          {js.UserProfile?.fullName || "Nama tidak tersedia"}
+                        </h3>
+                        <p className="text-sm text-primary-600 truncate">
+                          @{js.username}
+                        </p>
+                        <div className="flex items-center gap-2 text-xs text-gray-500 mt-1">
+                          <i className="fas fa-location-dot text-xs"></i>
+                          <span className="truncate capitalize">
+                            {js.UserProfile?.city && js.UserProfile?.country
+                              ? `${js.UserProfile.city}, ${js.UserProfile.country}`
+                              : js.UserProfile?.country ||
+                                "Lokasi tidak tersedia"}
+                          </span>
+                        </div>
                       </div>
                     </div>
 
-                    {/* Name & meta */}
-                    <div className="flex-1 min-w-0">
-                      <h3 className="font-bold text-gray-900 group-hover:text-primary-600 transition-colors truncate">
-                        {js.UserProfile?.fullName || 'Nama tidak tersedia'}
-                      </h3>
-                      <p className="text-sm text-primary-600 truncate">
-                        @{js.username}
-                      </p>
-                      <div className="flex items-center gap-2 text-xs text-gray-500 mt-1">
-                        <i className="fas fa-location-dot text-xs"></i>
-                        <span className="truncate">
-                          {js.UserProfile?.city && js.UserProfile?.country
-                            ? `${js.UserProfile.city}, ${js.UserProfile.country}`
-                            : js.UserProfile?.country || 'Lokasi tidak tersedia'}
-                        </span>
+                    {/* Bio */}
+                    {js.UserProfile?.bio && (
+                      <div className="mb-4">
+                        <p className="text-sm text-gray-600 line-clamp-3 leading-relaxed">
+                          {js.UserProfile.bio}
+                        </p>
+                      </div>
+                    )}
+
+                    {/* Skills */}
+                    {skillsPreview.length > 0 && (
+                      <div className="mb-4">
+                        <div className="flex items-center gap-2 mb-2">
+                          <i className="fas fa-tools text-gray-400 text-sm"></i>
+                          <span className="text-xs font-medium text-gray-700">
+                            Keahlian
+                          </span>
+                        </div>
+                        <div className="flex flex-wrap gap-2">
+                          {skillsPreview.map((skill) => (
+                            <span
+                              key={skill.id}
+                              className="bg-blue-50 text-blue-700 px-3 py-1.5 rounded-lg text-xs font-medium capitalize border border-blue-100"
+                            >
+                              {skill.Skill?.name}
+                            </span>
+                          ))}
+                          {extraSkills > 0 && (
+                            <span className="bg-gray-50 text-gray-600 px-3 py-1.5 rounded-lg text-xs border border-gray-200">
+                              +{extraSkills} lainnya
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Disabilities */}
+                    {disabilityPreview.length > 0 && (
+                      <div className="mb-4">
+                        <div className="flex items-center gap-2 mb-2">
+                          <i className="fas fa-universal-access text-gray-400 text-sm"></i>
+                          <span className="text-xs font-medium text-gray-700">
+                            Disabilitas
+                          </span>
+                        </div>
+                        <div className="flex flex-wrap gap-2">
+                          {disabilityPreview.map((disability) => (
+                            <span
+                              key={disability.id}
+                              className="bg-green-50 text-green-700 px-3 py-1.5 rounded-lg text-xs font-medium capitalize border border-green-100"
+                            >
+                              {disability.Disability?.name}
+                              <span className="text-green-600 ml-1">
+                                • {disability.Disability?.type}
+                              </span>
+                            </span>
+                          ))}
+                          {extraDisability > 0 && (
+                            <span className="bg-gray-50 text-gray-600 px-3 py-1.5 rounded-lg text-xs border border-gray-200">
+                              +{extraDisability} lainnya
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Footer */}
+                    <div className="pt-4 border-t border-gray-100">
+                      <div className="flex items-center justify-between">
+                        <div className="text-xs text-gray-500">
+                          <i className="fas fa-eye mr-1"></i>
+                          Lihat profil lengkap
+                        </div>
+                        <div className="text-primary-600 text-sm font-medium flex items-center gap-1">
+                          <span className="group-hover:translate-x-1 transition-transform duration-300">
+                            Detail
+                          </span>
+                          <i className="fas fa-arrow-right text-xs group-hover:translate-x-1 transition-transform duration-300"></i>
+                        </div>
                       </div>
                     </div>
                   </div>
-
-                  {/* Bio */}
-                  {js.UserProfile?.bio && (
-                    <div className="mb-4">
-                      <p className="text-sm text-gray-600 line-clamp-3 leading-relaxed">
-                        {js.UserProfile.bio}
-                      </p>
-                    </div>
-                  )}
-
-                  {/* Skills */}
-                  {skillsPreview.length > 0 && (
-                    <div className="mb-4">
-                      <div className="flex items-center gap-2 mb-2">
-                        <i className="fas fa-tools text-gray-400 text-sm"></i>
-                        <span className="text-xs font-medium text-gray-700">Keahlian</span>
-                      </div>
-                      <div className="flex flex-wrap gap-2">
-                        {skillsPreview.map((skill) => (
-                          <span
-                            key={skill.id}
-                            className="bg-blue-50 text-blue-700 px-3 py-1.5 rounded-lg text-xs font-medium capitalize border border-blue-100"
-                          >
-                            {skill.skillName}
-                          </span>
-                        ))}
-                        {extraSkills > 0 && (
-                          <span className="bg-gray-50 text-gray-600 px-3 py-1.5 rounded-lg text-xs border border-gray-200">
-                            +{extraSkills} lainnya
-                          </span>
-                        )}
-                      </div>
-                    </div>
-                  )}
-
-                  {/* Disabilities */}
-                  {disabilityPreview.length > 0 && (
-                    <div className="mb-4">
-                      <div className="flex items-center gap-2 mb-2">
-                        <i className="fas fa-universal-access text-gray-400 text-sm"></i>
-                        <span className="text-xs font-medium text-gray-700">Disabilitas</span>
-                      </div>
-                      <div className="flex flex-wrap gap-2">
-                        {disabilityPreview.map((disability) => (
-                          <span
-                            key={disability.id}
-                            className="bg-green-50 text-green-700 px-3 py-1.5 rounded-lg text-xs font-medium capitalize border border-green-100"
-                          >
-                            {disability.disabilityName}
-                            {disability.type && (
-                              <span className="text-green-600 ml-1">• {disability.type}</span>
-                            )}
-                          </span>
-                        ))}
-                        {extraDisability > 0 && (
-                          <span className="bg-gray-50 text-gray-600 px-3 py-1.5 rounded-lg text-xs border border-gray-200">
-                            +{extraDisability} lainnya
-                          </span>
-                        )}
-                      </div>
-                    </div>
-                  )}
-
-                  {/* Footer */}
-                  <div className="pt-4 border-t border-gray-100">
-                    <div className="flex items-center justify-between">
-                      <div className="text-xs text-gray-500">
-                        <i className="fas fa-eye mr-1"></i>
-                        Lihat profil lengkap
-                      </div>
-                      <div className="text-primary-600 text-sm font-medium flex items-center gap-1">
-                        <span className="group-hover:translate-x-1 transition-transform duration-300">
-                          Detail
-                        </span>
-                        <i className="fas fa-arrow-right text-xs group-hover:translate-x-1 transition-transform duration-300"></i>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              );
-            })}
+                );
+              })}
           </div>
 
           {/* Pagination */}
@@ -548,10 +560,12 @@ const CandidatePage = () => {
                     <option value={80}>80</option>
                   </select>
                   <span className="text-gray-700 font-medium">
-                    {((meta.page - 1) * meta.limit) + 1} - {Math.min(meta.page * meta.limit, meta.total)} dari {meta.total} kandidat
+                    {(meta.page - 1) * meta.limit + 1} -{" "}
+                    {Math.min(meta.page * meta.limit, meta.total)} dari{" "}
+                    {meta.total} kandidat
                   </span>
                 </div>
-                
+
                 <div className="flex items-center gap-2">
                   <button
                     className="px-4 py-2 border border-gray-300 bg-white hover:bg-gray-50 text-gray-700 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
@@ -561,36 +575,39 @@ const CandidatePage = () => {
                     <i className="fas fa-chevron-left"></i>
                     <span className="hidden sm:inline">Previous</span>
                   </button>
-                  
+
                   <div className="flex items-center gap-1">
-                    {Array.from({ length: Math.min(5, meta.totalPages || 1) }, (_, i) => {
-                      let pageNum;
-                      if (meta.totalPages <= 5) {
-                        pageNum = i + 1;
-                      } else if (meta.page <= 3) {
-                        pageNum = i + 1;
-                      } else if (meta.page >= meta.totalPages - 2) {
-                        pageNum = meta.totalPages - 4 + i;
-                      } else {
-                        pageNum = meta.page - 2 + i;
+                    {Array.from(
+                      { length: Math.min(5, meta.totalPages || 1) },
+                      (_, i) => {
+                        let pageNum;
+                        if (meta.totalPages <= 5) {
+                          pageNum = i + 1;
+                        } else if (meta.page <= 3) {
+                          pageNum = i + 1;
+                        } else if (meta.page >= meta.totalPages - 2) {
+                          pageNum = meta.totalPages - 4 + i;
+                        } else {
+                          pageNum = meta.page - 2 + i;
+                        }
+
+                        return (
+                          <button
+                            key={pageNum}
+                            onClick={() => handlePageChange(pageNum)}
+                            className={`w-10 h-10 flex items-center justify-center rounded-lg transition-colors ${
+                              meta.page === pageNum
+                                ? "bg-primary-600 text-white"
+                                : "bg-white text-gray-700 hover:bg-gray-50 border border-gray-300"
+                            }`}
+                          >
+                            {pageNum}
+                          </button>
+                        );
                       }
-                      
-                      return (
-                        <button
-                          key={pageNum}
-                          onClick={() => handlePageChange(pageNum)}
-                          className={`w-10 h-10 flex items-center justify-center rounded-lg transition-colors ${
-                            meta.page === pageNum
-                              ? 'bg-primary-600 text-white'
-                              : 'bg-white text-gray-700 hover:bg-gray-50 border border-gray-300'
-                          }`}
-                        >
-                          {pageNum}
-                        </button>
-                      );
-                    })}
+                    )}
                   </div>
-                  
+
                   <button
                     className="px-4 py-2 border border-gray-300 bg-white hover:bg-gray-50 text-gray-700 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
                     onClick={() => handlePageChange(meta.page + 1)}
@@ -601,7 +618,7 @@ const CandidatePage = () => {
                   </button>
                 </div>
               </div>
-              
+
               {/* Mobile page info */}
               <div className="sm:hidden text-center mt-4 text-sm text-gray-600">
                 Halaman {meta.page} dari {meta.totalPages || 1}

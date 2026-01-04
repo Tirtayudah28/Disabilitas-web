@@ -57,7 +57,7 @@ const EmployerApplicantPage = () => {
         sort: filters.sort || undefined,
       };
 
-      const res = await axios.get("/api/company-applications", {
+      const res = await axios.get("/api/user/cm/applications", {
         params,
         headers: { Authorization: `Bearer ${token}` },
       });
@@ -380,19 +380,28 @@ const EmployerApplicantPage = () => {
                           </p>
                         </div>
                       )}
-                      {application.portofolioLink && (
-                        <div className="mt-3">
-                          <a
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            href={application.portofolioLink}
-                            className="text-xs text-blue-600"
-                          >
-                            <i className="fa-solid fa-link mr-1"></i>
-                            {application.portofolioLink}
-                          </a>
+                      <div className="flex items-center gap-3 mt-3">
+                        <div
+                          href={application.email}
+                          className="text-xs text-blue-600 mt-1"
+                        >
+                          <i className="fa-solid fa-envelope mr-1"></i>
+                          {application.email}
                         </div>
-                      )}
+                        {application.portofolioLink && (
+                          <div>
+                            <a
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              href={application.portofolioLink}
+                              className="text-xs text-blue-600"
+                            >
+                              <i className="fa-solid fa-link mr-1"></i>
+                              {application.portofolioLink}
+                            </a>
+                          </div>
+                        )}
+                      </div>
                     </div>
                   )}
 

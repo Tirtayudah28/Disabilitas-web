@@ -473,7 +473,7 @@ const JobDetailPage = () => {
               <div className="h-7 w-36 bg-gray-200 rounded-full" />
             </div>
           </div>
-          
+
           {/* Right Side Skeleton */}
           <div className="w-full md:w-64 space-y-3">
             <div className="h-10 w-full bg-gray-200 rounded-lg" />
@@ -651,13 +651,13 @@ const JobDetailPage = () => {
                     )}
                     <div className="flex flex-wrap gap-3 mt-3">
                       {job?.employmentType !== "blank" && (
-                        <span className="px-4 py-2 rounded-lg border border-blue-200 bg-blue-50 text-blue-700 font-medium text-sm">
+                        <span className="capitalize px-4 py-2 rounded-lg border border-blue-200 bg-blue-50 text-blue-700 font-medium text-sm">
                           <i className="fas fa-briefcase mr-2"></i>
                           {job?.employmentType}
                         </span>
                       )}
                       {job?.locationType !== "blank" && (
-                        <span className="px-4 py-2 rounded-lg border border-green-200 bg-green-50 text-green-700 font-medium text-sm">
+                        <span className="capitalize px-4 py-2 rounded-lg border border-green-200 bg-green-50 text-green-700 font-medium text-sm">
                           <i className="fas fa-location-dot mr-2"></i>
                           {job?.locationType}
                         </span>
@@ -725,51 +725,38 @@ const JobDetailPage = () => {
                         </>
                       )}
                     </button>
-                    <div className="text-right">
-                      <div className="bg-green-100 text-green-800 px-3 py-2 rounded-lg font-bold text-lg mb-2">
-                        <i className="fas fa-bolt mr-1"></i>
-                        {job.match}% Match
-                      </div>
-                    </div>
-                     {/* {job?.match && (
-                      <div className="text-center">
-                        <div className="bg-gradient-to-r from-green-500 to-emerald-600 text-white px-4 py-3 rounded-lg font-bold text-lg shadow-md">
-                          <i className="fas fa-bolt mr-2"></i>
-                          {job.match}% Match
-                        </div>
-                        <p className="text-gray-600 text-sm mt-2">
-                          Profil Anda cocok dengan lowongan ini
-                        </p>
-                      </div>
-                    )} */}
                   </div>
                 ) : null}
               </div>
-              
+
               {/* Status Timeline - Only for Owner */}
               {isOwner && (
                 <div className="mt-8 pt-6 border-t border-gray-200">
-                  <h4 className="font-semibold text-gray-700 mb-4">Status Lowongan</h4>
+                  <h4 className="font-semibold text-gray-700 mb-4">
+                    Status Lowongan
+                  </h4>
                   <div className="flex flex-col sm:flex-row w-full gap-4">
-                    {["pending", "open", "closed", "cancelled"].map((status) => (
-                      <div key={status} className="flex-1 text-center">
-                        <div className="relative">
-                          <div
-                            className={`h-8 mb-2 rounded-lg ${getStatusPilColor(
-                              status
-                            )} transition-all duration-300`}
-                          ></div>
-                          {job?.status === status && (
-                            <div className="absolute -top-1 left-1/2 transform -translate-x-1/2 bg-white px-2 py-1 rounded-full shadow-sm border border-gray-200">
-                              <div className="h-2 w-2 rounded-full bg-green-500"></div>
-                            </div>
-                          )}
+                    {["pending", "open", "closed", "cancelled"].map(
+                      (status) => (
+                        <div key={status} className="flex-1 text-center">
+                          <div className="relative">
+                            <div
+                              className={`h-8 mb-2 rounded-lg ${getStatusPilColor(
+                                status
+                              )} transition-all duration-300`}
+                            ></div>
+                            {job?.status === status && (
+                              <div className="absolute -top-1 left-1/2 transform -translate-x-1/2 bg-white px-2 py-1 rounded-full shadow-sm border border-gray-200">
+                                <div className="h-2 w-2 rounded-full bg-green-500"></div>
+                              </div>
+                            )}
+                          </div>
+                          <p className="text-gray-700 text-sm font-medium capitalize">
+                            {status}
+                          </p>
                         </div>
-                        <p className="text-gray-700 text-sm font-medium capitalize">
-                          {status}
-                        </p>
-                      </div>
-                    ))}
+                      )
+                    )}
                   </div>
                 </div>
               )}
@@ -831,16 +818,11 @@ const JobDetailPage = () => {
                       >
                         <div className="flex flex-col gap-1">
                           <h3 className="font-medium text-gray-900 capitalize">
-                            {s.skillName || s.Skill.name}
+                            {s.Skill.name}
                           </h3>
-                          {s.description && (
-                            <p className="text-gray-600 text-sm">
-                              {s.description}
-                            </p>
-                          )}
                         </div>
                         {isOwner && (
-                          <button 
+                          <button
                             onClick={() => handleDeleteSkill(s.id)}
                             className="h-8 w-8 rounded-full bg-red-50 text-red-600 hover:bg-red-100 transition-all duration-200 flex items-center justify-center"
                             title="Hapus Keahlian"
@@ -888,21 +870,14 @@ const JobDetailPage = () => {
                       >
                         <div className="flex flex-col gap-1">
                           <h3 className="font-medium text-gray-900 capitalize">
-                            {d.disabilityName || d.Disability.name}
-                          </h3>
-                          <div className="flex items-center gap-2">
-                            <span className="px-2 py-1 bg-blue-100 text-blue-700 text-xs font-medium rounded">
-                              {d.type || d.Disability.type}
+                            {d.Disability.name}
+                            <span className="px-3 py-1 bg-blue-100 text-blue-700 text-xs font-medium rounded-full">
+                              {d.Disability.type}
                             </span>
-                            {d.description && (
-                              <p className="text-gray-600 text-sm mt-1">
-                                {d.description}
-                              </p>
-                            )}
-                          </div>
+                          </h3>
                         </div>
                         {isOwner && (
-                          <button 
+                          <button
                             onClick={() => handleDeleteDisability(d.id)}
                             className="h-8 w-8 rounded-full bg-red-50 text-red-600 hover:bg-red-100 transition-all duration-200 flex items-center justify-center"
                             title="Hapus Disabilitas"
@@ -937,7 +912,7 @@ const JobDetailPage = () => {
                   </p>
                 </div>
               </div>
-              
+
               <div className="space-y-4">
                 {jobApplications && jobApplications.length > 0 ? (
                   jobApplications.map((application) => (
@@ -969,12 +944,12 @@ const JobDetailPage = () => {
                             <p className="text-gray-500 text-xs mt-1">
                               <i className="fas fa-clock mr-1"></i>
                               Dilamar pada{" "}
-                              {application?.appliedAt
+                              {application?.createdAt
                                 ? new Intl.DateTimeFormat("id-ID", {
                                     day: "numeric",
                                     month: "long",
                                     year: "numeric",
-                                  }).format(new Date(application.appliedAt))
+                                  }).format(new Date(application.createdAt))
                                 : ""}
                             </p>
                           </div>
@@ -999,7 +974,11 @@ const JobDetailPage = () => {
                           onClick={() => toggleMessage(application.id)}
                           className="text-sm text-blue-600 hover:text-blue-800 font-medium flex items-center gap-2 mb-3"
                         >
-                          <i className={`fas fa-chevron-${openMessages[application.id] ? 'up' : 'down'}`}></i>
+                          <i
+                            className={`fas fa-chevron-${
+                              openMessages[application.id] ? "up" : "down"
+                            }`}
+                          ></i>
                           {openMessages[application.id]
                             ? "Sembunyikan detail"
                             : "Lihat detail lamaran"}
@@ -1009,7 +988,8 @@ const JobDetailPage = () => {
                       {openMessages[application.id] && (
                         <div className="space-y-3">
                           {/* Applicant's Message */}
-                          {(application.message || application.portofolioLink) && (
+                          {(application.message ||
+                            application.portofolioLink) && (
                             <div className="rounded-xl p-4 bg-blue-50 border border-blue-100">
                               {application.message && (
                                 <div className="mb-3">
@@ -1042,7 +1022,8 @@ const JobDetailPage = () => {
                           )}
 
                           {/* Company's Message */}
-                          {(application.companyMessage || application.companyExternalLink) && (
+                          {(application.companyMessage ||
+                            application.companyExternalLink) && (
                             <div
                               className={`rounded-xl p-4 ${
                                 application.status === "accepted"
@@ -1099,12 +1080,16 @@ const JobDetailPage = () => {
                 ) : (
                   <div className="text-center py-10">
                     <i className="fas fa-file-alt text-4xl text-gray-300 mb-3"></i>
-                    <p className="text-gray-600 font-medium">Belum ada lamaran di lowongan ini.</p>
-                    <p className="text-gray-500 text-sm mt-1">Lamaran akan muncul di sini</p>
+                    <p className="text-gray-600 font-medium">
+                      Belum ada lamaran di lowongan ini.
+                    </p>
+                    <p className="text-gray-500 text-sm mt-1">
+                      Lamaran akan muncul di sini
+                    </p>
                   </div>
                 )}
               </div>
-              
+
               {/* Pagination */}
               {meta.totalPages > 1 && (
                 <div className="flex items-center justify-between mt-8 pt-6 border-t border-gray-200">
@@ -1144,7 +1129,9 @@ const JobDetailPage = () => {
             <CompanyInfoSkeleton />
           ) : (
             <div className="bg-white rounded-xl shadow-md p-6">
-              <h3 className="font-bold text-lg mb-4 text-gray-900">Tentang Perusahaan</h3>
+              <h3 className="font-bold text-lg mb-4 text-gray-900">
+                Tentang Perusahaan
+              </h3>
               <Link to={`/cm/${job?.Company?.User?.id}`}>
                 <div className="flex gap-4 p-3 transition hover:bg-gray-50 cursor-pointer rounded-xl border border-gray-100">
                   <img
@@ -1156,14 +1143,16 @@ const JobDetailPage = () => {
                     <h4 className="font-bold text-gray-900">
                       {job?.Company?.companyName}
                     </h4>
-                    <p className="text-gray-700 text-sm mt-1">
-                      <i className="fas fa-industry mr-2"></i>
-                      {job?.Company?.industryName}
+                    <p className="text-gray-700 text-sm mt-1 capitalize">
+                      <i className="fas fa-industry mr-1"></i>
+                      {job?.Company?.Industry?.name}
                     </p>
-                    <p className="text-gray-600 text-sm mt-1">
-                      <i className="fas fa-calendar-alt mr-2"></i>
-                      Berdiri sejak {job?.Company?.establishedYear}
-                    </p>
+                    {job?.Company?.establishedYear && (
+                      <p className="text-gray-600 text-sm mt-1 capitalize">
+                        <i className="fas fa-calendar-alt mr-1"></i>
+                        Berdiri sejak {job?.Company?.establishedYear}
+                      </p>
+                    )}
                   </div>
                 </div>
               </Link>
@@ -1174,8 +1163,12 @@ const JobDetailPage = () => {
           {otherJobPreview.length > 0 && (
             <div className="bg-white rounded-xl shadow-md overflow-hidden">
               <div className="p-6 border-b border-gray-100">
-                <h3 className="font-bold text-lg text-gray-900">Pekerjaan Lainnya</h3>
-                <p className="text-gray-600 text-sm mt-1">Lowongan serupa dari perusahaan ini</p>
+                <h3 className="font-bold text-lg text-gray-900">
+                  Pekerjaan Lainnya
+                </h3>
+                <p className="text-gray-600 text-sm mt-1">
+                  Lowongan serupa dari perusahaan ini
+                </p>
               </div>
               <div className="p-4">
                 <div className="flex flex-col gap-4">
@@ -1189,7 +1182,8 @@ const JobDetailPage = () => {
                             <div className="flex items-center gap-4">
                               <img
                                 src={
-                                  ojp?.Company?.User?.profilePicture || defaultCm
+                                  ojp?.Company?.User?.profilePicture ||
+                                  defaultCm
                                 }
                                 alt="Profile Picture"
                                 className="h-10 w-10 object-cover aspect-square rounded-lg"

@@ -156,15 +156,15 @@ const CmEditProfilePopup = ({
   useEffect(() => {
     if (!profileData) return;
     setForm({
-      industryId: profileData?.company?.industryId || "",
-      industryName: profileData?.company?.industryName || "",
-      companyName: profileData?.company?.companyName || "",
-      companyDescription: profileData?.company?.companyDescription || "",
-      country: profileData?.company?.country || "",
-      city: profileData?.company?.city || "",
-      address: profileData?.company?.address || "",
-      establishedYear: profileData?.company?.establishedYear || "",
-      websiteLink: profileData?.company?.websiteLink || "",
+      industryId: profileData?.Company?.industryId|| "",
+      industryName: profileData?.Company?.Industry?.name || "",
+      companyName: profileData?.Company?.companyName || "",
+      companyDescription: profileData?.Company?.companyDescription || "",
+      country: profileData?.Company?.country || "",
+      city: profileData?.Company?.city || "",
+      address: profileData?.Company?.address || "",
+      establishedYear: profileData?.Company?.establishedYear || "",
+      websiteLink: profileData?.Company?.websiteLink || "",
     });
   }, [profileData]);
 

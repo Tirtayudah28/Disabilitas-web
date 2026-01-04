@@ -94,11 +94,10 @@ const EmployerDashboard = () => {
                 className="aspect-square w-28 h-28 object-cover"
               />
               <h3 className="font-bold text-gray-900 mt-2">
-                {company?.company?.companyName}
+                {company?.Company?.companyName}
               </h3>
               <p className="text-sm text-gray-600 capitalize">
-                {company?.company?.Industry?.name ||
-                  company?.company?.industryName}
+                {company?.Company?.Industry?.name || ""}
               </p>
             </Link>
 

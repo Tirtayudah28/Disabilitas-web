@@ -55,14 +55,14 @@ const EditProfilePopup = ({
   useEffect(() => {
     if (!profileData) return;
     setForm({
-      fullName: profileData?.profile?.fullName || "",
-      phoneNumber: profileData?.profile?.phoneNumber || "",
-      bio: profileData?.profile?.bio || "",
-      country: profileData?.profile?.country || "",
-      city: profileData?.profile?.city || "",
-      address: profileData?.profile?.address || "",
-      gender: profileData?.profile?.gender || "",
-      dateOfBirth: profileData?.profile?.dateOfBirth || "",
+      fullName: profileData?.UserProfile?.fullName || "",
+      phoneNumber: profileData?.UserProfile?.phoneNumber || "",
+      bio: profileData?.UserProfile?.bio || "",
+      country: profileData?.UserProfile?.country || "",
+      city: profileData?.UserProfile?.city || "",
+      address: profileData?.UserProfile?.address || "",
+      gender: profileData?.UserProfile?.gender || "",
+      dateOfBirth: profileData?.UserProfile?.dateOfBirth || "",
     });
   }, [profileData]);
 

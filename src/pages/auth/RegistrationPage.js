@@ -73,9 +73,7 @@ const RegistrationPage = () => {
     try {
       const res = await axios.post("/api/auth/js-register", formData);
 
-      console.log(res.data);
       localStorage.setItem("useremail", formData.email);
-      window.open(res.data.emailTemp, "_blank"); //development, sementara
       navigate("/verification");
     } catch (err) {
       enqueueSnackbar(err.response?.data?.message || "Terjadi kesalahan saat mendaftar", {variant: "warning"})

@@ -220,9 +220,12 @@ const EmployerRegistrationPage = () => {
       const res = await axios.post("/api/auth/cm-register", payload);
 
       localStorage.setItem("useremail", formData.email);
-      window.open(res.data.emailTemp, "_blank"); //development, sementara
       navigate("/verification");
     } catch (err) {
+      enqueueSnackbar(
+        err.response?.data?.message || "Terjadi kesalahan saat mendaftar",
+        { variant: "warning" }
+      );
       setError(err.response?.data?.message);
     } finally {
       setIsLoading(false);

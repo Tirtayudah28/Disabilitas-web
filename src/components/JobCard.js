@@ -49,13 +49,13 @@ const JobCard = ({ job }) => {
       {/* Basic Info */}
       <div className="flex flex-wrap gap-3 text-sm mb-3">
         <span className="px-4 py-1 rounded-full border border-blue-400 text-blue-800">
-          <i class="fa-solid fa-calendar mr-2"></i>
+          <i className="fa-solid fa-calendar mr-2"></i>
           {dayjs(job?.startDate).fromNow()}
         </span>
 
         {job?.minSalary && (
           <span className="px-4 py-1 rounded-full border text-sm border-blue-400 text-blue-800 ">
-            <i class="fa-solid fa-money-bill-wave mr-2"></i>
+            <i className="fa-solid fa-money-bill-wave mr-2"></i>
             Rp{formatCurrency(job?.minSalary)}{" "}
             {job?.maxSalary && `- Rp${formatCurrency(job?.maxSalary)}`}
           </span>
@@ -72,10 +72,10 @@ const JobCard = ({ job }) => {
         <div className="flex flex-wrap gap-2 mb-4 mt-4">
           {skillsPreview.map((skill) => (
             <span
-              key={skill.id}
+              key={skill.Skill.id}
               className="bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-sm font-medium capitalize"
             >
-              {skill.skillName}
+              {skill.Skill?.name}
             </span>
           ))}
 
@@ -92,10 +92,10 @@ const JobCard = ({ job }) => {
         <div className="flex flex-wrap gap-2 mb-4">
           {disabilityPreview.map((disability) => (
             <span
-              key={disability.id}
+              key={disability.Disability.id}
               className="bg-green-100 text-green-800 px-3 py-1 rounded-full font-medium text-sm capitalize"
             >
-              {disability.disabilityName} / {disability.type}
+              {disability.Disability?.name} / {disability.Disability?.type}
             </span>
           ))}
 
